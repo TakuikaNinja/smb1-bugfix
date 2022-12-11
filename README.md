@@ -27,13 +27,13 @@ what hasn't changed?
 
 special thanks
 ========================================
-Nintendo - for creating such a legendary yet broken game, plus their console line
-Rare & other 2nd/3rd party developers - for making accuracy a requirement in NES emulators
-1wErt3r - for the orginal dissassembly: https://gist.github.com/1wErt3r/4048722
-Xkeeper0 - for the asm6f port which this is based off of: https://github.com/Xkeeper0/smb1
-Retro Game Mechanics Explained, Displaced Gamers & Kosmic - for making excellent videos about SMB1 oddities
-Every speedrunner, glitch-hunter, researcher & wiki contributor - for extensivly breaking, researching & documenting the games they love
-Ribiveer - for originally doing some of the QoL improvements which got me interested in this project
+- Nintendo - for creating such a legendary yet broken game, plus their console line
+- Rare & other 2nd/3rd party developers - for making accuracy a requirement in NES emulators
+- 1wErt3r - for the orginal dissassembly: https://gist.github.com/1wErt3r/4048722
+- Xkeeper0 - for the asm6f port which this is based off of: https://github.com/Xkeeper0/smb1
+- Retro Game Mechanics Explained, Displaced Gamers & Kosmic - for making excellent videos about SMB1 oddities
+- Every speedrunner, glitch-hunter, researcher & wiki contributor - for extensivly breaking, researching & documenting the games they love
+- Ribiveer - for originally doing some of the QoL improvements which got me interested in this project
 
 (original readme) smb1 disassembly but it works with asm6f
 ========================================
