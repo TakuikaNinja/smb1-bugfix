@@ -16,6 +16,7 @@ so what's different?
 - Keep PlayerStatus (power-up) & PlayerSize (big/small) in sync when taking damage (no more small fiery mario)
 - Getting hit as fiery mario will only downgrade to super mario (like modern entries)
 - Keep FireballThrowingTimer & PlayerAnimTimer in sync (no more skating/sliding glitch)
+- Lives system now uses the zero flag to determine game over instead of the negative flag (no more instant game over when dying with 128 lives)
 - and more to come?
 
 what hasn't changed?
