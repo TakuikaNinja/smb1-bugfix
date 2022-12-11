@@ -25,7 +25,10 @@ WBootCheck:
 	LDA WarmBootValidation                       ; second checkpoint, check to see if
 	CMP #$a5                                     ; another location has a specific value
 	BNE ColdBoot
-	LDY #WarmBootOffset                          ; if passed both, load warm boot pointer
+        LDA ContinueWorld                            ; glitch world fix
+        CMP #$08                                     ; max world value + 1 (world 9)
+        BCS ColdBoot                                 ; cold boot if greater than or equal
+	LDY #WarmBootOffset                          ; if passed, load warm boot pointer
 ColdBoot:
 	JSR InitializeMemory                         ; clear memory using pointer in Y
 	STA SND_DELTA_REG+1                          ; reset delta counter load register
@@ -405,6 +408,11 @@ ChkContinue:
 	ASL                                          ; check to see if A button was also pushed
 	BCC StartWorld1                              ; if not, don't load continue function's world number
 	LDA ContinueWorld                            ; load previously saved world number for secret
+        CMP #$08                                     ; max world value + 1 (world 9)
+        BCC DontFix                                  ; valid world, so don't fix
+        LDA #$00                                     ; glitch world fix: otherwise force world 1
+        STA ContinueWorld                            ; prevent cold start next time
+DontFix:
 	JSR GoContinue                               ; continue function when pressing A + start
 StartWorld1:
 	JSR LoadAreaPointer
@@ -642,7 +650,7 @@ EndChkBButton:
 	BEQ EndExitTwo                               ; branch to leave if not
 	LDA #$01                                     ; otherwise set world selection flag
 	STA WorldSelectEnableFlag
-	LDA #$ff                                     ; remove onscreen player's lives
+	LDA #$00                                     ; remove onscreen player's lives
 	STA NumberofLives
 	JSR TerminateGame                            ; do sub to continue other player or end game
 EndExitTwo:
@@ -1147,8 +1155,8 @@ EndGameText:
 	DEX                                          ; are we printing the world/lives display?
 	BNE CheckPlayerName                          ; if not, branch to check player's name
 	LDA NumberofLives                            ; otherwise, check number of lives
-	CLC                                          ; and increment by one for display
-	ADC #$01
+	;CLC                                          ; and increment by one for display
+	;ADC #$01
 	CMP #10                                      ; more than 9 lives?
 	BCC PutLives
 	SBC #10                                      ; if so, subtract 10 and put a crown tile
@@ -1470,10 +1478,10 @@ WriteBlankMT:
 	RTS
 
 ReplaceBlockMetatile:
-	JSR WriteBlockMetatile                       ; write metatile to vram buffer to replace block object
-	INC Block_ResidualCounter                    ; increment unused counter (residual code)
-	DEC Block_RepFlag,x                          ; decrement flag (residual code)
-	RTS                                          ; leave
+	JMP WriteBlockMetatile                       ; write metatile to vram buffer to replace block object
+	;INC Block_ResidualCounter                    ; increment unused counter (residual code)
+	;DEC Block_RepFlag,x                          ; decrement flag (residual code)
+	;RTS                                          ; leave
 
 DestroyBlockMetatile:
 	LDA #$00                                     ; force blank metatile if branched/jumped to this point
@@ -2199,7 +2207,7 @@ PrimaryGameSetup:
 	LDA #$01
 	STA FetchNewGameTimerFlag                    ; set flag to load game timer from header
 	STA PlayerSize                               ; set player's size to small
-	LDA #$02
+	LDA #$03
 	STA NumberofLives                            ; give each player three lives
 	STA OffScr_NumberofLives
 
@@ -2406,7 +2414,7 @@ PlayerLoseLife:
 	LDA #Silence                                 ; silence music
 	STA EventMusicQueue
 	DEC NumberofLives                            ; take one life from player
-	BPL StillInGame                              ; if player still has lives, branch
+	BNE StillInGame                              ; if player still has lives, branch
 	LDA #$00
 	STA OperMode_Task                            ; initialize mode task,
 	LDA #GameOverModeValue                       ; switch to game over mode
@@ -2507,7 +2515,7 @@ TransposePlayers:
 	LDA NumberOfPlayers                          ; if only a 1 player game, leave
 	BEQ ExTrans
 	LDA OffScr_NumberofLives                     ; does offscreen player have any lives left?
-	BMI ExTrans                                  ; branch if not
+	BEQ ExTrans                                  ; branch if not
 	LDA CurrentPlayer                            ; invert bit to update
 	EOR #%00000001                               ; which player is on the screen
 	STA CurrentPlayer
@@ -3735,6 +3743,7 @@ Jumpspring:
 	JSR GetLrgObjAttrib
 	JSR FindEmptyEnemySlot                       ; find empty space in enemy object buffer
 	JSR GetAreaObjXPosition                      ; get horizontal coordinate for jumpspring
+        BCS ExitJumpSpring                           ; PAL bugfix: Check whether there's a free enemy slot before placing spring. Avoids placing it in the special item slot.
 	STA Enemy_X_Position,x                       ; and store
 	LDA CurrentPageLoc                           ; store page location of jumpspring
 	STA Enemy_PageLoc,x
@@ -3751,6 +3760,7 @@ Jumpspring:
 	STA MetatileBuffer,x
 	LDA #$68
 	STA MetatileBuffer+1,x
+ExitJumpSpring:
 	RTS
 
 ; --------------------------------
@@ -4574,9 +4584,13 @@ InitChangeSize:
 	BNE ExitBoth                                 ; then branch to leave
 	STY PlayerAnimCtrl                           ; otherwise initialize player's animation frame control
 	INC PlayerChangeSizeFlag                     ; set growing/shrinking flag
-	LDA PlayerSize
-	EOR #$01                                     ; invert player's size
-	STA PlayerSize
+	LDA PlayerStatus                             ; check status instead of blindly trusting size (small fiery fix)
+        CMP #$02                                     ; fire flower?
+        BNE NotFire                                  ; if not, jump ahead
+        LSR A                                        ; shift right (2 -> 1) to turn fire into super before the inversion
+NotFire:
+	EOR #$01                                     ; invert A to get actual size
+        STA PlayerSize                               ; save as PlayerSize
 ExitBoth:
 	RTS                                          ; leave
 
@@ -4643,7 +4657,7 @@ FlagpoleSlide:
 SlidePlayer:
 	JMP AutoControlPlayer                        ; jump to player control routine
 NoFPObj:
-	INC GameEngineSubroutine                     ; increment to next routine (this may
+	;INC GameEngineSubroutine                    ; increment to next routine (this may
 	RTS                                          ; be residual code)
 
 ; -------------------------------------------------------------------------------------
@@ -5167,8 +5181,8 @@ ProcFireball_Bubble:
 	STA Fireball_State,x
 	LDY PlayerAnimTimerSet                       ; copy animation frame timer setting
 	STY FireballThrowingTimer                    ; into fireball throwing timer
-	DEY
-	STY PlayerAnimTimer                          ; decrement and store in player's animation timer
+	;DEY                                         ; decrement? (causes skating/sliding glitch)
+	STY PlayerAnimTimer                          ; store in player's animation timer
 	INC FireballCounter                          ; increment fireball counter
 
 ProcFireballs:
@@ -5357,11 +5371,11 @@ ExGTimer:
 WarpZoneObject:
 	LDA ScrollLock                               ; check for scroll lock flag
 	BEQ ExGTimer                                 ; branch if not set to leave
-	LDA Player_Y_Position                        ; check to see if player's vertical coordinate has
-	AND Player_Y_HighPos                         ; same bits set as in vertical high byte (why?)
-	BNE ExGTimer                                 ; if so, branch to leave
+	LDA Player_Y_Position                        ; check to see if player's vertical coordinate is 0
+	;CMP Player_Y_HighPos                        ; same bits set as in vertical high byte (why?) 
+	BNE ExGTimer                                 ; if not, branch to leave (scroll lock fix)
 	STA ScrollLock                               ; otherwise nullify scroll lock flag
-	INC WarpZoneControl                          ; increment warp zone flag to make warp pipes for warp zone
+	;INC WarpZoneControl                         ; increment warp zone flag to make warp pipes for warp zone (causes minus world glitch)
 	JMP EraseEnemyObject                         ; kill this object
 
 ; -------------------------------------------------------------------------------------
@@ -5552,6 +5566,8 @@ BounceJS:
 	BNE DrawJSpr                                 ; skip to last part if not yet at fifth frame ($03)
 	LDA JumpspringForce
 	STA Player_Y_Speed                           ; store jumpspring force as player's new vertical speed
+        LDA #$40                                     ; PAL bugfix: Define vertical acceleration on springs (was undefined on NTSC)
+        STA VerticalForce
 	LDA #$00
 	STA JumpspringAnimCtrl                       ; initialize jumpspring frame control
 DrawJSpr:
@@ -7342,12 +7358,12 @@ DifLoop:
 UsePosv:
 	TYA                                          ; put value from A in Y back to A (they will be lost anyway)
 SetSpSpd:
-	JSR SmallBBox                                ; set bounding box control, init attributes, lose contents of A
 	LDY #$02
-	STA Enemy_X_Speed,x                          ; set horizontal speed to zero because previous contents
-	CMP #$00                                     ; of A were lost...branch here will never be taken for
-	BMI SpinyRte                                 ; the same reason
-	DEY
+	STA Enemy_X_Speed,x                          ; set horizontal speed
+	CMP #$00                                     ; check if speed is negative
+	BMI SpinyRte                                 ; if negative, keep Y at 02 (Leftwards)
+	DEY                                          ; otherwise set Y to 01 (Rightwards)
+        JSR SmallBBox                                ; set bounding box control, init attributes (spiny egg fix)
 SpinyRte:
 	STY Enemy_MovingDir,x                        ; set moving direction to the right
 	LDA #$fd
@@ -7432,7 +7448,7 @@ MaxCC:
 	AND #%00000011                               ; get last two bits of LSFR, first part
 	STA $00                                      ; and store in two places
 	STA $01
-	LDA #$fb                                     ; set vertical speed for cheep-cheep
+	LDA #$fa                                     ; set vertical speed for cheep-cheep ; PAL diff: Faster speed to compensate reworked function
 	STA Enemy_Y_Speed,x
 	LDA #$00                                     ; load default value
 	LDY Player_X_Speed                           ; check player's horizontal speed
@@ -8629,7 +8645,7 @@ NoFD:
 
 ChkNearPlayer:
 	LDA Enemy_Y_Position,x                       ; get vertical coordinate
-	ADC #$10                                     ; add sixteen pixels
+	ADC #$0C                                     ; add twelve pixels ; PAL bugfix: Bloopers can get closer vertically
 	CMP Player_Y_Position                        ; compare result with player's vertical coordinate
 	BCC Floatdown                                ; if modified vertical less than player's, branch
 	LDA #$00
@@ -9004,53 +9020,15 @@ GetVAdder:
 
 ; --------------------------------
 
-PRandomSubtracter:
-	.db $f8, $a0, $70, $bd, $00
-
-FlyCCBPriority:
-	.db $20, $20, $20, $00, $00
-
-MoveFlyingCheepCheep:
-	LDA Enemy_State,x                            ; check cheep-cheep's enemy state
-	AND #%00100000                               ; for d5 set
-	BEQ FlyCC                                    ; branch to continue code if not set
-	LDA #$00
-	STA Enemy_SprAttrib,x                        ; otherwise clear sprite attributes
-	JMP MoveJ_EnemyVertically                    ; and jump to move defeated cheep-cheep downwards
-FlyCC:
-	JSR MoveEnemyHorizontally                    ; move cheep-cheep horizontally based on speed and force
-	LDY #$0d                                     ; set vertical movement amount
-	LDA #$05                                     ; set maximum speed
-	JSR SetXMoveAmt                              ; branch to impose gravity on flying cheep-cheep
-	LDA Enemy_Y_MoveForce,x
-	LSR                                          ; get vertical movement force and
-	LSR                                          ; move high nybble to low
-	LSR
-	LSR
-	TAY                                          ; save as offset (note this tends to go into reach of code)
-	LDA Enemy_Y_Position,x                       ; get vertical position
-	SEC                                          ; subtract pseudorandom value based on offset from position
-	SBC PRandomSubtracter,y
-	BPL AddCCF                                   ; if result within top half of screen, skip this part
-	EOR #$ff
-	CLC                                          ; otherwise get two's compliment
-	ADC #$01
-AddCCF:
-	CMP #$08                                     ; if result or two's compliment greater than eight,
-	BCS BPGet                                    ; skip to the end without changing movement force
-	LDA Enemy_Y_MoveForce,x
-	CLC
-	ADC #$10                                     ; otherwise add to it
-	STA Enemy_Y_MoveForce,x
-	LSR                                          ; move high nybble to low again
-	LSR
-	LSR
-	LSR
-	TAY
-BPGet:
-	LDA FlyCCBPriority,y                         ; load bg priority data and store (this is very likely
-	STA Enemy_SprAttrib,x                        ; broken or residual code, value is overwritten before
-	RTS                                          ; drawing it next frame), then leave
+MoveFlyingCheepCheep:             ; PAL diff: reworked movement function for Cheep Cheeps
+       LDY #$20
+       LDA Enemy_State,x          ; check cheep-cheep's enemy state
+       AND #%00100000             ; for d5 set
+       BNE FlyCC
+       JSR MoveEnemyHorizontally
+       LDY #$17
+FlyCC: LDA #$05
+       JMP SetXMoveAmt
 
 ; --------------------------------
 ; $00 - used to hold horizontal difference
@@ -10218,7 +10196,7 @@ ExScrnBd:
 ; -------------------------------------------------------------------------------------
 
 ; some unused space
-	.db $ff, $ff, $ff
+	;.db $ff, $ff, $ff
 
 ; -------------------------------------------------------------------------------------
 ; $01 - enemy buffer offset
@@ -10430,7 +10408,7 @@ Shroom_Flower_PUp:
 	BEQ UpToSuper
 	CMP #$01                                     ; if player status not super, leave
 	BNE NoPUp
-	LDX ObjectOffset                             ; get enemy offset, not necessary
+	;LDX ObjectOffset                             ; get enemy offset, not necessary
 	LDA #$02                                     ; set player status to fiery
 	STA PlayerStatus
 	JSR GetPlayerColors                          ; run sub to change colors of player
@@ -10449,7 +10427,7 @@ UpToSuper:
 	LDA #$09                                     ; set value to be used by subroutine tree (super)
 
 UpToFiery:
-	LDY #$00                                     ; set value to be used as new player state
+	LDY #$02                                     ; set value to be used as new player state (item jump fix)
 	JSR SetPRout                                 ; set values to stop certain things in motion
 NoPUp:
 	RTS
@@ -10557,12 +10535,13 @@ ChkForPlayerInjury:
 	BMI ChkInj                                   ; perform procedure below if player moving upwards
 	BNE EnemyStomped                             ; or not at all, and branch elsewhere if moving downwards
 ChkInj:
-	LDA Enemy_ID,x                               ; branch if enemy object < $07
-	CMP #Bloober
-	BCC ChkETmrs
-	LDA Player_Y_Position                        ; add 12 pixels to player's vertical position
-	CLC
-	ADC #$0c
+        LDA #$14                                     ; PAL bugfix: Vertical difference deciding whether Mario stomped or got hit depends on the enemy
+        LDY Enemy_ID,x                               ; branch if enemy object < $07
+        CPY #FlyingCheepCheep
+        BNE ChkInj2
+        LDA #$07
+ChkInj2:
+        ADC Player_Y_Position
 	CMP Enemy_Y_Position,x                       ; compare modified player's position to enemy's position
 	BCC EnemyStomped                             ; branch if this player's position above (less than) enemy's
 ChkETmrs:
@@ -10587,13 +10566,21 @@ InjurePlayer:
 ForceInjury:
 	LDX PlayerStatus                             ; check player's status
 	BEQ KillPlayer                               ; branch if small
-	STA PlayerStatus                             ; otherwise set player's status to small
+        LDA PlayerStatus                             ; otherwise...
+        PHA                                          ; backup status (cannot use X)
+        LSR A                                        ; shift right to get status below (fire->super, super->small)
+	STA PlayerStatus                             ; and set as the player's status
 	LDA #$08
 	STA InjuryTimer                              ; set injured invincibility timer
-	ASL
+	LDA #$10                                     ; PAL diff: set value explicitly (noop)
 	STA Square1SoundQueue                        ; play pipedown/injury sound
-	JSR GetPlayerColors                          ; change player's palette if necessary
-	LDA #$0a                                     ; set subroutine to run on next frame
+	JSR GetPlayerColors                          ; change player's palette if necessary (trashes X)
+        PLA                                          ; restore previous status
+        TAX                                          ; transfer to X
+	LDA #$0a                                     ; set subroutine to run on next frame (injury blink)
+        CPX #$02                                     ; was the previous status the fire flower?
+        BNE SetKRout                                 ; if not, jump ahead
+        LDA #$0c                                     ; if so, change the subroutine (fiery)
 SetKRout:
 	LDY #$01                                     ; set new player state
 SetPRout:
@@ -11173,9 +11160,11 @@ SolidOrClimb:
 	BEQ NYSpd                                    ; branch ahead and do not play sound
 	LDA #Sfx_Bump
 	STA Square1SoundQueue                        ; otherwise load bump sound
-NYSpd:
-	LDA #$01                                     ; set player's vertical speed to nullify
-	STA Player_Y_Speed                           ; jump or swim
+NYSpd:  LDY #$01                                     ; set player's vertical speed to nullify
+        LDA AreaType                                 ; PAL diff: Set vertical speed to 0 in water stages
+        BNE NYSpd2                                   ; not water
+        DEY
+NYSpd2: STY Player_Y_Speed                           ; jump or swim
 
 DoFootCheck:
 	LDY $eb                                      ; get block buffer adder offset
@@ -13735,8 +13724,9 @@ PlayerGraphicsTable:
 
 ; small player table
 	.db $fc, $fc, $fc, $fc, $32, $33, $34, $35   ; walking frame 1
+        .db $fc, $fc, $fc, $fc, $3a, $37, $3b, $3c   ;         frame 3
 	.db $fc, $fc, $fc, $fc, $36, $37, $38, $39   ;         frame 2
-	.db $fc, $fc, $fc, $fc, $3a, $37, $3b, $3c   ;         frame 3
+	; animation order fix
 	.db $fc, $fc, $fc, $fc, $3d, $3e, $3f, $40   ; skidding
 	.db $fc, $fc, $fc, $fc, $32, $41, $42, $43   ; jumping
 	.db $fc, $fc, $fc, $fc, $32, $33, $44, $45   ; swimming frame 1
@@ -13816,10 +13806,10 @@ PlayerGfxProcessing:
 	JSR ChkForPlayerAttrib                       ; set horizontal flip bits as necessary
 	LDA FireballThrowingTimer
 	BEQ PlayerOffscreenChk                       ; if fireball throw timer not set, skip to the end
-	LDY #$00                                     ; set value to initialize by default
+	;LDY #$00                                    ; set value to initialize by default (why?)
 	LDA PlayerAnimTimer                          ; get animation frame timer
 	CMP FireballThrowingTimer                    ; compare to fireball throw timer
-	STY FireballThrowingTimer                    ; initialize fireball throw timer
+	;STY FireballThrowingTimer                   ; initialize fireball throw timer (why?)
 	BCS PlayerOffscreenChk                       ; if animation frame timer => fireball throw timer skip to end
 	STA FireballThrowingTimer                    ; otherwise store animation timer into fireball throw timer
 	LDY #$07                                     ; load offset for throwing
@@ -14388,7 +14378,7 @@ SetHFAt:
 ; -------------------------------------------------------------------------------------
 
 ; unused space
-	.db $ff, $ff, $ff, $ff, $ff, $ff
+	;.db $ff, $ff, $ff, $ff, $ff, $ff
 
 ; -------------------------------------------------------------------------------------
 
@@ -14400,7 +14390,7 @@ SetHFAt:
 
 ; -------------------------------------------------------------------------------------
 ; INTERRUPT VECTORS
-
+.org $FFFA
 	.dw NonMaskableInterrupt
 	.dw Start
 	.dw $fff0                                    ; unused

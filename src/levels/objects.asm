@@ -215,7 +215,7 @@ L_GroundArea8:
 	.db $90, $11
 	.db $0f, $26, $6e, $10, $8b, $17, $af, $32, $d8, $62
 	.db $e8, $62, $fc, $3f, $ad, $c8, $f8, $64, $0c, $be
-	.db $43, $43, $f8, $64, $0c, $bf, $73, $40, $84, $40
+	.db $43, $43, $f8, $64, $0c, $be, $73, $40, $84, $40 ; bridge railing overshoot fix
 	.db $93, $40, $a4, $40, $b3, $40, $f8, $64, $48, $e4
 	.db $5c, $39, $83, $40, $92, $41, $b3, $40, $f8, $64
 	.db $48, $e4, $5c, $39, $f8, $64, $13, $c2, $37, $65
@@ -251,8 +251,8 @@ L_GroundArea10:
 
 ; level 5-1
 L_GroundArea11:
-	.db $95, $b1
-	.db $0f, $26, $0d, $02, $c8, $72, $1c, $81, $38, $72
+        .db $52, $B1 ; starting castle fix
+	.db $0f, $20, $6e, $45, $0d, $02, $c8, $72, $1c, $81, $38, $72 ; starting castle fix
 	.db $0d, $05, $97, $34, $98, $62, $a3, $20, $b3, $06
 	.db $c3, $20, $cc, $03, $f9, $91, $2c, $81, $48, $62
 	.db $0d, $09, $37, $63, $47, $03, $57, $21, $8c, $02
@@ -480,7 +480,7 @@ L_WaterArea1:
 	.db $0d, $c9, $1e, $01, $6c, $01, $62, $35, $63, $53
 	.db $8a, $41, $ac, $01, $b3, $53, $e9, $51, $26, $c3
 	.db $27, $33, $63, $43, $64, $33, $ba, $60, $c9, $61
-	.db $ce, $0b, $e5, $09, $ee, $0f, $7d, $ca, $7d, $47
+	.db $ce, $0b, $de, $0f, $e5, $09, $7d, $ca, $7d, $47 ; PAL bugfix: Close 1-tile gap above exit pipe
 	.db $fd
 
 ; level 2-2/7-2
@@ -497,13 +497,13 @@ L_WaterArea2:
 	.db $c3, $67, $d3, $31, $dc, $06, $f7, $42, $fa, $42
 	.db $23, $b1, $43, $67, $c3, $34, $c7, $34, $d1, $51
 	.db $43, $b3, $47, $33, $9a, $30, $a9, $61, $b8, $62
-	.db $be, $0b, $d5, $09, $de, $0f, $0d, $ca, $7d, $47
+	.db $be, $0b, $ce, $0f, $d5, $09, $0d, $ca, $7d, $47 ; PAL bugfix: Close 1-tile gap above exit pipe
 	.db $fd
 
 ; water area used in level 8-4
 L_WaterArea3:
 	.db $49, $0f
 	.db $1e, $01, $39, $73, $5e, $07, $ae, $0b, $1e, $82
-	.db $6e, $88, $9e, $02, $0d, $04, $2e, $0b, $45, $09
-	.db $4e, $0f, $ed, $47
+	.db $6e, $88, $9e, $02, $0d, $04, $2e, $0b, $3e, $0f ; PAL bugfix: Close 1-tile gap above exit pipe
+        .db $45, $09, $ed, $47
 	.db $fd
