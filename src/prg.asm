@@ -389,8 +389,9 @@ UpdateShroom:
 	INY                                          ; proper display, and put in blank byte before
 	STY VRAM_Buffer1+3                           ; null terminator
 NullJoypad:
-	LDA #$00                                     ; clear joypad bits for player 1
+	LDA #$00                                     ; clear joypad bits for both players
 	STA SavedJoypad1Bits
+        STA SavedJoypad2Bits
 RunDemo:
 	JSR GameCoreRoutine                          ; run game engine
 	LDA GameEngineSubroutine                     ; check to see if we're running lose life routine
@@ -2473,7 +2474,8 @@ SetupGameOver:
 RunGameOver:
 	LDA #$00                                     ; reenable screen
 	STA DisableScreenFlag
-	LDA SavedJoypad1Bits                         ; check controller for start pressed
+	LDA SavedJoypad1Bits                         ; check controllers for start pressed
+        ORA SavedJoypad2Bits
 	AND #Start_Button
 	BNE TerminateGame
 	LDA ScreenTimer                              ; if not pressed, wait for
@@ -2486,7 +2488,6 @@ TerminateGame:
 	LDA WorldNumber                              ; otherwise put world number of current
 	STA ContinueWorld                            ; player into secret continue function variable
 	LDA #$00
-	ASL                                          ; residual ASL instruction
 	STA OperMode_Task                            ; reset all modes to title screen and
 	STA ScreenTimer                              ; leave
 	STA OperMode

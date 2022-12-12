@@ -1,6 +1,6 @@
 smb1 disassembly but it has the PAL bugfixes, QoL improvements & more
 ========================================
-There have been rumours that Rare was once working on a revision of SMB1 which could fit in a 16KiB PRG-ROM. We will probably never know if this was true but it does make one wonder - what could have been improved? This repo is my attempt at ansering that question. 
+There have been rumours that Rare was once working on a revision of SMB1 which could fit in a 16KiB PRG-ROM. We will probably never know if this was true but it does make one wonder - what could have been improved? This repo is my attempt at answering that question. 
 None of this work is my own - I simply researched all the bugs/oddities I could find and fixed them to the best of my ability. See the special thanks section for the real contributors. 
 
 so what's different?
