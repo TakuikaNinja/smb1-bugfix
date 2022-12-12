@@ -28,9 +28,10 @@ This file is based on the changes originally done by Ribiveer.
 - [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 - [ ] Fire Mario and Fire Luigi now have separate palettes.
 - [ ] Green Cheep Cheeps now appear green underwater.
-- [ ] When entering a warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
+- [x] When entering a warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
 - [x] Both players can now always pause the game.
 - [ ] The locations of some warp destination change and enemy despawn triggers have been tweaked.
+- [ ] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
 - [ ] Scroll padding/centering is more robust (todo?)
 
 ## Modernised Quality of Life Mechanics

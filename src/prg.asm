@@ -4499,6 +4499,9 @@ SetEntr:
 ; -------------------------------------------------------------------------------------
 
 VerticalPipeEntry:
+        LDA #$00                                     ; reset horizontal speed
+        STA Player_X_Speed
+        STA SavedJoypadBits                          ; nullify input (prevents running while entering pipes)
 	LDA #$01                                     ; set 1 as movement amount
 	JSR MovePlayerYAxis                          ; do sub to move player downwards
 	JSR ScrollHandler                            ; do sub to scroll screen with saved force if necessary
@@ -4543,6 +4546,7 @@ EnterSidePipe:
 	AND #%00001111                               ; horizontal position
 	BNE RightPipe
 	STA Player_X_Speed                           ; if lower nybble = 0, set as horizontal speed
+        ORA #Down_Dir                                ; force the player to crouch if big
 	TAY                                          ; and nullify controller bit override here
 RightPipe:
 	TYA                                          ; use contents of Y to
@@ -11254,8 +11258,6 @@ ExSCH:
 	RTS                                          ; leave
 
 CheckSideMTiles:
-	JSR ChkInvisibleMTiles                       ; check for hidden or coin 1-up blocks
-	BEQ ExCSM                                    ; branch to leave if either found
 	JSR CheckForClimbMTiles                      ; check for climbable metatiles
 	BCC ContSChk                                 ; if not found, skip and continue with code
 	JMP HandleClimbing                           ; otherwise jump to handle climbing
@@ -11265,7 +11267,7 @@ ContSChk:
 	JSR ChkJumpspringMetatiles                   ; check for jumpspring metatiles
 	BCC ChkPBtm                                  ; if not found, branch ahead to continue cude
 	LDA JumpspringAnimCtrl                       ; otherwise check jumpspring animation control
-	BNE ExCSM                                    ; branch to leave if set
+	BNE ExCSM                                    ; branch to leave if set (exits too early - right foot isn't checked)
 	JMP StopPlayerMove                           ; otherwise jump to impede player's movement
 ChkPBtm:
 	LDY Player_State                             ; get player's state
