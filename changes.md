@@ -6,7 +6,7 @@ This file is based on the changes originally done by Ribiveer.
 
 ## Bug Fixes & Small Tweaks
 - [x] Scroll lock object in underground warpzone now works as intended. (no more minus world)
-- [x] An erroneous increment of the warp zone value has been removed (1-2 warp zone pipe destination stays at 1-2 exit)
+- [x] An erroneous increment of the warp zone value has been removed (1-2 warp zone pipe destination stays at 1-2 exit until warp zone loads)
 - [x] Lakitus now throw their spinies as originally intended.
 - [x] Warm start detection & continue functions now check ContinueWorld for a valid value. (no more glitch worlds)
 - [ ] Falling while crouching now keeps your sprite crouched.
