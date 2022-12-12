@@ -5,20 +5,7 @@ None of this work is my own - I simply researched all the bugs/oddities I could 
 
 so what's different?
 ========================================
-- Implemented all bugfixes from the PAL release (excluding 8-2 paratroopa placement, hitbox & framerate specific changes)
-- Scroll lock object in underground warpzone works as intended + erroneous increment of warp zone value removed (no more minus world)
-- Spiny egg throwing logic is fixed (has horizontal movement)
-- Warm start detection & continue functions now check ContinueWorld for a valid value (no more glitch worlds)
-- 5-1 starting castle is the correct 3-tier one (like other levels starting a world beyond world 1)
-- 2-3/7-3 bridge railing no longer overshoots at the first gap
-- Reordered small mario walk cycle so it flows better
-- Added "missing" pixels in big mario jump sprite
-- Keep PlayerStatus (power-up) & PlayerSize (big/small) in sync when taking damage (no more small fiery mario)
-- Getting hit as fiery mario will only downgrade to super mario (like modern entries)
-- Keep FireballThrowingTimer & PlayerAnimTimer in sync (no more skating/sliding glitch)
-- Getting an item now places mario in the falling state instead of grounded (no more item jump)
-- Lives system now uses the zero flag to determine game over instead of the negative flag (no more instant game over when dying with 128 lives)
-- and more to come?
+See [changes.md](changes.md) for details. 
 
 what hasn't changed?
 ========================================

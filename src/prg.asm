@@ -215,11 +215,12 @@ ChkPauseTimer:
 	RTS
 ChkStart:
 	LDA SavedJoypad1Bits                         ; check to see if start is pressed
-	AND #Start_Button                            ; on controller 1
+        ORA SavedJoypad2Bits                         ; on either controller
+	AND #Start_Button
 	BEQ ClrPauseTimer
-	LDA GamePauseStatus                          ; check to see if timer flag is set
-	AND #%10000000                               ; and if so, do not reset timer (residual,
-	BNE ExitPause                                ; joypad reading routine makes this unnecessary)
+	;LDA GamePauseStatus                         ; check to see if timer flag is set
+	;AND #%10000000                              ; and if so, do not reset timer (residual,
+	;BNE ExitPause                               ; joypad reading routine makes this unnecessary)
 	LDA #$2b                                     ; set pause timer
 	STA GamePauseTimer
 	LDA GamePauseStatus
@@ -700,9 +701,7 @@ DecNumTimer:
 	BNE ChkTallEnemy
 	CPY #$0b                                     ; check offset for $0b
 	BNE LoadNumTiles                             ; branch ahead if not found
-	INC NumberofLives                            ; give player one extra life (1-up)
-	LDA #Sfx_ExtraLife
-	STA Square2SoundQueue                        ; and play the 1-up sound
+	JSR IncrementLives
 LoadNumTiles:
 	LDA ScoreUpdateData,y                        ; load point value here
 	LSR                                          ; move high nybble to low
@@ -1155,8 +1154,6 @@ EndGameText:
 	DEX                                          ; are we printing the world/lives display?
 	BNE CheckPlayerName                          ; if not, branch to check player's name
 	LDA NumberofLives                            ; otherwise, check number of lives
-	;CLC                                          ; and increment by one for display
-	;ADC #$01
 	CMP #10                                      ; more than 9 lives?
 	BCC PutLives
 	SBC #10                                      ; if so, subtract 10 and put a crown tile
@@ -2332,7 +2329,7 @@ GameTimerData:
 Entrance_GameTimerSetup:
 	LDA ScreenLeft_PageLoc                       ; set current page for area objects
 	STA Player_PageLoc                           ; as page location for player
-	LDA #$28                                     ; store value here
+	LDA #$70                                     ; PAL diff: Player's initial downward acceleration is higher
 	STA VerticalForceDown                        ; for fractional movement downwards if necessary
 	LDA #$01                                     ; set high byte of player position and
 	STA PlayerFacingDir                          ; set facing direction so that player faces right
@@ -3769,8 +3766,6 @@ ExitJumpSpring:
 Hidden1UpBlock:
 	LDA Hidden1UpFlag                            ; if flag not set, do not render object
 	BEQ ExitDecBlock
-	LDA #$00                                     ; if set, init for the next one
-	STA Hidden1UpFlag
 	JMP BrickWithItem                            ; jump to code shared with unbreakable bricks
 
 QuestionBlock:
@@ -4663,7 +4658,7 @@ NoFPObj:
 ; -------------------------------------------------------------------------------------
 
 Hidden1UpCoinAmts:
-	.db $15, $23, $16, $1b, $17, $18, $23, $63
+	.db $15, $23, $16, $1b, $17, $18, $23;, $63 ; world 8 value is pointless
 
 PlayerEndLevel:
 	LDA #$01                                     ; force player to walk to the right
@@ -4691,15 +4686,17 @@ RdyNextA:
 	LDA StarFlagTaskControl
 	CMP #$05                                     ; if star flag task control not yet set
 	BNE ExitNA                                   ; beyond last valid task number, branch to leave
-	INC LevelNumber                              ; increment level number used for game logic
+        LDA #$00
+        STA Hidden1UpFlag                            ; clear flag for the upcoming check
+        INC LevelNumber                              ; increment level number used for game logic
 	LDA LevelNumber
 	CMP #$03                                     ; check to see if we have yet reached level -4
 	BNE NextArea                                 ; and skip this last part here if not
 	LDY WorldNumber                              ; get world number as offset
 	LDA CoinTallyFor1Ups                         ; check third area coin tally for bonus 1-ups
 	CMP Hidden1UpCoinAmts,y                      ; against minimum value, if player has not collected
-	BCC NextArea                                 ; at least this number of coins, leave flag clear
-	INC Hidden1UpFlag                            ; otherwise set hidden 1-up box control flag
+	BCC NextArea                                 ; at least this number of coins, otherwise leave flag clear
+	INC Hidden1UpFlag                            ; set hidden 1-up box control flag
 NextArea:
 	INC AreaNumber                               ; increment area number used for address loader
 	JSR LoadAreaPointer                          ; get new level pointer
@@ -6021,6 +6018,15 @@ ScoreOffsets:
 StatusBarNybbles:
 	.db $02, $13
 
+IncrementLives:
+        INC NumberofLives                            ; give the player an extra life
+        BNE NoFix                                    ; overflowed to 0?
+        DEC NumberofLives                            ; if so revert the increment
+NoFix:
+        LDA #Sfx_ExtraLife
+	STA Square2SoundQueue                        ; play 1-up sound
+        RTS
+
 GiveOneCoin:
 	LDA #$01                                     ; set digit modifier to add 1 coin
 	STA DigitModifier+5                          ; to the current player's coin tally
@@ -6033,10 +6039,8 @@ GiveOneCoin:
 	BNE CoinPoints                               ; if not, skip all of this
 	LDA #$00
 	STA CoinTally                                ; otherwise, reinitialize coin amount
-	INC NumberofLives                            ; give the player an extra life
-	LDA #Sfx_ExtraLife
-	STA Square2SoundQueue                        ; play 1-up sound
-
+	JSR IncrementLives
+	
 CoinPoints:
 	LDA #$02                                     ; set digit modifier to award
 	STA DigitModifier+4                          ; 200 points to the player
@@ -10370,11 +10374,6 @@ PlayerHammerCollision:
 	BNE ExPHC                                    ; if collision flag already set, branch to leave
 	LDA #$01
 	STA Misc_Collision_Flag,x                    ; otherwise set collision flag now
-	LDA Misc_X_Speed,x
-	EOR #$ff                                     ; get two's compliment of
-	CLC                                          ; hammer's horizontal speed
-	ADC #$01
-	STA Misc_X_Speed,x                           ; set to send hammer flying the opposite direction
 	LDA StarInvincibleTimer                      ; if star mario invincibility timer set,
 	BNE ExPHC                                    ; branch to leave
 	JMP InjurePlayer                             ; otherwise jump to hurt player, do not return
@@ -10404,15 +10403,18 @@ HandlePowerUpCollision:
 	RTS
 
 Shroom_Flower_PUp:
-	LDA PlayerStatus                             ; if player status = small, branch
-	BEQ UpToSuper
-	CMP #$01                                     ; if player status not super, leave
-	BNE NoPUp
-	;LDX ObjectOffset                             ; get enemy offset, not necessary
-	LDA #$02                                     ; set player status to fiery
-	STA PlayerStatus
+	LDA PlayerStatus                             ; if player status = fire, branch
+        CMP #$02
+        BEQ NoPUp
+        LDA PowerUpType                              ; is the power-up a mushroom?
+        BEQ UpToSuper                                ; if so, do the grow animation
+        ASL A                                        ; otherwise, shift the flower bit left (1 -> 2)
+	STA PlayerStatus                             ; and force fire flower
+        LDA PlayerSize                               ; is PlayerSize big?
+        BEQ DontGrow                                 ; if so, jump ahead
+        JSR InitChangeSize                           ; otherwise, force the growth animation
+DontGrow:
 	JSR GetPlayerColors                          ; run sub to change colors of player
-	LDX ObjectOffset                             ; get enemy offset again, and again not necessary
 	LDA #$0c                                     ; set value to be used by subroutine tree (fiery)
 	JMP UpToFiery                                ; jump to set values accordingly
 
@@ -10549,15 +10551,6 @@ ChkETmrs:
 	BNE EnemyStomped                             ; branch if set
 	LDA InjuryTimer                              ; check to see if injured invincibility timer still
 	BNE ExInjColRoutines                         ; counting down, and branch elsewhere to leave if so
-	LDA Player_Rel_XPos
-	CMP Enemy_Rel_XPos                           ; if player's relative position to the left of enemy's
-	BCC TInjE                                    ; relative position, branch here
-	JMP ChkEnemyFaceRight                        ; otherwise do a jump here
-TInjE:
-	LDA Enemy_MovingDir,x                        ; if enemy moving towards the left,
-	CMP #$01                                     ; branch, otherwise do a jump here
-	BNE InjurePlayer                             ; to turn the enemy around
-	JMP LInj
 
 InjurePlayer:
 	LDA InjuryTimer                              ; check again to see if injured invincibility timer is
@@ -10567,14 +10560,14 @@ ForceInjury:
 	LDX PlayerStatus                             ; check player's status
 	BEQ KillPlayer                               ; branch if small
         LDA PlayerStatus                             ; otherwise...
-        PHA                                          ; backup status (cannot use X)
+        PHA                                          ; backup status (cannot use X or Y)
         LSR A                                        ; shift right to get status below (fire->super, super->small)
 	STA PlayerStatus                             ; and set as the player's status
 	LDA #$08
 	STA InjuryTimer                              ; set injured invincibility timer
-	LDA #$10                                     ; PAL diff: set value explicitly (noop)
+	ASL A                                        ; shift left to get #$10
 	STA Square1SoundQueue                        ; play pipedown/injury sound
-	JSR GetPlayerColors                          ; change player's palette if necessary (trashes X)
+	JSR GetPlayerColors                          ; change player's palette if necessary (trashes X & Y)
         PLA                                          ; restore previous status
         TAX                                          ; transfer to X
 	LDA #$0a                                     ; set subroutine to run on next frame (injury blink)
@@ -12022,7 +12015,7 @@ BoundBoxCtrlData:
 	.db $00, $00, $30, $0d
 	.db $00, $00, $08, $08
 	.db $06, $04, $0a, $08
-	.db $03, $0e, $0d, $14
+	.db $03, $0c, $0d, $14 ; PAL diff: some enemies (Piranha, Bullet Bill, Goomba, Spiny, Blooper, Cheep Cheep) has larger hitbox
 	.db $00, $02, $10, $15
 	.db $04, $04, $0c, $1c
 
