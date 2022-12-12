@@ -1,4 +1,4 @@
-This file is based on the changes orignally done by Ribiveer.
+This file is based on the changes originally done by Ribiveer.
 
 ## Music Changes
 - [ ] There is now music on the title screen: an alternate version of the underwater theme.
