@@ -23,7 +23,6 @@ This file is based on the changes originally done by Ribiveer.
 - [ ] Holding the jump button no longer makes Mario jump while entering an area.
 - [x] PlayerStatus & PlayerSize is now always kept in sync (no more Small Fire Mario)
 - [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync (no more skating/sliding glitch)
-- [ ] Faulty warp pipes have now been linked to Bowser's sewage system. (what?)
 - [ ] Kicked shells now keep their momentum while going off a ledge.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 - [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
