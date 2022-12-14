@@ -5,3 +5,5 @@ Thumbs.db
 *.cdl
 asm6f
 
+*.bat
+*.exe
