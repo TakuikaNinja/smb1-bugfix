@@ -11246,7 +11246,7 @@ ExSCH:
 	RTS                                          ; leave
 
 CheckSideMTiles:
-        JSR ChkInvisibleMTiles                       ; do sub to check for hidden coin or 1-up blocks
+	JSR ChkInvisibleMTiles                       ; do sub to check for hidden coin or 1-up blocks
 	BEQ DoPlayerSideCheck                        ; if either found, branch
 	JSR CheckForClimbMTiles                      ; check for climbable metatiles
 	BCC ContSChk                                 ; if not found, skip and continue with code
@@ -13928,11 +13928,11 @@ NonAnimatedActs:
 	RTS
 
 ActionFalling:
-        LDY #$06                                     ; load offset for crouching by default
-        LDA CrouchingFlag                            ; get crouching flag
-        BNE CrouchFall
+	LDY #$06                                     ; load offset for crouching by default
+	LDA CrouchingFlag                            ; get crouching flag
+	BNE CrouchFall
 	DEY                                          ; decrement twice to get #$04 (walking/running)
-        DEY                                    
+	DEY                                    
 CrouchFall:
 	JSR GetGfxOffsetAdder                        ; get offset to graphics table
 	JMP GetCurrentAnimOffset                     ; execute instructions for falling state
