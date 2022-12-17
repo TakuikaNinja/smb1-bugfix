@@ -13930,10 +13930,9 @@ NonAnimatedActs:
 ActionFalling:
 	LDY #$06                                     ; load offset for crouching by default
 	LDA CrouchingFlag                            ; get crouching flag
-	BNE CrouchFall
-	DEY                                          ; decrement twice to get #$04 (walking/running)
+	BNE NonAnimatedActs                          ; if set, branch to get offset for graphics table
+	DEY                                          ; otherwise decrement twice to get #$04 (walking/running)
 	DEY                                    
-CrouchFall:
 	JSR GetGfxOffsetAdder                        ; get offset to graphics table
 	JMP GetCurrentAnimOffset                     ; execute instructions for falling state
 
