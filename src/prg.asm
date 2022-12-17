@@ -4792,6 +4792,8 @@ DumpFall:
 ProcSwim:
 	LDA SwimmingFlag                             ; if swimming flag not set,
 	BEQ LRAir                                    ; branch ahead to last part
+        LDA #$00
+        STA CrouchingFlag                            ; clear crouching flag (force big hitbox)
 	JSR GetPlayerAnimSpeed                       ; do a sub to get animation frame timing
 	LDA Player_Y_Position
 	CMP #$14                                     ; check vertical position against preset value
@@ -11244,6 +11246,8 @@ ExSCH:
 	RTS                                          ; leave
 
 CheckSideMTiles:
+        JSR ChkInvisibleMTiles                       ; do sub to check for hidden coin or 1-up blocks
+	BEQ DoPlayerSideCheck                        ; if either found, branch
 	JSR CheckForClimbMTiles                      ; check for climbable metatiles
 	BCC ContSChk                                 ; if not found, skip and continue with code
 	JMP HandleClimbing                           ; otherwise jump to handle climbing
@@ -13924,7 +13928,12 @@ NonAnimatedActs:
 	RTS
 
 ActionFalling:
-	LDY #$04                                     ; load offset for walking/running
+        LDY #$06                                     ; load offset for crouching by default
+        LDA CrouchingFlag                            ; get crouching flag
+        BNE CrouchFall
+	DEY                                          ; decrement twice to get #$04 (walking/running)
+        DEY                                    
+CrouchFall:
 	JSR GetGfxOffsetAdder                        ; get offset to graphics table
 	JMP GetCurrentAnimOffset                     ; execute instructions for falling state
 

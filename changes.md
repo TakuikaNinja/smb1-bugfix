@@ -9,8 +9,8 @@ This file is based on the changes originally done by Ribiveer.
 - [x] An erroneous increment of the warp zone value has been removed (1-2 warp zone pipe destination stays at 1-2 exit until warp zone loads)
 - [x] Lakitus now throw their spinies as originally intended.
 - [x] Warm start detection & continue functions now check ContinueWorld for a valid value. (no more glitch worlds)
-- [ ] Falling while crouching now keeps your sprite crouched.
-- [ ] While underwater, crouching no longer messes up the hitbox.
+- [x] Falling while crouching now keeps your sprite crouched.
+- [x] While underwater, crouching no longer messes up the hitbox.
 - [x] Small Mario's walking animation now flows better.
 - [ ] Stars are now guaranteed to jump out of their blocks, as opposed to sometimes falling down.
 - [x] The lives system now uses the zero flag instead of the negative flag for game over detection. (no more 128 lives glitch)
