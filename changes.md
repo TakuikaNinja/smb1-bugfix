@@ -18,7 +18,7 @@ This file is based on the changes originally done by Ribiveer.
 - [ ] Lives are now capped at 99(?) to prevent overflows.
 - [ ] The lives screen now properly reflects Mario's power-up state.
 - [x] Player status is now correctly set to falling while collecting a power-up. (no more item jump)
-- [ ] Getting the flagpole stops the star invincibility, to prevent audio glitches.
+- [X] Getting the flagpole stops the star invincibility, to prevent audio glitches.
 - [ ] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
 - [ ] Holding the jump button no longer makes Mario jump while entering an area.
 - [x] PlayerStatus & PlayerSize is now always kept in sync (no more Small Fire Mario)

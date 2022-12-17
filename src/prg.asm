@@ -11359,6 +11359,8 @@ ChkForFlagpole:
 	BNE VineCollision                            ; branch to alternate code if flagpole shaft not found
 
 FlagpoleCollision:
+	LDA #$00
+	STA StarInvincibleTimer                      ; clear star invincible timer (prevent music glitch)
 	LDA GameEngineSubroutine
 	CMP #$05                                     ; check for end-of-level routine running
 	BEQ PutPlayerOnVine                          ; if running, branch to end of climbing code
