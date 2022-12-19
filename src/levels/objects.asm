@@ -251,7 +251,7 @@ L_GroundArea10:
 
 ; level 5-1
 L_GroundArea11:
-        .db $52, $B1 ; starting castle fix
+	.db $52, $B1 ; starting castle fix
 	.db $0f, $20, $6e, $45, $0d, $02, $c8, $72, $1c, $81, $38, $72 ; starting castle fix
 	.db $0d, $05, $97, $34, $98, $62, $a3, $20, $b3, $06
 	.db $c3, $20, $cc, $03, $f9, $91, $2c, $81, $48, $62
@@ -505,5 +505,5 @@ L_WaterArea3:
 	.db $49, $0f
 	.db $1e, $01, $39, $73, $5e, $07, $ae, $0b, $1e, $82
 	.db $6e, $88, $9e, $02, $0d, $04, $2e, $0b, $3e, $0f ; PAL bugfix: Close 1-tile gap above exit pipe
-        .db $45, $09, $ed, $47
+	.db $45, $09, $ed, $47
 	.db $fd

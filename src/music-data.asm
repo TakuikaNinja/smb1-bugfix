@@ -30,6 +30,10 @@ MusicHeaderData:
 	.db GroundLevelPart3AHdr-MHD, GroundLevelPart3BHdr-MHD, GroundLevelPart3AHdr-MHD, GroundLevelLeadInHdr-MHD
 	.db GroundLevelPart4AHdr-MHD, GroundLevelPart4BHdr-MHD, GroundLevelPart4AHdr-MHD, GroundLevelPart4CHdr-MHD
 
+	.db VictoryMusHdr-MHD, VictoryMusHdr-MHD
+	.db VictoryMusBHdr-MHD
+	.db VictoryMusHdr-MHD, VictoryMusHdr-MHD
+
 ; music headers
 ; header format is as follows:
 ; 1 byte - length byte offset
@@ -44,8 +48,6 @@ Star_CloudHdr:
 	.db $20, <Star_CloudMData, >Star_CloudMData, $2e, $1a, $40
 EndOfLevelMusHdr:
 	.db $20, <WinLevelMusData, >WinLevelMusData, $3d, $21
-ResidualHeaderData:
-	.db $20, $c4, $fc, $3f, $1d
 UndergroundMusHdr:
 	.db $18, <UndergroundMusData, >UndergroundMusData, $00, $00
 SilenceHdr:
@@ -53,7 +55,9 @@ SilenceHdr:
 CastleMusHdr:
 	.db $00, <CastleMusData, >CastleMusData, $93, $62
 VictoryMusHdr:
-	.db $10, <VictoryMusData, >VictoryMusData, $24, $14
+	.db $30, <VictoryMusData, >VictoryMusData, $24, $14
+VictoryMusBHdr:
+	.db $30, <VictoryMusBData, >VictoryMusBData, $34, $23
 GameOverMusHdr:
 	.db $18, <GameOverMusData, >GameOverMusData, $1e, $14
 WaterMusHdr:
@@ -277,8 +281,7 @@ WinLevelMusData:
 
 	.db $cd, $d5, $dd, $e3, $ed, $f5, $bb, $b5, $cf, $d5
 	.db $db, $e5, $ed, $f3, $bd, $b3, $d1, $d9, $df, $e9
-	.db $f1, $f7, $bf, $ff, $ff, $ff, $34
-	.db $00                                      ; unused byte
+	.db $f1, $f7, $bf, $ff, $ff, $ff, $34, $00     
 
 	.db $86, $04, $87, $14, $1c, $22, $86, $34, $84, $2c
 	.db $04, $04, $04, $87, $14, $1a, $24, $86, $32, $84
@@ -347,17 +350,25 @@ EndOfCastleMusData:
 	.db $81, $28, $87, $2c, $2c, $2c, $84, $30
 
 VictoryMusData:
-	.db $83, $04, $84, $0c, $83, $62, $10, $84, $12
-	.db $83, $1c, $22, $1e, $22, $26, $18, $1e, $04, $1c, $00
+	.db $84, $04, $86, $0c, $84, $62, $10, $86, $12
+	.db $84, $1c, $22, $1e, $22, $26, $18, $1e, $04, $1c, $00
 
-	.db $e3, $e1, $e3, $1d, $de, $e0, $23
-	.db $ec, $75, $74, $f0, $f4, $f6, $ea, $31, $2d
+	.db $e2, $e0, $e2, $9d, $1f, $21, $A3
+	.db $2d, $74, $f4, $31, $35, $37, $2b, $b1, $2d
 
-	.db $83, $12, $14, $04, $18, $1a, $1c, $14
+	.db $84, $12, $14, $04, $18, $1a, $1c, $14
 	.db $26, $22, $1e, $1c, $18, $1e, $22, $0c, $14
 
-; unused space
-	.db $ff, $ff, $ff
+VictoryMusBData:
+	.db $81, $22, $83, $22, $86, $24, $85, $18, $82, $1e, $84, $1e
+	.db $83, $04, $83, $1c, $83, $18, $84, $1c, $81, $26, $83, $26
+	.db $86, $26, $85, $1e, $82, $24, $86, $22, $84, $1e, $00
+
+	.db $74, $f4, $b5, $6b, $b0, $31, $c4, $ec
+	.db $ea, $2d, $76, $f6, $b7, $6d, $b0, $b5, $31
+
+	.db $84, $12, $1c, $20, $24, $2a, $26, $24
+	.db $26, $22, $1e, $22, $24, $1e, $22, $0c, $1e
 
 FreqRegLookupTbl:
 	.db $00, $88, $00, $2f, $00, $00
@@ -381,12 +392,14 @@ MusicLengthLookupTbl:
 	.db $36, $03, $09, $06, $12, $1b, $24, $0c
 	.db $24, $02, $06, $04, $0c, $12, $18, $08
 	.db $12, $01, $03, $02, $06, $09, $0c, $04
-
-EndOfCastleMusicEnvData:
-	.db $98, $99, $9a, $9b
+	.db $51, $12, $0D, $09, $1b, $28, $36, $12       ; 30 (ported from vs.smb)
 
 AreaMusicEnvData:
-	.db $90, $94, $94, $95, $95, $96, $97, $98
+	.db $90, $94, $94, $95, $95, $96, $97, $97
+
+EndOfCastleMusicEnvData:
+	.db $98                                          ; shared with area music envelope
+	.db $99, $9a, $9b
 
 WaterEventMusEnvData:
 	.db $90, $91, $92, $92, $93, $93, $93, $94
@@ -395,12 +408,8 @@ WaterEventMusEnvData:
 	.db $96, $96, $96, $96, $96, $96, $96, $96
 	.db $96, $96, $96, $96, $95, $95, $94, $93
 
-BowserFlameEnvData:
+ShatterFlameEnvData:
 	.db $15, $16, $16, $17, $17, $18, $19, $19
 	.db $1a, $1a, $1c, $1d, $1d, $1e, $1e, $1f
 	.db $1f, $1f, $1f, $1e, $1d, $1c, $1e, $1f
 	.db $1f, $1e, $1d, $1c, $1a, $18, $16, $14
-
-BrickShatterEnvData:
-	.db $15, $16, $16, $17, $17, $18, $19, $19
-	.db $1a, $1a, $1c, $1d, $1d, $1e, $1e, $1f
