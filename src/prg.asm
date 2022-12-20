@@ -4781,16 +4781,13 @@ ProcSwim:
 	JSR GetPlayerAnimSpeed                       ; do a sub to get animation frame timing
 	LDA Player_Y_Position
 	CMP #$14                                     ; check vertical position against preset value
-	BCS LRWater                                  ; if not yet reached a certain position, branch ahead
+	BCS LRAir                                    ; if not yet reached a certain position, branch ahead
 	LDA #$18
 	STA VerticalForce                            ; otherwise set fractional
-LRWater:
-	LDA Left_Right_Buttons                       ; check left/right controller bits (check for swimming)
-	BEQ LRAir                                    ; if not pressing any, skip
-	STA PlayerFacingDir                          ; otherwise set facing direction accordingly
 LRAir:
 	LDA Left_Right_Buttons                       ; check left/right controller bits (check for jumping/falling)
 	BEQ JSMove                                   ; if not pressing any, skip
+	STA PlayerFacingDir                          ; otherwise set facing direction accordingly
 	JSR ImposeFriction                           ; otherwise process horizontal movement
 JSMove:
 	JSR JmpMove
@@ -4871,9 +4868,6 @@ FallMForceData:
 PlayerYSpdData:
 	.db $fc, $fc, $fc, $fb, $fb, $fe, $ff
 
-;InitMForceData:
-;	.db $00, $00, $00, $00, $00, $80, $00
-
 MaxLeftXSpdData:
 	.db $d8, $e8, $f0
 
@@ -4914,28 +4908,7 @@ SetCAnim:
 	STA PlayerAnimTimerSet                       ; store animation timer setting and leave
 	RTS
 
-CheckForJumping:
-	LDA JumpspringAnimCtrl                       ; if jumpspring animating,
-	BNE NoJump                                   ; skip ahead to something else
-	LDA A_B_Buttons                              ; check for A button press
-	AND #A_Button
-	BEQ NoJump                                   ; if not, branch to something else
-	AND PreviousA_B_Buttons                      ; if button not pressed in previous frame, branch
-	BEQ ProcJumping
-NoJump:
-	JMP X_Physics                                ; otherwise, jump to something else
-
-ProcJumping:
-	LDA Player_State                             ; check player state
-	BEQ InitJS                                   ; if on the ground, branch
-	LDA SwimmingFlag                             ; if swimming flag not set, jump to do something else
-	BEQ NoJump                                   ; to prevent midair jumping, otherwise continue
-	LDA JumpSwimTimer                            ; if jump/swim timer nonzero, branch
-	BNE InitJS
-	LDA Player_Y_Speed                           ; check player's vertical speed
-	BPL InitJS                                   ; if player's vertical speed motionless or down, branch
-	JMP X_Physics                                ; if timer at zero and player still rising, do not swim
-InitJS:
+HandleJumpSwim:
 	LDA #$20                                     ; set jump/swim timer
 	STA JumpSwimTimer
 	LDY #$00                                     ; initialize vertical force and dummy variable
@@ -4961,8 +4934,6 @@ InitJS:
 	BCC ChkWtr                                   ; note that for jumping, range is 0-4 for Y
 	INY
 ChkWtr:
-	;LDA #$01                                     ; set value here (apparently always set to 1)
-	;STA DiffToHaltJump
 	LDA SwimmingFlag                             ; if swimming flag disabled, branch
 	BEQ GetYPhy
 	LDY #$05                                     ; otherwise set Y to 5, range is 5-6
@@ -4980,6 +4951,31 @@ SetYForce:
 	STA VerticalForceDown
 	LDA PlayerYSpdData,y
 	STA Player_Y_Speed
+	RTS
+
+CheckForJumping:
+	LDA JumpspringAnimCtrl                       ; if jumpspring animating,
+	BNE NoJump                                   ; skip ahead to something else
+	LDA A_B_Buttons                              ; check for A button press
+	AND #A_Button
+	BEQ NoJump                                   ; if not, branch to something else
+	AND PreviousA_B_Buttons                      ; if button not pressed in previous frame, branch
+	BEQ ProcJumping
+NoJump:
+	JMP X_Physics                                ; otherwise, jump to something else
+
+ProcJumping:
+	LDA Player_State                             ; check player state
+	BEQ InitJS                                   ; if on the ground, branch
+	LDA SwimmingFlag                             ; if swimming flag not set, jump to do something else
+	BEQ NoJump                                   ; to prevent midair jumping, otherwise continue
+	LDA JumpSwimTimer                            ; if jump/swim timer nonzero, branch
+	BNE InitJS
+	LDA Player_Y_Speed                           ; check player's vertical speed
+	BPL InitJS                                   ; if player's vertical speed motionless or down, branch
+	JMP X_Physics                                ; if timer at zero and player still rising, do not swim
+InitJS:
+	JSR HandleJumpSwim
 	LDA SwimmingFlag                             ; if swimming flag disabled, branch
 	BEQ PJumpSnd
 	LDA #Sfx_EnemyStomp                          ; load swim/goomba stomp sound into
@@ -5000,20 +4996,13 @@ SJumpSnd:
 X_Physics:
 	LDY #$00
 	STY $00                                      ; init value here
-	LDA Player_State                             ; if mario is on the ground, branch
-	BEQ ProcPRun
-	LDA Player_XSpeedAbsolute                    ; check something that seems to be related
-	CMP #$19                                     ; to mario's speed
-	BCS GetXPhy                                  ; if =>$19 branch here
-	BCC ChkRFast                                 ; if not branch elsewhere
-ProcPRun:
-	INY                                          ; if mario on the ground, increment Y
 	LDA AreaType                                 ; check area type
-	BEQ ChkRFast                                 ; if water type, branch
-	DEY                                          ; decrement Y by default for non-water type area
-	LDA Left_Right_Buttons                       ; get left/right controller bits
-	CMP Player_MovingDir                         ; check against moving direction
-	BNE ChkRFast                                 ; if controller bits <> moving direction, skip this part
+	BNE ProcPRun                                 ; if not water type, branch
+	LDA Player_State                             ; if mario is not on the ground, branch
+	BNE ChkRFast
+	INY                                          ; if mario is on the ground, increment Y
+	BNE ChkRFast                                 ; then branch [unconditional branch]
+ProcPRun:
 	LDA A_B_Buttons                              ; check for b button pressed
 	AND #B_Button
 	BNE SetRTmr                                  ; if pressed, skip ahead to set timer
@@ -5029,7 +5018,7 @@ ChkRFast:
 	BCC GetXPhy                                  ; if less than a certain amount, branch ahead
 FastXSp:
 	INC $00                                      ; if running speed set or speed => $21 increment $00
-	JMP GetXPhy                                  ; and jump ahead
+	BNE GetXPhy                                  ; and jump ahead [unconditional branch]
 SetRTmr:
 	LDA #$0a                                     ; if b button pressed, set running timer
 	STA RunningTimer
@@ -5051,6 +5040,8 @@ GetXPhy2:
 	LDA PlayerFacingDir
 	CMP Player_MovingDir                         ; check facing direction against moving direction
 	BEQ ExitPhy                                  ; if the same, branch to leave
+	LDA Left_Right_Buttons                       ; get left/right controller bits
+	BEQ ExitPhy                                  ; if not pressed, branch to leave
 	ASL FrictionAdderLow                         ; otherwise shift d7 of friction adder low into carry
 	ROL FrictionAdderHigh                        ; then rotate carry onto d0 of friction adder high
 ExitPhy:
@@ -5075,12 +5066,14 @@ ChkSkid:
 	AND #%01111111                               ; mask out A button
 	BEQ SetAnimSpd                               ; if no other buttons pressed, branch ahead of all this
 	AND #$03                                     ; mask out all others except left and right
+	BEQ SetRunSpd                                ; if not pressing any directions, don't play the skidding animation
 	CMP Player_MovingDir                         ; check against moving direction
 	BNE ProcSkid                                 ; if left/right controller bits <> moving direction, branch
 	LDA #$00                                     ; otherwise set zero value here
 SetRunSpd:
 	STA RunningSpeed                             ; store zero or running speed here
 	JMP SetAnimSpd
+
 ProcSkid:
 	LDA Player_XSpeedAbsolute                    ; check player's walking/running speed
 	CMP #$0b                                     ; against one last amount
@@ -5090,6 +5083,7 @@ ProcSkid:
 	LDA #$00
 	STA Player_X_Speed                           ; nullify player's horizontal speed
 	STA Player_X_MoveForce                       ; and dummy variable for player
+
 SetAnimSpd:
 	LDA PlayerAnimTmrData,y                      ; get animation timer setting using Y as offset
 	STA PlayerAnimTimerSet
@@ -7158,12 +7152,7 @@ InitNormalEnemy:
 	DEY                                          ; if not set, decrement offset
 GetESpd:
 	LDA NormalXSpdData,y                         ; get appropriate horizontal speed
-	.db $2c                                      ; [skip 2 bytes]
-
-; --------------------------------
-
-InitHorizFlySwimEnemy:
-	LDA #$00                                     ; initialize horizontal speed
+SetESpd:
 	STA Enemy_X_Speed,x                          ; store as speed for enemy object
 	JMP TallBBox                                 ; branch to set bounding box control and other data
 
@@ -7188,7 +7177,13 @@ InitHammerBro:
 	LDA HBroWalkingTimerData,y
 	STA EnemyIntervalTimer,x                     ; set value as delay for hammer bro to walk left
 	LDA #$0b                                     ; set specific value for bounding box size control
-	BNE SetBBox                                  ; [unconditional branch]
+	JMP SetBBox
+	
+; --------------------------------
+
+InitHorizFlySwimEnemy:
+	LDA #$00                                     ; initialize horizontal speed
+	JMP SetESpd
 
 ; --------------------------------
 
@@ -10625,22 +10620,22 @@ EnemyStompedPts:
 	STA Enemy_State,x                            ; set d5 in enemy state
 	JSR InitVStf                                 ; nullify vertical speed, physics-related thing,
 	STA Enemy_X_Speed,x                          ; and horizontal speed
-	JMP SetBounce                                ; set player's vertical speed, to give bounce
+	JMP HandleJumpSwim                           ; handle bounce physics
 
 ChkForDemoteKoopa:
 	CMP #$09                                     ; branch elsewhere if enemy object < $09
 	BCC HandleStompedShellE
 	AND #%00000001                               ; demote koopa paratroopas to ordinary troopas
 	STA Enemy_ID,x
-	LDA #$00                                     ; return enemy to normal state
-	STA Enemy_State,x
+	LDY #$00                                     ; return enemy to normal state
+	STY Enemy_State,x
 	LDA #$03                                     ; award 400 points to the player
 	JSR SetupFloateyNumber
 	JSR InitVStf                                 ; nullify physics-related thing and vertical speed
 	JSR EnemyFacePlayer                          ; turn enemy around if necessary
 	LDA DemotedKoopaXSpdData,y
 	STA Enemy_X_Speed,x                          ; set appropriate moving speed based on direction
-	JMP SetBounce                                ; then move onto something else
+	JMP HandleJumpSwim                           ; handle bounce physics
 
 RevivalRateData:
 	.db $10, $0b
@@ -10657,10 +10652,12 @@ HandleStompedShellE:
 	LDY PrimaryHardMode                          ; check primary hard mode flag
 	LDA RevivalRateData,y                        ; load timer setting according to flag
 	STA EnemyIntervalTimer,x                     ; set as enemy timer to revive stomped enemy
-SetBounce:
-	LDA #$fc                                     ; set player's vertical speed for bounce
-	STA Player_Y_Speed                           ; and then leave!!!
-	RTS
+	JMP HandleJumpSwim                           ; handle bounce physics
+
+;SetBounce:
+;	LDA #$fc                                     ; set player's vertical speed for bounce
+;	STA Player_Y_Speed                           ; and then leave!!!
+;	RTS
 
 ChkEnemyFaceRight:
 	LDA Enemy_MovingDir,x                        ; check to see if enemy is moving to the right
@@ -13888,12 +13885,14 @@ ProcOnGroundActs:
 	LDA Player_MovingDir                         ; otherwise check to see if moving direction
 	AND PlayerFacingDir                          ; and facing direction are the same
 	BNE ActionWalkRun                            ; if moving direction = facing direction, branch, don't skid
-	LDA GameEngineSubroutine
-	CMP #$08                                     ; if not running the player control routine, skip skid sfx
-	BNE NoSkidSfx
+	LDA Left_Right_Buttons                       ; check if left or right are being pressed
+	BEQ ActionWalkRun                            ; if not pressed, branch, don't skid
+;	LDA GameEngineSubroutine
+;	CMP #$08                                     ; if not running the player control routine, skip skid sfx
+;	BNE NoSkidSfx
 	LDA #Sfx_Skidding                            ; otherwise play skid sound
 	STA NoiseSoundQueue
-NoSkidSfx:	
+NoSkidSfx:
 	INY                                          ; otherwise increment to skid offset ($03)
 
 NonAnimatedActs:
