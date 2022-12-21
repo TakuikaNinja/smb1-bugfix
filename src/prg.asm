@@ -75,6 +75,8 @@ VRAM_Buffer_Offset:
 	.db <VRAM_Buffer1_Offset, <VRAM_Buffer2_Offset
 
 NonMaskableInterrupt:
+	PHP
+	PHA
 	LDA Mirror_PPU_CTRL_REG1                     ; disable NMIs in mirror reg
 	AND #%01111111                               ; save all other bits
 	STA Mirror_PPU_CTRL_REG1
@@ -195,6 +197,8 @@ SkipMainOper:
 	PLA
 	ORA #%10000000                               ; reactivate NMIs
 	STA PPU_CTRL_REG1
+	PLA
+	PLP
 	RTI                                          ; we are done until the next frame!
 
 ; -------------------------------------------------------------------------------------
@@ -4935,16 +4939,17 @@ HandleJumpSwim:
 	INY
 ChkWtr:
 	LDA SwimmingFlag                             ; if swimming flag disabled, branch
-	BEQ GetYPhy
-	LDY #$05                                     ; otherwise set Y to 5, range is 5-6
-	LDX #$80                                     ; load 'InitMForce' value for swimming 
-	LDA Whirlpool_Flag                           ; if whirlpool flag not set, branch
 	BEQ SetYForce
-	INY                                          ; otherwise increment to 6
-GetYPhy:
-	LDX #$00                                     ; load default 'InitMForce' value
+	LDY #$05                                     ; otherwise set Y to 5, range is 5-6
+	LDA #$80                                     ; load 'InitMForce' value for swimming 
+	STA Player_Y_MoveForce
+	LDA Whirlpool_Flag                           ; if whirlpool flag not set, branch
+	BEQ GetYPhy
+	INY                                          ; otherwise increment to 6                                    
 SetYForce:
-	STX Player_Y_MoveForce
+	LDA #$00                                     ; load default 'InitMForce' value
+	STA Player_Y_MoveForce
+GetYPhy:
 	LDA JumpMForceData,y                         ; store appropriate jump/swim
 	STA VerticalForce                            ; data here
 	LDA FallMForceData,y
@@ -7152,7 +7157,12 @@ InitNormalEnemy:
 	DEY                                          ; if not set, decrement offset
 GetESpd:
 	LDA NormalXSpdData,y                         ; get appropriate horizontal speed
-SetESpd:
+	.db $2c                                      ; [skip 2 bytes]
+
+; --------------------------------
+
+InitHorizFlySwimEnemy:
+	LDA #$00                                     ; initialize horizontal speed
 	STA Enemy_X_Speed,x                          ; store as speed for enemy object
 	JMP TallBBox                                 ; branch to set bounding box control and other data
 
@@ -7177,15 +7187,7 @@ InitHammerBro:
 	LDA HBroWalkingTimerData,y
 	STA EnemyIntervalTimer,x                     ; set value as delay for hammer bro to walk left
 	LDA #$0b                                     ; set specific value for bounding box size control
-	JMP SetBBox
-	
-; --------------------------------
-
-InitHorizFlySwimEnemy:
-	LDA #$00                                     ; initialize horizontal speed
-	JMP SetESpd
-
-; --------------------------------
+	BNE SetBBox                                  ; [unconditional branch]
 
 InitBloober:
 	LDA #$00                                     ; initialize horizontal speed
@@ -10401,8 +10403,8 @@ DontGrow:
 	BNE UpToFiery                                ; jump to set values accordingly [unconditional branch]
 
 SetFor1Up:
-	LDA #$00
-	STA Square2SoundQueue                        ; clear the power-up sound from the queue (avoids awkward power-up sound interruption)
+	LDA #Sfx_ExtraLife
+	STA Square2SoundQueue                        ; queue up the 1-up sound instead (avoids awkward power-up sound interruption)
 	LDA #$0b                                     ; change 1000 points into 1-up instead
 	STA FloateyNum_Control,x                     ; and then leave
 NoPUp:
@@ -10653,11 +10655,6 @@ HandleStompedShellE:
 	LDA RevivalRateData,y                        ; load timer setting according to flag
 	STA EnemyIntervalTimer,x                     ; set as enemy timer to revive stomped enemy
 	JMP HandleJumpSwim                           ; handle bounce physics
-
-;SetBounce:
-;	LDA #$fc                                     ; set player's vertical speed for bounce
-;	STA Player_Y_Speed                           ; and then leave!!!
-;	RTS
 
 ChkEnemyFaceRight:
 	LDA Enemy_MovingDir,x                        ; check to see if enemy is moving to the right
@@ -12229,8 +12226,7 @@ BlockBufferChk_FBall:
 	ADC #$07                                     ; add seven bytes to use
 	TAX
 	LDA #$00                                     ; set A to return vertical coordinate
-	.db $2c                                      ; [skip 2 bytes]
-	NOP                                          ; skipped
+	.db $24                                      ; [skip 1 byte]
 
 BlockBufferChk_Enemy:
 	INX                                          ; add 1 to X to run sub with enemy offset in mind (skipped for FBall)
