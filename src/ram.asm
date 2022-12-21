@@ -363,7 +363,7 @@ FrictionAdderLow      = $0702
 RunningSpeed          = $0703
 SwimmingFlag          = $0704
 Player_X_MoveForce    = $0705
-DiffToHaltJump        = $0706
+;DiffToHaltJump        = $0706                   ; free
 JumpOrigin_Y_HighPos  = $0707
 JumpOrigin_Y_Position = $0708
 VerticalForce         = $0709
@@ -526,3 +526,5 @@ AreaMusicBuffer_Alt   = $07c5
 PauseModeFlag         = $07c6
 GroundMusicHeaderOfs  = $07c7
 AltRegContentFlag     = $07ca
+
+VictoryMusicHeaderOfs  = $07cc

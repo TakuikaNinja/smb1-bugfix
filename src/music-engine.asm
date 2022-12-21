@@ -329,8 +329,6 @@ PowerUpGrabFreqData:
 	.db $4c, $52, $4c, $48, $3e, $36, $3e, $36, $30
 	.db $28, $4a, $50, $4a, $64, $3c, $32, $3c, $32
 	.db $2c, $24, $3a, $64, $3a, $34, $2c, $22, $2c
-
-; residual frequency data
 	.db $22, $1c, $14
 
 PUp_VGrow_FreqData:
@@ -380,7 +378,7 @@ SBlasJ:
 	BNE BlstSJp                                  ; unconditional branch to load rest of reg contents
 
 PlayPowerUpGrab:
-	LDA #$36                                     ; load length of power-up grab sound
+	LDA #$3c                                     ; load length of power-up grab sound
 	STA Squ2_SfxLenCounter
 
 ContinuePowerUpGrab:
@@ -414,12 +412,11 @@ ExSfx2:
 
 Square2SfxHandler:
 	LDA Square2SoundBuffer                       ; special handling for the 1-up sound to keep it
-	AND #Sfx_ExtraLife                           ; from being interrupted by other sounds on square 2
-	BNE ContinueExtraLife
+	BMI ContinueExtraLife                        ; from being interrupted by other sounds on square 2
 	LDY Square2SoundQueue                        ; check for sfx in queue
 	BEQ CheckSfx2Buffer
 	STY Square2SoundBuffer                       ; if found, put in buffer and check for the following
-	BMI PlayBowserFall                           ; bowser fall
+	BMI PlayExtraLife                            ; 1-up
 	LSR Square2SoundQueue
 	BCS PlayCoinGrab                             ; coin grab
 	LSR Square2SoundQueue
@@ -433,12 +430,12 @@ Square2SfxHandler:
 	LSR Square2SoundQueue
 	BCS PlayPowerUpGrab                          ; power-up grab
 	LSR Square2SoundQueue
-	BCS PlayExtraLife                            ; 1-up
+	BCS PlayBowserFall                           ; bowser fall
 
 CheckSfx2Buffer:
 	LDA Square2SoundBuffer                       ; check for sfx in buffer
 	BEQ ExS2H                                    ; if not found, exit sub
-	BMI ContinueBowserFall                       ; bowser fall
+	BMI ContinueExtraLife                        ; 1-up
 	LSR
 	BCS Cont_CGrab_TTick                         ; coin grab
 	LSR
@@ -452,7 +449,7 @@ CheckSfx2Buffer:
 	LSR
 	BCS ContinuePowerUpGrab                      ; power-up grab
 	LSR
-	BCS ContinueExtraLife                        ; 1-up
+	BCS ContinueBowserFall                       ; bowser fall
 ExS2H:
 	RTS
 
@@ -536,7 +533,26 @@ BrickShatterFreqData:
 	.db $01, $0e, $0e, $0d, $0b, $06, $0c, $0f
 	.db $0a, $09, $03, $0d, $08, $0d, $06, $0c
 
+SkidSfxFreqData:
+	.db $47, $49, $42, $4a, $43, $4b
+
+PlaySkidSfx:
+	STY NoiseSoundBuffer
+	LDA #$06
+	STA Noise_SfxLenCounter
+
+ContinueSkidSfx:
+	LDA Noise_SfxLenCounter
+	TAY
+	LDA SkidSfxFreqData-1,y
+	STA SND_TRIANGLE_REG+2
+	LDA #$18
+	STA SND_TRIANGLE_REG
+	STA SND_TRIANGLE_REG+3
+	BNE DecrementSfx3Length
+
 PlayBrickShatter:
+	STY NoiseSoundBuffer
 	LDA #$20                                     ; load length of brick shatter sound
 	STA Noise_SfxLenCounter
 
@@ -546,7 +562,7 @@ ContinueBrickShatter:
 	BCC DecrementSfx3Length
 	TAY
 	LDX BrickShatterFreqData,y                   ; load reg contents of brick shatter sound
-	LDA BrickShatterEnvData,y
+	LDA ShatterFlameEnvData,y
 
 PlayNoiseSfx:
 	STA SND_NOISE_REG                            ; play the sfx
@@ -560,14 +576,16 @@ DecrementSfx3Length:
 	LDA #$f0                                     ; if done, stop playing the sfx
 	STA SND_NOISE_REG
 	LDA #$00
+	STA SND_TRIANGLE_REG
 	STA NoiseSoundBuffer
 ExSfx3:
 	RTS
 
 NoiseSfxHandler:
-	LDY NoiseSoundQueue                          ; check for sfx in queue
-	BEQ CheckNoiseBuffer
-	STY NoiseSoundBuffer                         ; if found, put in buffer
+	LDA NoiseSoundBuffer
+	BMI ContinueSkidSfx
+	LDY NoiseSoundQueue
+	BMI PlaySkidSfx
 	LSR NoiseSoundQueue
 	BCS PlayBrickShatter                         ; brick shatter
 	LSR NoiseSoundQueue
@@ -584,6 +602,7 @@ ExNH:
 	RTS
 
 PlayBowserFlame:
+	STY NoiseSoundBuffer
 	LDA #$40                                     ; load length of bowser flame sound
 	STA Noise_SfxLenCounter
 
@@ -592,7 +611,7 @@ ContinueBowserFlame:
 	LSR
 	TAY
 	LDX #$0f                                     ; load reg contents of bowser flame sound
-	LDA BowserFlameEnvData-1,y
+	LDA ShatterFlameEnvData-1,y
 	BNE PlayNoiseSfx                             ; unconditional branch here
 
 ; --------------------------------
@@ -611,11 +630,17 @@ MusicHandler:
 	RTS                                          ; no music, then leave
 
 LoadEventMusic:
+	LDY #$31
+	STY VictoryMusicHeaderOfs		     ; start counter used only by victory music
 	STA EventMusicBuffer                         ; copy event music queue contents to buffer
 	CMP #DeathMusic                              ; is it death music?
 	BNE NoStopSfx                                ; if not, jump elsewhere
 	JSR StopSquare1Sfx                           ; stop sfx in square 1 and 2
 	JSR StopSquare2Sfx                           ; but clear only square 1's sfx buffer
+	LDY #$00
+	STY NoteLengthTblAdder                       ; default value for additional length byte offset
+	STY AreaMusicBuffer                          ; clear area music buffer
+	BEQ FindEventMusicHeader		
 NoStopSfx:
 	LDX AreaMusicBuffer
 	STX AreaMusicBuffer_Alt                      ; save current area music buffer to be re-obtained later
@@ -623,13 +648,24 @@ NoStopSfx:
 	STY NoteLengthTblAdder                       ; default value for additional length byte offset
 	STY AreaMusicBuffer                          ; clear area music buffer
 	CMP #TimeRunningOutMusic                     ; is it time running out music?
-	BNE FindEventMusicHeader
+	BNE CheckVictoryMusic
 	LDX #$08                                     ; load offset to be added to length byte of header
 	STX NoteLengthTblAdder
 	BNE FindEventMusicHeader                     ; unconditional branch
 
+CheckVictoryMusic:
+	CMP #VictoryMusic                            ; is it time victory music?
+	BNE FindEventMusicHeader
+
+HandleVictMusicLoopB:
+	INC VictoryMusicHeaderOfs                    ; increment but only if playing victory music
+	LDY VictoryMusicHeaderOfs                    ; is it time to loopback victory music?
+	CPY #$37
+	BNE LoadHeader                               ; branch ahead with alternate offset
+	JMP EndPlayback
+
 LoadAreaMusic:
-	CMP #$04                                     ; is it underground music?
+	CMP #UndergroundMusic                        ; is it underground music?
 	BNE NoStop1                                  ; no, do not stop square 1 sfx
 	JSR StopSquare1Sfx
 NoStop1:
@@ -710,6 +746,8 @@ NotTRO:
 	LDA AreaMusicBuffer                          ; check primary buffer for any music except pipe intro
 	AND #%01011111
 	BNE MusicLoopBack                            ; if any area music except pipe intro, music loops
+	
+EndPlayback:
 	LDA #$00                                     ; clear primary and secondary buffers and initialize
 	STA AreaMusicBuffer                          ; control regs of square and triangle channels
 	STA EventMusicBuffer
@@ -723,7 +761,7 @@ MusicLoopBack:
 	JMP HandleAreaMusicLoopB
 
 VictoryMLoopBack:
-	JMP LoadEventMusic
+	JMP HandleVictMusicLoopB
 
 Squ2LengthHandler:
 	JSR ProcessLengthData                        ; store length of note
@@ -925,7 +963,7 @@ AlternateLengthHandler:
 ProcessLengthData:
 	AND #%00000111                               ; clear all but the three LSBs
 	CLC
-	ADC $f0                                      ; add offset loaded from first header byte
+	ADC NoteLenLookupTblOfs                      ; add offset loaded from first header byte
 	ADC NoteLengthTblAdder                       ; add extra if time running out music
 	TAY
 	LDA MusicLengthLookupTbl,y                   ; load length

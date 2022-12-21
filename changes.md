@@ -1,8 +1,18 @@
 This file is based on the changes originally done by Ribiveer.
+Changes marked with '+' are new additions/contributions that were not part of Ribiveer's original set of changes.
 
 ## Music Changes
 - [ ] There is now music on the title screen: an alternate version of the underwater theme.
-- [ ] The final victory song has been extended, with a B-section and an end.
+- [~] The final victory song has been extended, with a B-section and an end. (ported over from Vs.SMB; may need to adjust further)
+
++ [x] Level music now use a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes were left unchanged.
+
+## Sound Changes
++ [x] Skidding now has a sound effect, in line with SMB2J and later entries.
++ [x] Springboards now make the block bump sound effect when bounced on, in line with SMM/SMM2.
++ [x] The unused notes at the beginning of the power-up sound have been restored, as originally intended.
++ [x] The 1-up sound now has top priority in its queue, fixing a bug where one sound can be initialized and play for a single frame, but continued as a corrupted 1-up sound.
++ [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays (unrelated to the aforementioned bug).
 
 ## Bug Fixes & Small Tweaks
 - [x] Scroll lock object in underground warpzone now works as intended. (no more minus world)
@@ -18,7 +28,7 @@ This file is based on the changes originally done by Ribiveer.
 - [ ] Lives are now capped at 99(?) to prevent overflows.
 - [ ] The lives screen now properly reflects Mario's power-up state.
 - [x] Player status is now correctly set to falling while collecting a power-up. (no more item jump)
-- [X] Getting the flagpole stops the star invincibility, to prevent audio glitches.
+- [x] Getting the flagpole stops the star invincibility, to prevent audio glitches.
 - [ ] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
 - [ ] Holding the jump button no longer makes Mario jump while entering an area.
 - [x] PlayerStatus & PlayerSize is now always kept in sync (no more Small Fire Mario)
@@ -33,6 +43,11 @@ This file is based on the changes originally done by Ribiveer.
 - [ ] The locations of some warp destination change and enemy despawn triggers have been tweaked.
 - [ ] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
 - [ ] Scroll padding/centering is more robust (todo?)
+
++ [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior NTSC version (jump-height and gravity)
++ [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum
++ [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB
++ [~] Optimized, tweaked, and trimmed code wherever possible (ongoing effort)
 
 ## Modernised Quality of Life Mechanics
 - [ ] Holding A now allows you to bounce on enemies higher, like in later entries.
