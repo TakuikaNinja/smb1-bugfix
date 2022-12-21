@@ -1696,7 +1696,7 @@ WaterPaletteData:
 	.db $0f, $30, $12, $0f
 	.db $0f, $27, $12, $0f
 	.db $22, $16, $27, $18
-	.db $0f, $10, $30, $27
+	.db $0f, $1a, $30, $27 ; change $10 -> $1a to make cheep-cheep green instead of grey
 	.db $0f, $16, $30, $27
 	.db $0f, $0f, $30, $10
 	.db $00
@@ -9144,6 +9144,17 @@ BridgeCollapseData:
 	.db $8a, $88, $86, $84, $82, $80
 
 BridgeCollapse:
+	LDA TimerControl                             ; if master timer control is still running... (i.e. player was hit on the same frame as touching the axe)
+	CMP #$f0                                     ; check for a specific moment in time
+	BNE Skip                                     ; and branch ahead if not
+	LDA InjuryTimer                              ; is InjuryTimer set? (i.e. not dead, blinking)
+	BNE Injury                                   ; yes, so beanch ahead
+	JMP ExitDeath                                ; otherwise exit this routine (prevents lives from decrementing somehow?)
+Injury:
+	LDA PlayerStatus                             ; is the player super/fiery now?
+	BNE Skip                                     ; yes, so branch ahead
+	JSR InitChangeSize                           ; otherwise force the size change (prevents PlayerStatus/PlayerSize desync)
+Skip:
 	LDX BowserFront_Offset                       ; get enemy offset for bowser
 	LDA Enemy_ID,x                               ; check enemy object identifier for bowser
 	CMP #Bowser                                  ; if not found, branch ahead,
@@ -10543,7 +10554,7 @@ InjurePlayer:
 ForceInjury:
 	LDX PlayerStatus                             ; check player's status
 	BEQ KillPlayer                               ; branch if small
-	LDA PlayerStatus                             ; otherwise...
+	TXA                                          ; otherwise...
 	PHA                                          ; backup status (cannot use X or Y)
 	LSR A                                        ; shift right to get status below (fire->super, super->small)
 	STA PlayerStatus                             ; and set as the player's status
