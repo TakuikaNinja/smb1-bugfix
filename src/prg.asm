@@ -10638,9 +10638,14 @@ EnemyStompedPts:
 ChkForDemoteKoopa:
 	CMP #$09                                     ; branch elsewhere if enemy object < $09
 	BCC HandleStompedShellE
+	CMP #RedParatroopa                           ; is this a Red Paratropa?
+	BNE Green                                    ; no, so branch ahead
+	AND #%00000011                               ; yes, so demote to red koopa
+	.db $2c                                      ; [skip 2 bytes]
+Green:
 	AND #%00000001                               ; demote koopa paratroopas to ordinary troopas
 	STA Enemy_ID,x
-	LDY #$00                                     ; return enemy to normal state
+	LDY #$01                                     ; return enemy to normal state (1 is falling, so why was it 0?)
 	STY Enemy_State,x
 	LDA #$03                                     ; award 400 points to the player
 	JSR SetupFloateyNumber

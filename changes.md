@@ -61,6 +61,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Hammers now travel along their arc, regardless of whether they touch Mario.
 - [x] Enemies like Goombas, Koopas, Buzzy Beetles and Spinies will no longer turn around when colliding with Mario.
 - [ ] It is now possible to defeat Spinies by hitting blocks underneath them.
++ [x] Paratroopas will now be set to the falling state instead of the grounded state when stomped. 
++ [x] Red Paratroopas will now be properly demoted to Red Koopas when stomped.
 
 ## PAL Version Changes
 - [x] Cheep Cheep code has been optimised.
