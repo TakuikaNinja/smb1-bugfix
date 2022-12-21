@@ -9149,7 +9149,7 @@ BridgeCollapse:
 	BNE Skip                                     ; and branch ahead if not
 	LDA InjuryTimer                              ; is InjuryTimer set? (i.e. not dead, blinking)
 	BNE Injury                                   ; yes, so beanch ahead
-	JMP ExitDeath                                ; otherwise exit this routine (prevents lives from decrementing somehow?)
+	RTS                                          ; otherwise exit this routine (prevents lives from decrementing somehow?)
 Injury:
 	LDA PlayerStatus                             ; is the player super/fiery now?
 	BNE Skip                                     ; yes, so branch ahead
