@@ -20,7 +20,7 @@ special thanks
 - 1wErt3r - for the orginal dissassembly: https://gist.github.com/1wErt3r/4048722
 - Xkeeper0 - for the asm6f port which this is based off of: https://github.com/Xkeeper0/smb1
 - Retro Game Mechanics Explained, Displaced Gamers, Bismuth, Kosmic & other YouTubers I may have missed - for making excellent videos about SMB1 oddities
-- Every speedrunner, glitch-hunter, researcher & wiki contributor - for extensivly breaking, researching & documenting the games they love
+- Every speedrunner, glitch-hunter, researcher & wiki contributor - for extensively breaking, researching & documenting the games they love
 - Ribiveer - for originally doing some of the QoL improvements which got me interested in this project
 
 (original readme) smb1 disassembly but it works with asm6f
