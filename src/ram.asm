@@ -235,6 +235,8 @@ BrickCoinTimerFlag    = $06bc
 StarFlagTaskControl   = $0746
 
 PseudoRandomBitReg    = $07a7
+
+NMISyncFlag           = $07fe
 WarmBootValidation    = $07ff
 
 SprShuffleAmtOffset   = $06e0

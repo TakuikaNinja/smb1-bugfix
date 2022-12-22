@@ -43,11 +43,18 @@ ColdBoot:
 	JSR MoveAllSpritesOffscreen
 	JSR InitializeNameTables                     ; initialize both name tables
 	INC DisableScreenFlag                        ; set flag to disable screen output
-	LDA Mirror_PPU_CTRL_REG1
-	ORA #%10000000                               ; enable NMIs
-	JSR WritePPUReg1
-EndlessLoop:
-	JMP EndlessLoop                              ; endless loop, need I say more?
+	JSR EnableNMI
+GameLoop:
+	LDA GamePauseStatus                          ; if in pause mode, do not perform operation mode stuff
+	LSR
+	BCS SkipMainOper
+	JSR OperModeExecutionTree                    ; otherwise do one of many, many possible subroutines
+SkipMainOper:
+	INC NMISyncFlag
+NMIWait:
+	LDA NMISyncFlag
+	BNE NMIWait
+	JMP GameLoop                                 ; endless loop, need I say more?
 
 ; -------------------------------------------------------------------------------------
 ; $00 - vram buffer address table low, also used for pseudorandom bit
@@ -75,8 +82,12 @@ VRAM_Buffer_Offset:
 	.db <VRAM_Buffer1_Offset, <VRAM_Buffer2_Offset
 
 NonMaskableInterrupt:
-	PHP
-	PHA
+	PHP                                          ; backup SR
+	PHA                                          ; backup A
+	TXA
+	PHA                                          ; backup X
+	TYA
+	PHA                                          ; backup Y
 	LDA Mirror_PPU_CTRL_REG1                     ; disable NMIs in mirror reg
 	AND #%01111111                               ; save all other bits
 	STA Mirror_PPU_CTRL_REG1
@@ -188,17 +199,19 @@ SkipSprite0:
 	LDA Mirror_PPU_CTRL_REG1                     ; load saved mirror of $2000
 	PHA
 	STA PPU_CTRL_REG1
-	LDA GamePauseStatus                          ; if in pause mode, do not perform operation mode stuff
-	LSR
-	BCS SkipMainOper
-	JSR OperModeExecutionTree                    ; otherwise do one of many, many possible subroutines
-SkipMainOper:
 	LDA PPU_STATUS                               ; reset flip-flop
 	PLA
 	ORA #%10000000                               ; reactivate NMIs
 	STA PPU_CTRL_REG1
-	PLA
-	PLP
+	STA Mirror_PPU_CTRL_REG1
+	LDA #$00
+	STA NMISyncFlag                              ; clear NMI sync flag
+	PLA                                         
+	TAY                                          ; restore Y
+	PLA                                         
+	TAX                                          ; restore X
+	PLA                                          ; restore A
+	PLP                                          ; restore SR
 	RTI                                          ; we are done until the next frame!
 
 ; -------------------------------------------------------------------------------------
@@ -222,9 +235,6 @@ ChkStart:
 	ORA SavedJoypad2Bits                         ; on either controller
 	AND #Start_Button
 	BEQ ClrPauseTimer
-	;LDA GamePauseStatus                         ; check to see if timer flag is set
-	;AND #%10000000                              ; and if so, do not reset timer (residual,
-	;BNE ExitPause                               ; joypad reading routine makes this unnecessary)
 	LDA #$2b                                     ; set pause timer
 	STA GamePauseTimer
 	LDA GamePauseStatus
@@ -1972,6 +1982,10 @@ InitScroll:
 
 ; -------------------------------------------------------------------------------------
 
+EnableNMI:
+	LDA Mirror_PPU_CTRL_REG1
+	ORA #%10000000                               ; enable NMIs
+
 WritePPUReg1:
 	STA PPU_CTRL_REG1                            ; write contents of A to PPU register 1
 	STA Mirror_PPU_CTRL_REG1                     ; and its mirror
@@ -3539,10 +3553,10 @@ Bridge_Low:
 ; --------------------------------
 
 FlagBalls_Residual:
-	JSR GetLrgObjAttrib                          ; get low nybble from object byte
-	LDX #$02                                     ; render flag balls on third row from top
-	LDA #$6d                                     ; of screen downwards based on low nybble
-	JMP RenderUnderPart
+;	JSR GetLrgObjAttrib                          ; get low nybble from object byte
+;	LDX #$02                                     ; render flag balls on third row from top
+;	LDA #$6d                                     ; of screen downwards based on low nybble
+;	JMP RenderUnderPart
 
 ; --------------------------------
 
