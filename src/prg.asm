@@ -82,7 +82,6 @@ VRAM_Buffer_Offset:
 	.db <VRAM_Buffer1_Offset, <VRAM_Buffer2_Offset
 
 NonMaskableInterrupt:
-	PHP                                          ; backup SR
 	PHA                                          ; backup A
 	TXA
 	PHA                                          ; backup X
@@ -93,6 +92,13 @@ NonMaskableInterrupt:
 	STA Mirror_PPU_CTRL_REG1
 	AND #%01111110                               ; alter name table address to be $2800
 	STA PPU_CTRL_REG1                            ; (essentially $2000) but save other bits
+	LDA NMISyncFlag
+	BNE UpdatePPU
+	JMP LagFrame
+
+UpdatePPU:
+	LDA #$00
+	STA NMISyncFlag                              ; clear NMI sync flag
 	LDA Mirror_PPU_CTRL_REG2                     ; disable OAM and background display by default
 	AND #%11100110
 	LDY DisableScreenFlag                        ; get screen disable flag
@@ -185,6 +191,7 @@ Sprite0Clr:
 	JSR SpriteShuffler
 Sprite0Hit:
 	LDA PPU_STATUS                               ; do sprite #0 hit detection
+	BMI Sprite0Hit
 	AND #%01000000
 	BEQ Sprite0Hit
 	LDY #$14                                     ; small delay, to wait until we hit horizontal blank time
@@ -192,28 +199,37 @@ HBlankDelay:
 	DEY
 	BNE HBlankDelay
 SkipSprite0:
+	LDA PPU_STATUS                               ; reset flip-flop
+	JMP HUDSkip
+
+LagFrame:
+	JSR InitScroll
+	LDA Sprite0HitDetectFlag                     ; check for flag here
+	BEQ HUDSkip
+	LDX #$5
+HUDDelayHi:
+	LDY #$e7
+HUDDelayLo:
+	DEY
+	BNE HUDDelayLo
+	DEY
+	DEX
+	BNE HUDDelayHi
+HUDSkip:
 	LDA HorizontalScroll                         ; set scroll registers from variables
 	STA PPU_SCROLL_REG
 	LDA VerticalScroll
 	STA PPU_SCROLL_REG
 	LDA Mirror_PPU_CTRL_REG1                     ; load saved mirror of $2000
-	PHA
-	STA PPU_CTRL_REG1
-	LDA PPU_STATUS                               ; reset flip-flop
-	PLA
 	ORA #%10000000                               ; reactivate NMIs
 	STA PPU_CTRL_REG1
 	STA Mirror_PPU_CTRL_REG1
-	LDA #$00
-	STA NMISyncFlag                              ; clear NMI sync flag
 	PLA                                         
 	TAY                                          ; restore Y
 	PLA                                         
 	TAX                                          ; restore X
 	PLA                                          ; restore A
-	PLP                                          ; restore SR
 	RTI                                          ; we are done until the next frame!
-
 ; -------------------------------------------------------------------------------------
 
 PauseRoutine:
@@ -2259,8 +2275,6 @@ ISpr0Loop:
 	STA Sprite_Data,y
 	DEY
 	BPL ISpr0Loop
-	;JSR DoNothing2                               ; these jsrs doesn't do anything useful
-	;JSR DoNothing1
 	INC Sprite0HitDetectFlag                     ; set sprite #0 check flag
 	INC OperMode_Task                            ; increment to next task
 	RTS
@@ -2543,14 +2557,6 @@ TransLoop:
 	CLC                                          ; clear carry flag to get game going
 ExTrans:
 	RTS
-
-; -------------------------------------------------------------------------------------
-
-;DoNothing1:
-	;LDA #$ff                                     ; this is residual code, this value is
-	;STA $06c9                                    ; not used anywhere in the program
-;DoNothing2:
-	;RTS
 
 ; -------------------------------------------------------------------------------------
 
