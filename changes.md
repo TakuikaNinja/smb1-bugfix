@@ -4,7 +4,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 ## Music Changes
 - [ ] There is now music on the title screen: an alternate version of the underwater theme.
 - [x] The final victory song has been extended, with a B-section and an ending. (ported over from Vs.SMB; may need to adjust further)
-+ [x] Level music now uses a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes were left unchanged.
++ [x] Level music now uses a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes are left unchanged.
 
 ## Sound Changes
 + [x] Skidding now has a sound effect, in line with SMB2J and later entries.
@@ -46,6 +46,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
++ [x] Moved the main game loop out of NMI and added proper interrupt and lag frame handling to the NMI routine
 + [x] Optimized, tweaked, and trimmed code wherever possible. (ongoing effort)
 
 ## Modernised Quality of Life Mechanics
