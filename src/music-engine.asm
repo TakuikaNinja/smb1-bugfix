@@ -202,23 +202,25 @@ DecJpFPS:
 
 
 Square1SfxHandler:
-	LDY Square1SoundQueue                        ; check for sfx in queue
+	LDY #$00
+	LDA Square1SoundQueue                        ; check for sfx in queue
 	BEQ CheckSfx1Buffer
-	STY Square1SoundBuffer                       ; if found, put in buffer
+	STY Square1SoundQueue
+	STA Square1SoundBuffer                       ; if found, put in buffer
 	BMI PlaySmallJump                            ; small jump
-	LSR Square1SoundQueue
+	LSR
 	BCS PlayBigJump                              ; big jump
-	LSR Square1SoundQueue
+	LSR
 	BCS PlayBump                                 ; bump
-	LSR Square1SoundQueue
+	LSR
 	BCS PlaySwimStomp                            ; swim/stomp
-	LSR Square1SoundQueue
+	LSR
 	BCS PlaySmackEnemy                           ; smack enemy
-	LSR Square1SoundQueue
+	LSR
 	BCS PlayPipeDownInj                          ; pipedown/injury
-	LSR Square1SoundQueue
+	LSR
 	BCS PlayFireballThrow                        ; fireball throw
-	LSR Square1SoundQueue
+	LSR
 	BCS PlayFlagpoleSlide                        ; slide flagpole
 
 CheckSfx1Buffer:
@@ -413,23 +415,26 @@ ExSfx2:
 Square2SfxHandler:
 	LDA Square2SoundBuffer                       ; special handling for the 1-up sound to keep it
 	BMI ContinueExtraLife                        ; from being interrupted by other sounds on square 2
-	LDY Square2SoundQueue                        ; check for sfx in queue
+	
+	LDY #$00
+	LDA Square2SoundQueue                        ; check for sfx in queue
 	BEQ CheckSfx2Buffer
-	STY Square2SoundBuffer                       ; if found, put in buffer and check for the following
+	STY Square2SoundQueue                        ; check for sfx in queue
+	STA Square2SoundBuffer                       ; if found, put in buffer and check for the following
 	BMI PlayExtraLife                            ; 1-up
-	LSR Square2SoundQueue
+	LSR
 	BCS PlayCoinGrab                             ; coin grab
-	LSR Square2SoundQueue
+	LSR
 	BCS PlayGrowPowerUp                          ; power-up reveal
-	LSR Square2SoundQueue
+	LSR
 	BCS PlayGrowVine                             ; vine grow
-	LSR Square2SoundQueue
+	LSR
 	BCS PlayBlast                                ; fireworks/gunfire
-	LSR Square2SoundQueue
+	LSR
 	BCS PlayTimerTick                            ; timer tick
-	LSR Square2SoundQueue
+	LSR
 	BCS PlayPowerUpGrab                          ; power-up grab
-	LSR Square2SoundQueue
+	LSR
 	BCS PlayBowserFall                           ; bowser fall
 
 CheckSfx2Buffer:
