@@ -10,8 +10,7 @@ See [changes.md](changes.md) for details.
 what hasn't changed?
 ========================================
 - The game
-- Every bug/oddity which either isn't documented well, or I lack the understanding/capacity to fix
-- Visual glitches and lag caused by the "everything in NMI" approach used in this game (glitched scanlines, HUD flickering, etc). This will never change unless a coordinated effort is made to restructure the game logic. 
+- Every bug/oddity which either isn't documented well, or I lack the understanding/capacity to fix 
 - The ROM file size & mapper type. This will also never change as I want to show that these improvements would have been possible in the 80's. 
 
 special thanks
