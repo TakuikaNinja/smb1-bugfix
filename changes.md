@@ -3,7 +3,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 
 ## Music Changes
 - [ ] There is now music on the title screen: an alternate version of the underwater theme.
-- [x] The final victory song has been extended, with a B-section and an end. (ported over from Vs.SMB; may need to adjust further)
+- [x] The final victory song has been extended, with a B-section and an ending. (ported over from Vs.SMB; may need to adjust further)
 + [x] Level music now uses a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes are left unchanged.
 
 ## Sound Changes
@@ -11,11 +11,11 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Springboards now make the block bump sound effect when bounced on, in line with SMM/SMM2.
 + [x] The unused notes at the beginning of the power-up sound have been restored, as originally intended.
 + [x] The 1-up sound now has top priority in its queue, fixing a bug where one sound can be initialized and play for a single frame, but continued as a corrupted 1-up sound.
-+ [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays (unrelated to the aforementioned bug).
++ [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays. (unrelated to the aforementioned bug).
 
 ## Bug Fixes & Small Tweaks
 + [x] Scroll lock object in underground warpzone now works as intended. (no more minus world)
-+ [x] An erroneous increment of the warp zone value has been removed (1-2 warp zone pipe destination stays at 1-2 exit until warp zone loads)
++ [x] An erroneous increment of the warpzone value has been removed. (1-2 warpzone pipe destination stays at 1-2 exit until warp zone loads)
 - [x] Lakitus now throw their spinies as originally intended.
 + [x] Warm start detection & continue functions now check ContinueWorld for a valid value. (no more glitch worlds)
 - [x] Falling while crouching now keeps your sprite crouched.
@@ -30,29 +30,29 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Getting the flagpole stops the star invincibility, to prevent audio glitches.
 - [ ] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
 - [ ] Holding the jump button no longer makes Mario jump while entering an area.
-+ [x] PlayerStatus & PlayerSize is now always kept in sync (no more Small Fire Mario)
-+ [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync (no more skating/sliding glitch)
++ [x] PlayerStatus & PlayerSize is now kept in sync when getting hit on the same frame as touching the axe. (no more Small Fire Mario, sorry)
++ [x] Dying on the same frame as touching the axe no longer decrements the lives counter. (you can still do this without penalty, though)
++ [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
 - [ ] Kicked shells now keep their momentum while going off a ledge.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 - [ ] Fire Mario and Fire Luigi now have separate palettes.
-- [ ] Green Cheep Cheeps now appear green underwater.
+- [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)
 - [x] When entering a warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
-- [x] Both players can now always pause the game.
+- [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
 + [ ] The locations of some warp destination change and enemy despawn triggers have been tweaked.
 + [ ] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
-+ [ ] Scroll padding/centering is more robust (todo?)
-
-+ [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior NTSC version (jump-height and gravity)
-+ [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum
-+ [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB
-+ [x] Optimized, tweaked, and trimmed code wherever possible (ongoing effort)
++ [ ] Scroll padding/centering is more robust. (todo?)
++ [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
++ [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
++ [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
++ [x] Optimized, tweaked, and trimmed code wherever possible. (ongoing effort)
 
 ## Modernised Quality of Life Mechanics
 - [x] Holding A now allows you to bounce on enemies higher, like in later entries.
 - [x] Getting a Fire Flower as Small Mario now turns Mario into Fire Mario, as opposed to Super Mario.
 - [x] Getting hit as Fire Mario now turns Mario into Super Mario, as opposed to Small Mario.
-- [x] Hidden 1-up blocks no longer despawn after dying.
+- [x] Hidden 1-up blocks no longer despawn after dying. The requirement to spawn them has been retained.
 - [ ] Hitting the top of the flagpole now gives Mario a 1-up.
 - [ ] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
 - [ ] Defeating consecutive enemies now increases the sound effect pitch with every enemy.
@@ -61,6 +61,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Hammers now travel along their arc, regardless of whether they touch Mario.
 - [x] Enemies like Goombas, Koopas, Buzzy Beetles and Spinies will no longer turn around when colliding with Mario.
 - [ ] It is now possible to defeat Spinies by hitting blocks underneath them.
++ [x] Paratroopas will now be set to the falling state instead of the grounded state when stomped. 
++ [x] Red Paratroopas will now be properly demoted to Red Koopas when stomped.
 
 ## PAL Version Changes
 - [x] Cheep Cheep code has been optimised.
@@ -70,13 +72,13 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Some enemies now have a slightly higher hitbox.
 + [x] Bloopers are now able to go lower onscreen, therefore standing big Mario will be hit now.
 + [x] Mario's initial downward acceleration is higher.
-- [x] Springboard vertical acceleration is now defined (whatever that means).
+- [x] Springboard vertical acceleration is now defined. (whatever that means)
 
 ## Graphics Changes
 - [ ] Added small one-pixel graphics tweaks to Buzzy Beetles, Hammer Bros. and Toad.
 - [ ] Made the outlines of bushes and clouds continuous.
 - [ ] Utulised an extra sprite to add a small animation to Piranha Plants.
-- [ ] Made Toad smile more :) (might revert this change honestly)
+- [ ] Made Toad smile more. :) (might revert this change honestly)
 - [ ] The hands of Mario's growing sprite and jump sprite have been fixed. (partial)
 - [ ] Hammer Bros. now bob up and down in their animation as well.
 - [ ] Super Mario's jump sprite has been fixed to match the eyes and cap of the other sprites. (partial)
