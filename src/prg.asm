@@ -149,8 +149,8 @@ DecTimers:
 	LDX #$14                                     ; load end offset for end of frame timers
 	DEC IntervalTimerControl                     ; decrement interval timer control,
 	BPL DecTimersLoop                            ; if not expired, only frame timers will decrement
-	LDA #$14
-	STA IntervalTimerControl                     ; if control for interval timers expired,
+	;LDA #$14
+	STX IntervalTimerControl                     ; if control for interval timers expired,
 	LDX #$23                                     ; interval timers will decrement along with frame timers
 DecTimersLoop:
 	LDA Timers,x                                 ; check current timer
@@ -181,19 +181,16 @@ RotPRandomBit:
 	LDA Sprite0HitDetectFlag                     ; check for flag here
 	BEQ SkipSprite0
 Sprite0Clr:
-	LDA PPU_STATUS                               ; wait for sprite 0 flag to clear, which will
-	AND #%01000000                               ; not happen until vblank has ended
-	BNE Sprite0Clr
+	BIT PPU_STATUS                               ; wait for sprite 0 flag to clear, which will
+	BVS Sprite0Clr                               ; not happen until vblank has ended
 	LDA GamePauseStatus                          ; if in pause mode, do not bother with sprites at all
 	LSR
 	BCS Sprite0Hit
 	JSR MoveSpritesOffscreen
 	JSR SpriteShuffler
 Sprite0Hit:
-	LDA PPU_STATUS                               ; do sprite #0 hit detection
-	BMI Sprite0Hit
-	AND #%01000000
-	BEQ Sprite0Hit
+	BIT PPU_STATUS                               ; do sprite #0 hit detection
+	BVC Sprite0Hit
 	LDY #$14                                     ; small delay, to wait until we hit horizontal blank time
 HBlankDelay:
 	DEY
@@ -220,10 +217,7 @@ HUDSkip:
 	STA PPU_SCROLL_REG
 	LDA VerticalScroll
 	STA PPU_SCROLL_REG
-	LDA Mirror_PPU_CTRL_REG1                     ; load saved mirror of $2000
-	ORA #%10000000                               ; reactivate NMIs
-	STA PPU_CTRL_REG1
-	STA Mirror_PPU_CTRL_REG1
+	JSR EnableNMI
 	PLA                                         
 	TAY                                          ; restore Y
 	PLA                                         
@@ -458,7 +452,7 @@ StartWorld1:
 	STA OperMode_Task                            ; set game mode here, and clear demo timer
 	STA DemoTimer
 	LDX #$17
-	LDA #$00
+	;LDA #$00
 InitScores:
 	STA ScoreAndCoinDisplay,x                    ; clear player scores and coin displays
 	DEX
@@ -1902,7 +1896,6 @@ InitATLoop:
 ; $00 - temp joypad bit
 
 ReadJoypads:
-
 	LDA #$01                                     ; reset and clear strobe of joypad ports
 	STA JOYPAD_PORT
 	LSR
@@ -1980,11 +1973,11 @@ RepeatByte:
 	LDA #$00
 	ADC $01
 	STA $01
-	LDA #$3f                                     ; sets vram address to $3f00
-	STA PPU_ADDRESS
-	LDA #$00
-	STA PPU_ADDRESS
-	STA PPU_ADDRESS                              ; then reinitializes it for some reason
+;	LDA #$3f                                     ; sets vram address to $3f00
+;	STA PPU_ADDRESS
+;	LDA #$00
+;	STA PPU_ADDRESS
+	STA PPU_ADDRESS                              ; reinitialize the vram address to $0000 (A should still contain #$00)
 	STA PPU_ADDRESS
 UpdateScreen:
 	LDX PPU_STATUS                               ; reset flip-flop
@@ -3864,7 +3857,7 @@ RenderUnderPart:
 	BEQ WaitOneRow                               ; if middle part (mushroom ledge), wait until next row
 	CPY #$c0
 	BEQ DrawThisRow                              ; if question block w/ coin, overwrite
-	CPY #$c0
+	;CPY #$c0
 	BCS WaitOneRow                               ; if any other metatile with palette 3, wait until next row
 	CPY #$54
 	BNE DrawThisRow                              ; if cracked rock terrain, overwrite
