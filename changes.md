@@ -4,7 +4,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 ## Music Changes
 - [ ] There is now music on the title screen: an alternate version of the underwater theme.
 - [x] The final victory song has been extended, with a B-section and an end. (ported over from Vs.SMB; may need to adjust further)
-+ [x] Level music now use a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes were left unchanged.
++ [x] Level music now uses a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes are left unchanged.
 
 ## Sound Changes
 + [x] Skidding now has a sound effect, in line with SMB2J and later entries.
