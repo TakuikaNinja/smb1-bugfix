@@ -47,7 +47,6 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
 + [x] Moved the main game loop out of NMI and added proper interrupt and lag frame handling to the NMI routine.
-+ [ ] Collision between enemies will now be properly checked for each of them. (neccessary for Bullet Bill shell kill)
 + [x] Optimized, tweaked, and trimmed code wherever possible. (ongoing effort)
 
 ## Modernised Quality of Life Mechanics
@@ -66,7 +65,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [ ] It is now possible to defeat Spinies by hitting blocks underneath them.
 + [x] Paratroopas will now be set to the falling state instead of the grounded state when stomped. 
 + [x] Red Paratroopas will now be properly demoted to Red Koopas when stomped.
-+ [ ] Bullet Bills fired from cannons are now able to collide with enemies, including kicked shells. (notably 7-1, now you can farm lives there)
++ [x] Bullet Bills fired from cannons are now able to collide with enemies, including kicked shells. (notably 7-1, now you can farm lives there)
 
 ## PAL Version Changes
 - [x] Cheep Cheep code has been optimised.

@@ -8097,7 +8097,7 @@ JmpEO:
 	.dw NoRunCode                                ; for objects $30-$35
 	.dw RunStarFlagObj
 	.dw JumpspringHandler
-	.dw NoRunCode
+	.dw EnemiesCollision
 	.dw WarpZoneObject
 	.dw RunRetainerObj
 
@@ -10734,12 +10734,15 @@ EnemiesCollision:
 	LDA AreaType
 	BEQ ExSFN                                    ; if water area type, leave
 	LDA Enemy_ID,x
+	CMP #BulletBill_CannonVar
+	BEQ SkipChecks
 	CMP #$15                                     ; if enemy object => $15, branch to leave
 	BCS ExitECRoutine
 	CMP #Lakitu                                  ; if lakitu, branch to leave
 	BEQ ExitECRoutine
 	CMP #PiranhaPlant                            ; if piranha plant, branch to leave
 	BEQ ExitECRoutine
+SkipChecks:
 	LDA EnemyOffscrBitsMasked,x                  ; if masked offscreen bits nonzero, branch to leave
 	BNE ExitECRoutine
 	JSR GetEnemyBoundBoxOfs                      ; otherwise, do sub, get appropriate bounding box offset for
