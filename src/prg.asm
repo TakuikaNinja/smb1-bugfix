@@ -134,7 +134,7 @@ InitBuffer:
 	STA VRAM_Buffer_AddrCtrl                     ; reinit address control to $0301
 	LDA Mirror_PPU_CTRL_REG2                     ; copy mirror of $2001 to register
 	STA PPU_CTRL_REG2
-	JSR SoundEngine                              ; play sound
+	;JSR SoundEngine                              ; play sound
 	JSR ReadJoypads                              ; read joypads
 	JSR PauseRoutine                             ; handle pause
 	JSR UpdateTopScore
@@ -218,6 +218,7 @@ HUDSkip:
 	LDA VerticalScroll
 	STA PPU_SCROLL_REG
 	JSR EnableNMI
+	JSR SoundEngine                              ; play sound
 	PLA                                         
 	TAY                                          ; restore Y
 	PLA                                         
