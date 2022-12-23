@@ -198,7 +198,6 @@ HBlankDelay:
 SkipSprite0:
 	LDA PPU_STATUS                               ; reset flip-flop
 	JMP HUDSkip
-
 LagFrame:
 	JSR InitScroll
 	LDA Sprite0HitDetectFlag                     ; check for flag here
@@ -1974,11 +1973,11 @@ RepeatByte:
 	LDA #$00
 	ADC $01
 	STA $01
-;	LDA #$3f                                     ; sets vram address to $3f00
-;	STA PPU_ADDRESS
-;	LDA #$00
-;	STA PPU_ADDRESS
-	STA PPU_ADDRESS                              ; reinitialize the vram address to $0000 (A should still contain #$00)
+	LDA #$3f                                     ; sets vram address to $3f00
+	STA PPU_ADDRESS
+	LDA #$00
+	STA PPU_ADDRESS
+	STA PPU_ADDRESS                              ; reinitialize the address
 	STA PPU_ADDRESS
 UpdateScreen:
 	LDX PPU_STATUS                               ; reset flip-flop
