@@ -428,7 +428,7 @@ FireballCounter       = $06ce
 FireballThrowingTimer = $0711
 
 HammerEnemyOffset     = $06ae
-JumpCoinMiscOffset    = $06b7
+;JumpCoinMiscOffset    = $06b7                   ; free
 
 Block_Buffer_1        = $0500
 Block_Buffer_2        = $05d0
