@@ -53,6 +53,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Holding A now allows you to bounce on enemies higher, like in later entries.
 - [x] Getting a Fire Flower as Small Mario now turns Mario into Fire Mario, as opposed to Super Mario.
 - [x] Getting hit as Fire Mario now turns Mario into Super Mario, as opposed to Small Mario.
++ [x] Fireballs will now remain onscreen even when Fire Mario has been hit. They will freeze during the hit animation, just like enemies do.
 - [x] Hidden 1-up blocks no longer despawn after dying. The requirement to spawn them has been retained.
 - [ ] Hitting the top of the flagpole now gives Mario a 1-up.
 - [ ] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!

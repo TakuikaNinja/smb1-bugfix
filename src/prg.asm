@@ -5160,14 +5160,14 @@ SetAbsSpd:
 ; $07 - used to store pseudorandom bit in BubbleCheck
 
 ProcFireball_Bubble:
-	LDA PlayerStatus                             ; check player's status
-	CMP #$02
-	BCC ProcAirBubbles                           ; if not fiery, branch
 	LDA A_B_Buttons
 	AND #B_Button                                ; check for b button pressed
 	BEQ ProcFireballs                            ; branch if not pressed
 	AND PreviousA_B_Buttons
 	BNE ProcFireballs                            ; if button pressed in previous frame, branch
+	LDA PlayerStatus                             ; check player's status
+	CMP #$02
+	BCC ProcAirBubbles                           ; if not fiery, branch
 	LDA FireballCounter                          ; load fireball counter
 	AND #%00000001                               ; get LSB and use as offset for buffer
 	TAX
@@ -5222,6 +5222,8 @@ FireballObjCore:
 	BCS FireballExplosion                        ; if so, branch to get relative coordinates and draw explosion
 	LDY Fireball_State,x                         ; if fireball inactive, branch to leave
 	BEQ NoFBall
+	LDA TimerControl                             ; if master timer control set, branch
+	BNE SkipCore                                 ; this branch just keeps the fireballs onscreen without moving them
 	DEY                                          ; if fireball state set to 1, skip this part and just run it
 	BEQ RunFB
 	LDA Player_X_Position                        ; get player's horizontal position
@@ -5255,6 +5257,7 @@ RunFB:
 	LDA #$00
 	JSR ImposeGravity                            ; do sub here to impose gravity on fireball and move vertically
 	JSR MoveObjectHorizontally                   ; do another sub to move it horizontally
+SkipCore:
 	LDX ObjectOffset                             ; return fireball offset to X
 	JSR RelativeFireballPosition                 ; get relative coordinates
 	JSR GetFireballOffscreenBits                 ; get offscreen information
@@ -5263,7 +5266,7 @@ RunFB:
 	LDA FBall_OffscreenBits                      ; get fireball offscreen bits
 	AND #%11001100                               ; mask out certain bits
 	BNE EraseFB                                  ; if any bits still set, branch to kill fireball
-	JSR FireballEnemyCollision                   ; do fireball to enemy collision detection and deal with collisions
+	JSR FireballEnemyCollision                   ; do fireball to enemy collision detection and deal with collisions	
 	JMP DrawFireball                             ; draw fireball appropriately and leave
 EraseFB:
 	LDA #$00                                     ; erase fireball state
