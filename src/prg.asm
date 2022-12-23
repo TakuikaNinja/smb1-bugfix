@@ -12498,7 +12498,7 @@ NoHOffscr:
 ; -------------------------------------------------------------------------------------
 ; $00-$01 - used to hold tile numbers ($01 addressed in draw floatey number part)
 ; $02 - used to hold Y coordinate for floatey number
-; $03 - residual byte used for flip (but value set here affects nothing)
+; $03 - used for flip (not setting this causes the floatey number to flip when mario is to the right of it)
 ; $04 - attribute byte for floatey number
 ; $05 - used as X coordinate for floatey number
 
@@ -12527,7 +12527,7 @@ FlagpoleGfxHandler:
 	LDA FlagpoleFNum_Y_Pos                       ; get vertical coordinate for floatey number
 	STA $02                                      ; store it here
 	LDA #$01
-;	STA $03                                      ; set value for flip which will not be used, and
+	STA $03                                      ; set value for flip, and
 	STA $04                                      ; attribute byte for floatey number
 	STA Sprite_Attributes,y                      ; set attribute bytes for all three sprites
 	STA Sprite_Attributes+4,y
