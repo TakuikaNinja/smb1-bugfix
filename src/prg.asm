@@ -1974,12 +1974,10 @@ RepeatByte:
 	LDA #$00
 	ADC $01
 	STA $01
-;	LDA #$3f                                     ; sets vram address to $3f00
-;	STA PPU_ADDRESS
-;	LDA #$00
-;	STA PPU_ADDRESS
-	STA PPU_ADDRESS                              ; reinitialize the vram address to $0000 (A should still contain #$00)
+	LDA #$00
 	STA PPU_ADDRESS
+	STA PPU_ADDRESS                              ; reinitialize the vram address to $0000 before leaving
+	
 UpdateScreen:
 	LDX PPU_STATUS                               ; reset flip-flop
 	LDY #$00                                     ; load first byte from indirect as a pointer
