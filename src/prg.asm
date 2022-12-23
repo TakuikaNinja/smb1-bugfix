@@ -5266,7 +5266,7 @@ SkipCore:
 	LDA FBall_OffscreenBits                      ; get fireball offscreen bits
 	AND #%11001100                               ; mask out certain bits
 	BNE EraseFB                                  ; if any bits still set, branch to kill fireball
-	JSR FireballEnemyCollision                   ; do fireball to enemy collision detection and deal with collisions	
+	JSR FireballEnemyCollision                   ; do fireball to enemy collision detection and deal with collisions
 	JMP DrawFireball                             ; draw fireball appropriately and leave
 EraseFB:
 	LDA #$00                                     ; erase fireball state
@@ -10264,7 +10264,7 @@ NotGoomba:
 	LDX ObjectOffset                             ; return fireball's original offset
 	BCC NoFToECol                                ; if carry clear, no collision, thus do next enemy slot
 	LDA #%10000000
-	STA Fireball_State,x                         ; set d7 in enemy state
+	STA Fireball_State,x                         ; set d7 in fireball state (exploding)
 	LDX $01                                      ; get enemy offset
 	JSR HandleEnemyFBallCol                      ; jump to handle fireball to enemy collision
 NoFToECol:
