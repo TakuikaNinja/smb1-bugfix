@@ -267,7 +267,7 @@ ExitPause:
 ; $00 - used for preset value
 
 SpriteShuffler:
-	LDY AreaType                                 ; load level type, likely residual code
+;	LDY AreaType                                 ; load level type, likely residual code
 	LDA #$28                                     ; load preset value which will put it at
 	STA $00                                      ; sprite #10
 	LDX #$0e                                     ; start at the end of OAM data offsets
@@ -594,8 +594,8 @@ PrintVictoryMessages:
 	BNE IncMsgCounter                            ; if set, branch to increment message counters
 	LDA PrimaryMsgCounter                        ; otherwise load primary message counter
 	BEQ ThankPlayer                              ; if set to zero, branch to print first message
-	CMP #$09                                     ; if at 9 or above, branch elsewhere (this comparison
-	BCS IncMsgCounter                            ; is residual code, counter never reaches 9)
+;	CMP #$09                                     ; if at 9 or above, branch elsewhere (this comparison
+;	BCS IncMsgCounter                            ; is residual code, counter never reaches 9)
 	LDY WorldNumber                              ; check world number
 	CPY #World8
 	BNE MRetainerMsg                             ; if not at world 8, skip to next part
@@ -989,9 +989,9 @@ DisplayIntermediate:
 	BEQ GameOverInter                            ; if so, proceed to display game over screen
 	LDA AltEntranceControl                       ; otherwise check for mode of alternate entry
 	BNE NoInter                                  ; and branch if found
-	LDY AreaType                                 ; check if we are on castle level
-	CPY #$03                                     ; and if so, branch (possibly residual)
-	BEQ PlayerInter
+;	LDY AreaType                                 ; check if we are on castle level
+;	CPY #$03                                     ; and if so, branch (possibly residual)
+;	BEQ PlayerInter
 	LDA DisableIntermediate                      ; if this flag is set, skip intermediate lives display
 	BNE NoInter                                  ; and jump to specific task, otherwise
 PlayerInter:
@@ -3356,7 +3356,7 @@ ExitCastle:
 
 WaterPipe:
 	JSR GetLrgObjAttrib                          ; get row and lower nybble
-	LDY AreaObjectLength,x                       ; get length (residual code, water pipe is 1 col thick)
+;	LDY AreaObjectLength,x                       ; get length (residual code, water pipe is 1 col thick)
 	LDX $07                                      ; get row
 	LDA #$6b
 	STA MetatileBuffer,x                         ; draw something here and below it
@@ -4218,7 +4218,7 @@ ScrollScreen:
 	STA Mirror_PPU_CTRL_REG1                     ; mirror to be used to set name table later
 	JSR GetScreenPosition                        ; figure out where the right side is
 	LDA #$08
-	;STA ScrollIntervalTimer                      ; set scroll timer (residual, not used elsewhere)
+;	STA ScrollIntervalTimer                      ; set scroll timer (residual, not used elsewhere)
 	BNE ChkPOffscr                               ; skip this part (unconditional)
 InitScrlAmt:
 	LDA #$00
@@ -4662,7 +4662,7 @@ FlagpoleSlide:
 SlidePlayer:
 	JMP AutoControlPlayer                        ; jump to player control routine
 NoFPObj:
-	INC GameEngineSubroutine                    ; increment to next routine (this may
+;	INC GameEngineSubroutine                     ; increment to next routine (this may
 	RTS                                          ; be residual code)
 
 ; -------------------------------------------------------------------------------------
@@ -5856,8 +5856,8 @@ ProcHammerObj:
 	TAX                                          ; return offset to X
 	LDA #$10
 	STA $00                                      ; set downward movement force
-	LDA #$0f
-	STA $01                                      ; set upward movement force (not used)
+;	LDA #$0f
+;	STA $01                                      ; set upward movement force (not used)
 	LDA #$04
 	STA $02                                      ; set maximum vertical speed
 	LDA #$00                                     ; set A to impose gravity on hammer
@@ -5954,7 +5954,7 @@ FMiscLoop:
 	BNE FMiscLoop                                ; do this until all slots are checked
 	LDY #$08                                     ; if no empty slots found, use last slot
 UseMiscS:
-	STY JumpCoinMiscOffset                       ; store offset of misc object buffer here (residual)
+;	STY JumpCoinMiscOffset                       ; store offset of misc object buffer here (residual)
 	RTS
 
 ; -------------------------------------------------------------------------------------
@@ -6002,8 +6002,8 @@ JCoinRun:
 	STA $00
 	LDA #$06                                     ; set maximum vertical speed
 	STA $02
-	LSR                                          ; divide by 2 and set
-	STA $01                                      ; as upward movement amount (apparently residual)
+;	LSR                                          ; divide by 2 and set
+;	STA $01                                      ; as upward movement amount (apparently residual)
 	LDA #$00                                     ; set A to impose gravity on jumping coin
 	JSR ImposeGravity                            ; do sub to move coin vertically and impose gravity on it
 	LDX ObjectOffset                             ; get original misc object offset
@@ -6096,7 +6096,7 @@ SetupPowerUp:
 	SEC
 	SBC #$08                                     ; subtract 8 pixels
 	STA Enemy_Y_Position+5                       ; and use as vertical coordinate of power-up object
-PwrUpJmp:
+;PwrUpJmp:
 	LDA #$01                                     ; this is a residual jump point in enemy object jump table
 	STA Enemy_State+5                            ; set power-up object's state
 	STA Enemy_Flag+5                             ; set buffer flag
@@ -6664,12 +6664,12 @@ MovePlatformDown:
 MovePlatformUp:
 	LDA #$01                                     ; save value to stack
 	PHA
-	LDY Enemy_ID,x                               ; get enemy object identifier
+;	LDY Enemy_ID,x                               ; get enemy object identifier
 	INX                                          ; increment offset for enemy object
 	LDA #$05                                     ; load default value here
-	CPY #$29                                     ; residual comparison, object #29 never executes
-	BNE SetDplSpd                                ; this code, thus unconditional branch here
-	LDA #$09                                     ; residual code
+;	CPY #$29                                     ; residual comparison, object #29 never executes
+;	BNE SetDplSpd                                ; this code, thus unconditional branch here
+;	LDA #$09                                     ; residual code
 SetDplSpd:
 	STA $00                                      ; save downward movement amount here
 	LDA #$0a                                     ; save upward movement amount here
@@ -6894,13 +6894,13 @@ CheckEndofBuffer:
 	AND #%00001111                               ; check for special row $0e
 	CMP #$0e
 	BEQ CheckRightBounds                         ; if found, branch, otherwise
-	CPX #$05                                     ; check for end of buffer
-	BCC CheckRightBounds                         ; if not at end of buffer, branch
-	INY
-	LDA (EnemyData),y                            ; check for specific value here
-	AND #%00111111                               ; not sure what this was intended for, exactly
-	CMP #$2e                                     ; this part is quite possibly residual code
-	BEQ CheckRightBounds                         ; but it has the effect of keeping enemies out of
+	CPX #$06                                     ; check if past 5 (end of buffer)
+	BCC CheckRightBounds                         ; if not past end of buffer, branch
+;	INY
+;	LDA (EnemyData),y                            ; check for specific value here
+;	AND #%00111111                               ; not sure what this was intended for, exactly
+;	CMP #$2e                                     ; this part is quite possibly residual code
+;	BEQ CheckRightBounds                         ; but it has the effect of keeping enemies out of
 	RTS                                          ; the sixth slot
 
 CheckRightBounds:
@@ -7122,7 +7122,7 @@ InitEnemyRoutines:
 	.dw PlatLiftUp
 	.dw PlatLiftDown
 	.dw InitBowser
-	.dw PwrUpJmp                                 ; possibly dummy value
+	.dw NoInitCode                                 ; possibly dummy value
 	.dw Setup_Vine
 
 	.dw NoInitCode                               ; for objects $30-$36
@@ -8672,7 +8672,7 @@ NotDefB:
 
 SwimCCXMoveData:
 	.db $40, $80
-	.db $04, $04                                 ; residual data, not used
+;	.db $04, $04                                 ; residual data, not used
 
 MoveSwimmingCheepCheep:
 	LDA Enemy_State,x                            ; check cheep-cheep's enemy object state
@@ -8810,7 +8810,7 @@ SkpFSte:
 SetupGFB:
 	STA $ef                                      ; save high byte of spinning thing, modified or otherwise
 	JSR RelativeEnemyPosition                    ; get relative coordinates to screen
-	JSR GetFirebarPosition                       ; do a sub here (residual, too early to be used now)
+;	JSR GetFirebarPosition                       ; do a sub here (residual, too early to be used now)
 	LDY Enemy_SprDataOffset,x                    ; get OAM data offset
 	LDA Enemy_Rel_YPos                           ; get relative vertical coordinate
 	STA Sprite_Y_Position,y                      ; store as Y in OAM data
@@ -9507,12 +9507,12 @@ DrawFlameLoop:
 	LDY Enemy_SprDataOffset,x                    ; get OAM data offset
 	LDA Enemy_OffscreenBits                      ; get enemy object offscreen bits
 	LSR                                          ; move d0 to carry and result to stack
-	PHA
-	BCC M3FOfs                                   ; branch if carry not set
-	LDA #$f8                                     ; otherwise move sprite offscreen, this part likely
-	STA Sprite_Y_Position+12,y                   ; residual since flame is only made of three sprites
+;	PHA
+;	BCC M3FOfs                                   ; branch if carry not set
+;	LDA #$f8                                     ; otherwise move sprite offscreen, this part likely
+;	STA Sprite_Y_Position+12,y                   ; residual since flame is only made of three sprites
 M3FOfs:
-	PLA                                          ; get bits from stack
+;	PLA                                          ; get bits from stack
 	LSR                                          ; move d1 to carry and move bits back to stack
 	PHA
 	BCC M2FOfs                                   ; branch if carry not set again
@@ -9772,7 +9772,7 @@ FirebarSpin:
 	STA $07                                      ; save spinning speed here
 	LDA FirebarSpinDirection,x                   ; check spinning direction
 	BNE SpinCounterClockwise                     ; if moving counter-clockwise, branch to other part
-	LDY #$18                                     ; possibly residual ldy
+;	LDY #$18                                     ; possibly residual ldy
 	LDA FirebarSpinState_Low,x
 	CLC                                          ; add spinning speed to what would normally be
 	ADC $07                                      ; the horizontal speed
@@ -9782,7 +9782,7 @@ FirebarSpin:
 	RTS
 
 SpinCounterClockwise:
-	LDY #$08                                     ; possibly residual ldy
+;	LDY #$08                                     ; possibly residual ldy
 	LDA FirebarSpinState_Low,x
 	SEC                                          ; subtract spinning speed to what would normally be
 	SBC $07                                      ; the horizontal speed
@@ -10113,7 +10113,7 @@ ExDPl:
 
 RightPlatform:
 	JSR MoveEnemyHorizontally                    ; move platform with current horizontal speed, if any
-	STA $00                                      ; store saved value here (residual code)
+;	STA $00                                      ; store saved value here (residual code)
 	LDA PlatformCollisionFlag,x                  ; check collision flag, if no collision between player
 	BMI ExRPl                                    ; and platform, branch ahead, leave speed unaltered
 	LDA #$10
@@ -12527,7 +12527,7 @@ FlagpoleGfxHandler:
 	LDA FlagpoleFNum_Y_Pos                       ; get vertical coordinate for floatey number
 	STA $02                                      ; store it here
 	LDA #$01
-	STA $03                                      ; set value for flip which will not be used, and
+;	STA $03                                      ; set value for flip which will not be used, and
 	STA $04                                      ; attribute byte for floatey number
 	STA Sprite_Attributes,y                      ; set attribute bytes for all three sprites
 	STA Sprite_Attributes+4,y
@@ -13441,12 +13441,12 @@ ExDBlk:
 ; $00 - used to hold palette bits for attribute byte or relative X position
 
 DrawBrickChunks:
-	LDA #$02                                     ; set palette bits here
-	STA $00
-	LDA #$75                                     ; set tile number for ball (something residual, likely)
-	LDY GameEngineSubroutine
-	CPY #$05                                     ; if end-of-level routine running,
-	BEQ DChunks                                  ; use palette and tile number assigned
+;	LDA #$02                                     ; set palette bits here
+;	STA $00
+;	LDA #$75                                     ; set tile number for ball (something residual, likely)
+;	LDY GameEngineSubroutine
+;	CPY #$05                                     ; if end-of-level routine running,
+;	BEQ DChunks                                  ; use palette and tile number assigned
 	LDA #$03                                     ; otherwise set different palette bits
 	STA $00
 	LDA #$84                                     ; and set tile number for brick chunks
