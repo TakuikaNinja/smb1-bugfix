@@ -7135,7 +7135,8 @@ InitEnemyRoutines:
 ; -------------------------------------------------------------------------------------
 
 InitGoomba:
-	JSR InitNormalEnemy                          ; set appropriate horizontal speed
+	LDA #$f8                                     ; set appropriate horizontal speed
+	STA Enemy_X_Speed,x                          ; store as speed for enemy object
 	JMP SmallBBox                                ; set $09 as bounding box control, set other values
 
 ; --------------------------------
@@ -7164,13 +7165,17 @@ NoInitCode:
 NormalXSpdData:
 	.db $f8, $f4
 
+; --------------------------------
+
+InitRedKoopa:
+	LDA #$01                                     ; set enemy state for red koopa troopa $03
+	STA Enemy_State,x
+
+; --------------------------------
+
 InitNormalEnemy:
-	LDY #$01                                     ; load offset of 1 by default
-	LDA PrimaryHardMode                          ; check for primary hard mode flag set
-	BNE GetESpd
-	DEY                                          ; if not set, decrement offset
-GetESpd:
-	LDA NormalXSpdData,y                         ; get appropriate horizontal speed
+	LDY PrimaryHardMode                          ; if quest 2, set to higher speed
+	LDA NormalXSpdData,y                         ;
 	.db $2c                                      ; [skip 2 bytes]
 
 ; --------------------------------
@@ -7179,14 +7184,6 @@ InitHorizFlySwimEnemy:
 	LDA #$00                                     ; initialize horizontal speed
 	STA Enemy_X_Speed,x                          ; store as speed for enemy object
 	JMP TallBBox                                 ; branch to set bounding box control and other data
-
-; --------------------------------
-
-InitRedKoopa:
-	JSR InitNormalEnemy                          ; load appropriate horizontal speed
-	LDA #$01                                     ; set enemy state for red koopa troopa $03
-	STA Enemy_State,x
-	RTS
 
 ; --------------------------------
 
@@ -7277,6 +7274,9 @@ PRDiffAdjustData:
 	.db $20, $22, $24, $26
 	.db $13, $14, $15, $16
 
+LakituRespawn:
+	.db $07, $03
+
 LakituAndSpinyHandler:
 	LDA FrenzyEnemyTimer                         ; if timer here not expired, leave
 	BNE ExLSHand
@@ -7293,7 +7293,8 @@ ChkLak:
 	BPL ChkLak                                   ; loop until all slots are checked
 	INC LakituReappearTimer                      ; increment reappearance timer
 	LDA LakituReappearTimer
-	CMP #$03                                     ; check to see if we're up to a certain value yet
+	LDY SecondaryHardMode                        ; if 5-3 or beyond, set the respawn timer to its SMB2J value
+	CMP LakituRespawn,y                          ; check to see if we're up to a certain value yet
 	BCC ExLSHand                                 ; if not, leave
 	LDX #$04                                     ; start with the last enemy slot again
 ChkNoEn:
@@ -8671,7 +8672,9 @@ NotDefB:
 
 SwimCCXMoveData:
 	.db $40, $80
-	.db $04, $04                                 ; residual data, not used
+
+SwimCCYSpdData:
+	.db $20, $40
 
 MoveSwimmingCheepCheep:
 	LDA Enemy_State,x                            ; check cheep-cheep's enemy object state
@@ -8696,7 +8699,8 @@ CCSwim:
 	LDA Enemy_PageLoc,x
 	SBC #$00                                     ; subtract borrow again, this time from the
 	STA Enemy_PageLoc,x                          ; page location, then save
-	LDA #$40
+	LDY SecondaryHardMode                        ; if 5-3 or beyond, set the Y-speed to its SMB2J value
+	LDA SwimCCYSpdData,y
 	STA $02                                      ; save new value here
 	CPX #$02                                     ; check enemy object offset
 	BCC ExSwCC                                   ; if in first or second slot, branch to leave
