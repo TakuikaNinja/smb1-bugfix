@@ -7231,11 +7231,20 @@ InitVStf:
 
 ; --------------------------------
 
+InitJumpGPTroopa:
+	LDY PrimaryHardMode                          ; if quest 2, set to higher speed
+	LDA NormalXSpdData,y                         ;
+	STA Enemy_X_Speed,x                          ; store as speed for enemy object
+	LDA #$03                                     ; set specific value for bounding box control
+	.db $2c                                      ; [skip 2 bytes]
+
+; --------------------------------
+
 InitBulletBill:
-	LDA #$02                                     ; set moving direction for left
-	STA Enemy_MovingDir,x
 	LDA #$09                                     ; set bounding box control for $09
 	STA Enemy_BoundBoxCtrl,x
+	LDA #$02                                     ; set moving direction for left
+	STA Enemy_MovingDir,x
 	RTS
 
 ; --------------------------------
@@ -7258,8 +7267,7 @@ InitLakitu:
 SetupLakitu:
 	LDA #$00                                     ; erase counter for lakitu's reappearance
 	STA LakituReappearTimer
-	JSR InitHorizFlySwimEnemy                    ; set $03 as bounding box, set other attributes
-	JMP TallBBox2                                ; set $03 as bounding box again (not necessary) and leave
+	JMP InitHorizFlySwimEnemy                    ; set $03 as bounding box, set other attributes
 
 KillLakitu:
 	JMP EraseEnemyObject
@@ -7411,7 +7419,7 @@ InitShortFirebar:
 	LDA Enemy_PageLoc,x
 	ADC #$00                                     ; add carry to page location
 	STA Enemy_PageLoc,x
-	JMP TallBBox2                                ; set bounding box control (not used) and leave
+	RTS
 
 ; --------------------------------
 ; $00-$01 - used to hold pseudorandom bits
@@ -7864,7 +7872,8 @@ InitPiranhaPlant:
 	SBC #$18
 	STA PiranhaPlantUpYPos,x                     ; save original vertical coordinate - 24 pixels here
 	LDA #$09
-	BNE SetBBox2                                 ; set specific value for bounding box control [unconditional branch]
+	STA Enemy_BoundBoxCtrl,x                     ; set bounding box control then leave
+	RTS
 
 ; --------------------------------
 
@@ -7885,11 +7894,6 @@ InitEnemyFrenzy:
 
 ; --------------------------------
 
-NoFrenzyCode:
-	RTS
-
-; --------------------------------
-
 EndFrenzy:
 	LDY #$05                                     ; start at last slot
 LakituChk:
@@ -7904,19 +7908,10 @@ NextFSlot:
 	LDA #$00
 	STA EnemyFrenzyBuffer                        ; empty enemy frenzy buffer
 	STA Enemy_Flag,x                             ; disable enemy buffer flag for this object
-	RTS
 
 ; --------------------------------
 
-InitJumpGPTroopa:
-	LDA #$02                                     ; set for movement to the left
-	STA Enemy_MovingDir,x
-	LDA #$f8                                     ; set horizontal speed
-	STA Enemy_X_Speed,x
-TallBBox2:
-	LDA #$03                                     ; set specific value for bounding box control
-SetBBox2:
-	STA Enemy_BoundBoxCtrl,x                     ; set bounding box control then leave
+NoFrenzyCode:
 	RTS
 
 ; --------------------------------
