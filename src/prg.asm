@@ -865,8 +865,9 @@ BackgroundColors:
 
 PlayerColors:
 	.db $22, $16, $27, $18                       ; mario's colors
-	.db $22, $30, $27, $19                       ; luigi's colors
-	.db $22, $37, $27, $16                       ; fiery (used by both)
+	.db $22, $19, $27, $2d                       ; luigi's colors
+	.db $22, $37, $27, $16                       ; fiery mario's colors
+	.db $22, $30, $27, $19                       ; fiery luigi's colors
 
 GetBackgroundColor:
 	LDY BackgroundColorCtrl                      ; check background color control
@@ -878,16 +879,18 @@ NoBGColor:
 
 GetPlayerColors:
 	LDX VRAM_Buffer1_Offset                      ; get current buffer offset
-	LDY #$00
-	LDA CurrentPlayer                            ; check which player is on the screen
+	LDA #$00
+	LDY CurrentPlayer                            ; check which player is on the screen
 	BEQ ChkFiery
-	LDY #$04                                     ; load offset for luigi
+	LDA #$04                                     ; load offset for luigi
 ChkFiery:
-	LDA PlayerStatus                             ; check player status
-	CMP #$02
+	LDY PlayerStatus                             ; check player status
+	CPY #$02
 	BNE StartClrGet                              ; if fiery, load alternate offset for fiery player
-	LDY #$08
+	CLC
+	ADC #$08
 StartClrGet:
+	TAY
 	LDA #$03                                     ; do four colors
 	STA $00
 ClrGetLoop:

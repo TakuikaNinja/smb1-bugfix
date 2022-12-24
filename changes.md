@@ -36,7 +36,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [ ] Kicked shells now keep their momentum while going off a ledge.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
-- [ ] Fire Mario and Fire Luigi now have separate palettes.
+- [x] Fire Mario and Fire Luigi now have separate palettes. (new colors for normal luigi, whereas fiery uses the old normal palette)
 - [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)
 - [x] When entering a warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
@@ -66,6 +66,9 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Paratroopas will now be set to the falling state instead of the grounded state when stomped. 
 + [x] Red Paratroopas will now be properly demoted to Red Koopas when stomped.
 + [x] Bullet Bills fired from cannons are now able to collide with enemies, including kicked shells. (notably 7-1, now you can farm lives there)
++ [x] Jumping Green Paratroopas now move faster in Quest 2 and demote to the appropriate speed in Quest 2.
++ [x] Swimming Cheep Cheeps now move up and down farther after 5-3.
++ [x] Lakitus respawn more quickly after 5-3.
 
 ## PAL Version Changes
 - [x] Cheep Cheep code has been optimised.
