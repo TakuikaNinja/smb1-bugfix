@@ -134,7 +134,7 @@ InitBuffer:
 	STA VRAM_Buffer_AddrCtrl                     ; reinit address control to $0301
 	LDA Mirror_PPU_CTRL_REG2                     ; copy mirror of $2001 to register
 	STA PPU_CTRL_REG2
-	;JSR SoundEngine                              ; play sound
+;	JSR SoundEngine                              ; play sound
 	JSR ReadJoypads                              ; read joypads
 	JSR PauseRoutine                             ; handle pause
 	JSR UpdateTopScore
@@ -149,7 +149,7 @@ DecTimers:
 	LDX #$14                                     ; load end offset for end of frame timers
 	DEC IntervalTimerControl                     ; decrement interval timer control,
 	BPL DecTimersLoop                            ; if not expired, only frame timers will decrement
-	;LDA #$14
+;	LDA #$14
 	STX IntervalTimerControl                     ; if control for interval timers expired,
 	LDX #$23                                     ; interval timers will decrement along with frame timers
 DecTimersLoop:
@@ -453,7 +453,7 @@ StartWorld1:
 	STA OperMode_Task                            ; set game mode here, and clear demo timer
 	STA DemoTimer
 	LDX #$17
-	;LDA #$00
+;	LDA #$00
 InitScores:
 	STA ScoreAndCoinDisplay,x                    ; clear player scores and coin displays
 	DEX
@@ -682,7 +682,7 @@ EndChkBButton:
 	JMP TerminateGame                            ; do sub to continue other player or end game
 
 ;EndExitTwo:
-	;RTS                                          ; leave
+;	RTS                                          ; leave
 
 ; -------------------------------------------------------------------------------------
 
@@ -3856,7 +3856,7 @@ RenderUnderPart:
 	BEQ WaitOneRow                               ; if middle part (mushroom ledge), wait until next row
 	CPY #$c0
 	BEQ DrawThisRow                              ; if question block w/ coin, overwrite
-	;CPY #$c0
+;	CPY #$c0
 	BCS WaitOneRow                               ; if any other metatile with palette 3, wait until next row
 	CPY #$54
 	BNE DrawThisRow                              ; if cracked rock terrain, overwrite
@@ -4554,7 +4554,7 @@ EnterSidePipe:
 RightPipe:
 	TYA                                          ; use contents of Y to
 	JMP AutoControlPlayer                        ; execute player control routine with ctrl bits nulled
-	;RTS
+;	RTS
 
 ; -------------------------------------------------------------------------------------
 
@@ -4569,7 +4569,7 @@ EndChgSize:
 	JMP DonePlayerTask                           ; otherwise do sub to init timer control and set routine
 
 ;ExitChgSize:
-	;RTS                                          ; and then leave
+;	RTS                                          ; and then leave
 
 ; -------------------------------------------------------------------------------------
 
@@ -4640,7 +4640,7 @@ ResetPalStar:
 	LDA Player_SprAttrib                         ; get player attributes
 	AND #%11111100                               ; mask out palette bits to force palette 0
 	STA Player_SprAttrib                         ; store as new player attributes
-	;RTS                                          ; and leave
+;	RTS                                          ; and leave
 
 ExitDeath:
 	RTS                                          ; leave from death routine
@@ -5110,7 +5110,7 @@ SetAnimSpd:
 
 ImposeFriction:
 	AND Player_CollisionBits                     ; perform AND between left/right controller bits and collision flag
-	;CMP #$00                                     ; then compare to zero (this instruction is redundant)
+;	CMP #$00                                     ; then compare to zero (this instruction is redundant)
 	BNE JoypFrict                                ; if any bits set, branch to next part
 	LDA Player_X_Speed
 	BEQ SetAbsSpd                                ; if player has no horizontal speed, branch ahead to last part
@@ -5187,7 +5187,7 @@ ProcFireball_Bubble:
 	STA Fireball_State,x
 	LDY PlayerAnimTimerSet                       ; copy animation frame timer setting
 	STY FireballThrowingTimer                    ; into fireball throwing timer
-	;DEY                                         ; decrement? (causes skating/sliding glitch)
+;	DEY                                          ; decrement? (causes skating/sliding glitch)
 	STY PlayerAnimTimer                          ; store in player's animation timer
 	INC FireballCounter                          ; increment fireball counter
 
@@ -5381,10 +5381,10 @@ WarpZoneObject:
 	LDA ScrollLock                               ; check for scroll lock flag
 	BEQ ExGTimer                                 ; branch if not set to leave
 	LDA Player_Y_Position                        ; check to see if player's vertical coordinate is 0
-	;CMP Player_Y_HighPos                        ; same bits set as in vertical high byte (why?) 
+;	CMP Player_Y_HighPos                         ; same bits set as in vertical high byte (why?) 
 	BNE ExGTimer                                 ; if not, branch to leave (scroll lock fix)
 	STA ScrollLock                               ; otherwise nullify scroll lock flag
-	;INC WarpZoneControl                         ; increment warp zone flag to make warp pipes for warp zone (causes minus world glitch)
+;	INC WarpZoneControl                          ; increment warp zone flag to make warp pipes for warp zone (causes minus world glitch)
 	JMP EraseEnemyObject                         ; kill this object
 
 ; -------------------------------------------------------------------------------------
@@ -5798,7 +5798,7 @@ RunBBSubs:
 KillBB:
 	JMP EraseEnemyObject                         ; kill bullet bill and leave
 	
-	;RTS
+;	RTS
 
 ; -------------------------------------------------------------------------------------
 
@@ -5900,7 +5900,7 @@ RunHSubs:
 	JSR GetMiscBoundBox                          ; get bounding box coordinates
 	JMP DrawHammer                               ; draw the hammer
 	
-	;RTS                                          ; and we are done here
+;	RTS                                          ; and we are done here
 
 ; -------------------------------------------------------------------------------------
 ; $02 - used to store vertical high nybble offset from block buffer routine
@@ -6418,8 +6418,8 @@ SpawnBrickChunks:
 	CLC                                          ; add 8 pixels to vertical coordinate
 	ADC #$08                                     ; and save as vertical coordinate for one of them
 	STA Block_Y_Position+2,x
-	;LDA #$fa
-	;STA Block_Y_Speed,x                          ; set vertical speed...again??? (redundant)
+;	LDA #$fa
+;	STA Block_Y_Speed,x                          ; set vertical speed...again??? (redundant)
 	RTS
 
 ; -------------------------------------------------------------------------------------
@@ -9554,7 +9554,7 @@ SetupExpl:
 	LDY Enemy_SprDataOffset,x                    ; get OAM data offset
 	LDA ExplosionGfxCounter,x                    ; get explosion graphics counter
 	JMP DrawExplosion_Fireworks                  ; do a sub to draw the explosion then leave
-	;RTS
+;	RTS
 
 FireworksSoundScore:
 	LDA #$00                                     ; disable enemy buffer flag
@@ -10444,7 +10444,7 @@ UpToSuper:
 UpToFiery:
 	LDY #$02                                     ; set value to be used as new player state (item jump fix)
 	JMP SetPRout                                 ; set values to stop certain things in motion
-	;RTS
+;	RTS
 
 ; --------------------------------
 
@@ -10734,15 +10734,15 @@ EnemiesCollision:
 	LDA AreaType
 	BEQ ExSFN                                    ; if water area type, leave
 	LDA Enemy_ID,x
-	CMP #BulletBill_CannonVar
-	BEQ SkipChecks
+	CMP #BulletBill_CannonVar                    ; check for bullet bill (cannon varient) first
+	BEQ SkipChecks1                              ; branch ahead if true
 	CMP #$15                                     ; if enemy object => $15, branch to leave
 	BCS ExitECRoutine
 	CMP #Lakitu                                  ; if lakitu, branch to leave
 	BEQ ExitECRoutine
 	CMP #PiranhaPlant                            ; if piranha plant, branch to leave
 	BEQ ExitECRoutine
-SkipChecks:
+SkipChecks1:
 	LDA EnemyOffscrBitsMasked,x                  ; if masked offscreen bits nonzero, branch to leave
 	BNE ExitECRoutine
 	JSR GetEnemyBoundBoxOfs                      ; otherwise, do sub, get appropriate bounding box offset for
@@ -10755,12 +10755,15 @@ ECLoop:
 	LDA Enemy_Flag,x                             ; check enemy object enable flag
 	BEQ ReadyNextEnemy                           ; branch if flag not set
 	LDA Enemy_ID,x
+	CMP #BulletBill_CannonVar                    ; check for bullet bill (cannon varient) first
+	BEQ SkipChecks2                              ; branch ahead if true
 	CMP #$15                                     ; check for enemy object => $15
 	BCS ReadyNextEnemy                           ; branch if true
 	CMP #Lakitu
 	BEQ ReadyNextEnemy                           ; branch if enemy object is lakitu
 	CMP #PiranhaPlant
 	BEQ ReadyNextEnemy                           ; branch if enemy object is piranha plant
+SkipChecks2:
 	LDA EnemyOffscrBitsMasked,x
 	BNE ReadyNextEnemy                           ; branch if masked offscreen bits set
 	TXA                                          ; get second enemy object's bounding box offset
@@ -11323,7 +11326,7 @@ ExCSM:
 
 StopPlayerMove:
 	JMP ImpedePlayerMove                         ; stop player's movement
-	;RTS                                          ; leave
+;	RTS                                          ; leave
 
 AreaChangeTimerData:
 	.db $a0, $34
@@ -11767,7 +11770,7 @@ SetForStn:
 	LDA #$03                                     ; set state here, apparently used to render
 	STA Enemy_State,x                            ; upside-down koopas and buzzy beetles
 	JMP EnemyLanding                             ; then land it properly
-	;RTS                                          ; then leave
+;	RTS                                          ; then leave
 
 ProcEnemyDirection:
 	LDA Enemy_ID,x                               ; check enemy identifier for goomba
@@ -13333,7 +13336,7 @@ AllRowC:
 	CMP #$02                                     ; if not yet past the bottom of the screen, branch
 	BNE ExEGHandler
 	JMP EraseEnemyObject                         ; what it says
-	;RTS
+;	RTS
 
 DrawEnemyObjRow:
 	LDA EnemyGraphicsTable,x                     ; load two tiles of enemy graphics
@@ -13789,10 +13792,10 @@ PlayerGfxProcessing:
 	JSR ChkForPlayerAttrib                       ; set horizontal flip bits as necessary
 	LDA FireballThrowingTimer
 	BEQ PlayerOffscreenChk                       ; if fireball throw timer not set, skip to the end
-	;LDY #$00                                    ; set value to initialize by default (why?)
+;	LDY #$00                                     ; set value to initialize by default (why?)
 	LDA PlayerAnimTimer                          ; get animation frame timer
 	CMP FireballThrowingTimer                    ; compare to fireball throw timer
-	;STY FireballThrowingTimer                   ; initialize fireball throw timer (why?)
+;	STY FireballThrowingTimer                    ; initialize fireball throw timer (why?)
 	BCS PlayerOffscreenChk                       ; if animation frame timer => fireball throw timer skip to end
 	STA FireballThrowingTimer                    ; otherwise store animation timer into fireball throw timer
 	LDY #$07                                     ; load offset for throwing
