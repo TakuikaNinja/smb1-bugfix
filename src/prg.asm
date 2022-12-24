@@ -6893,15 +6893,15 @@ ProcessEnemyData:
 CheckEndofBuffer:
 	AND #%00001111                               ; check for special row $0e
 	CMP #$0e
-	BEQ CheckRightBounds                         ; if found, branch, otherwise
-	CPX #$06                                     ; check if past 5 (end of buffer)
+	BEQ CheckRightBounds                         ; if found, branch
+	CPX #$05                                     ; otherwise check current index against end of buffer
 	BCC CheckRightBounds                         ; if not past end of buffer, branch
-;	INY
-;	LDA (EnemyData),y                            ; check for specific value here
-;	AND #%00111111                               ; not sure what this was intended for, exactly
-;	CMP #$2e                                     ; this part is quite possibly residual code
-;	BEQ CheckRightBounds                         ; but it has the effect of keeping enemies out of
-	RTS                                          ; the sixth slot
+	INY
+	LDA (EnemyData),y                            ; get next enemy to load
+	AND #%00111111                               ; mask out bit to get enemy identifier
+	CMP #PowerUpObject                           ; check for powerup
+	BEQ CheckRightBounds                         ; branch if true
+	RTS                                          ; otherwise leave (i.e don't load enemy)
 
 CheckRightBounds:
 	LDA ScreenRight_X_Pos                        ; add 48 to pixel coordinate of right boundary
