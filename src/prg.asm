@@ -6898,7 +6898,7 @@ CheckEndofBuffer:
 	BCC CheckRightBounds                         ; if not past end of buffer, branch
 	INY
 	LDA (EnemyData),y                            ; get next enemy to load
-	AND #%00111111                               ; mask out bit to get enemy identifier
+	AND #%00111111                               ; mask out bits to get enemy identifier
 	CMP #PowerUpObject                           ; check for powerup
 	BEQ CheckRightBounds                         ; branch if true
 	RTS                                          ; otherwise leave (i.e don't load enemy)
