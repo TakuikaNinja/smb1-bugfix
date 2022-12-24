@@ -865,8 +865,9 @@ BackgroundColors:
 
 PlayerColors:
 	.db $22, $16, $27, $18                       ; mario's colors
-	.db $22, $30, $27, $19                       ; luigi's colors
-	.db $22, $37, $27, $16                       ; fiery (used by both)
+	.db $22, $19, $27, $2d                       ; luigi's colors
+	.db $22, $37, $27, $16                       ; fiery mario's colors
+	.db $22, $30, $27, $19                       ; fiery luigi's colors
 
 GetBackgroundColor:
 	LDY BackgroundColorCtrl                      ; check background color control
@@ -878,16 +879,18 @@ NoBGColor:
 
 GetPlayerColors:
 	LDX VRAM_Buffer1_Offset                      ; get current buffer offset
-	LDY #$00
-	LDA CurrentPlayer                            ; check which player is on the screen
+	LDA #$00
+	LDY CurrentPlayer                            ; check which player is on the screen
 	BEQ ChkFiery
-	LDY #$04                                     ; load offset for luigi
+	LDA #$04                                     ; load offset for luigi
 ChkFiery:
-	LDA PlayerStatus                             ; check player status
-	CMP #$02
+	LDY PlayerStatus                             ; check player status
+	CPY #$02
 	BNE StartClrGet                              ; if fiery, load alternate offset for fiery player
-	LDY #$08
+	CLC
+	ADC #$08
 StartClrGet:
+	TAY
 	LDA #$03                                     ; do four colors
 	STA $00
 ClrGetLoop:
@@ -7136,7 +7139,8 @@ InitEnemyRoutines:
 ; -------------------------------------------------------------------------------------
 
 InitGoomba:
-	JSR InitNormalEnemy                          ; set appropriate horizontal speed
+	LDA #$f8                                     ; set appropriate horizontal speed
+	STA Enemy_X_Speed,x                          ; store as speed for enemy object
 	JMP SmallBBox                                ; set $09 as bounding box control, set other values
 
 ; --------------------------------
@@ -7165,13 +7169,17 @@ NoInitCode:
 NormalXSpdData:
 	.db $f8, $f4
 
+; --------------------------------
+
+InitRedKoopa:
+	LDA #$01                                     ; set enemy state for red koopa troopa $03
+	STA Enemy_State,x
+
+; --------------------------------
+
 InitNormalEnemy:
-	LDY #$01                                     ; load offset of 1 by default
-	LDA PrimaryHardMode                          ; check for primary hard mode flag set
-	BNE GetESpd
-	DEY                                          ; if not set, decrement offset
-GetESpd:
-	LDA NormalXSpdData,y                         ; get appropriate horizontal speed
+	LDY PrimaryHardMode                          ; if quest 2, set to higher speed
+	LDA NormalXSpdData,y                         ;
 	.db $2c                                      ; [skip 2 bytes]
 
 ; --------------------------------
@@ -7180,14 +7188,6 @@ InitHorizFlySwimEnemy:
 	LDA #$00                                     ; initialize horizontal speed
 	STA Enemy_X_Speed,x                          ; store as speed for enemy object
 	JMP TallBBox                                 ; branch to set bounding box control and other data
-
-; --------------------------------
-
-InitRedKoopa:
-	JSR InitNormalEnemy                          ; load appropriate horizontal speed
-	LDA #$01                                     ; set enemy state for red koopa troopa $03
-	STA Enemy_State,x
-	RTS
 
 ; --------------------------------
 
@@ -7237,11 +7237,20 @@ InitVStf:
 
 ; --------------------------------
 
+InitJumpGPTroopa:
+	LDY PrimaryHardMode                          ; if quest 2, set to higher speed
+	LDA NormalXSpdData,y                         ;
+	STA Enemy_X_Speed,x                          ; store as speed for enemy object
+	LDA #$03                                     ; set specific value for bounding box control
+	.db $2c                                      ; [skip 2 bytes]
+
+; --------------------------------
+
 InitBulletBill:
-	LDA #$02                                     ; set moving direction for left
-	STA Enemy_MovingDir,x
 	LDA #$09                                     ; set bounding box control for $09
 	STA Enemy_BoundBoxCtrl,x
+	LDA #$02                                     ; set moving direction for left
+	STA Enemy_MovingDir,x
 	RTS
 
 ; --------------------------------
@@ -7264,8 +7273,7 @@ InitLakitu:
 SetupLakitu:
 	LDA #$00                                     ; erase counter for lakitu's reappearance
 	STA LakituReappearTimer
-	JSR InitHorizFlySwimEnemy                    ; set $03 as bounding box, set other attributes
-	JMP TallBBox2                                ; set $03 as bounding box again (not necessary) and leave
+	JMP InitHorizFlySwimEnemy                    ; set $03 as bounding box, set other attributes
 
 KillLakitu:
 	JMP EraseEnemyObject
@@ -7277,6 +7285,9 @@ PRDiffAdjustData:
 	.db $26, $2c, $32, $38
 	.db $20, $22, $24, $26
 	.db $13, $14, $15, $16
+
+LakituRespawn:
+	.db $07, $03
 
 LakituAndSpinyHandler:
 	LDA FrenzyEnemyTimer                         ; if timer here not expired, leave
@@ -7294,7 +7305,8 @@ ChkLak:
 	BPL ChkLak                                   ; loop until all slots are checked
 	INC LakituReappearTimer                      ; increment reappearance timer
 	LDA LakituReappearTimer
-	CMP #$03                                     ; check to see if we're up to a certain value yet
+	LDY SecondaryHardMode                        ; if 5-3 or beyond, set the respawn timer to its SMB2J value
+	CMP LakituRespawn,y                          ; check to see if we're up to a certain value yet
 	BCC ExLSHand                                 ; if not, leave
 	LDX #$04                                     ; start with the last enemy slot again
 ChkNoEn:
@@ -7413,7 +7425,7 @@ InitShortFirebar:
 	LDA Enemy_PageLoc,x
 	ADC #$00                                     ; add carry to page location
 	STA Enemy_PageLoc,x
-	JMP TallBBox2                                ; set bounding box control (not used) and leave
+	RTS
 
 ; --------------------------------
 ; $00-$01 - used to hold pseudorandom bits
@@ -7866,7 +7878,8 @@ InitPiranhaPlant:
 	SBC #$18
 	STA PiranhaPlantUpYPos,x                     ; save original vertical coordinate - 24 pixels here
 	LDA #$09
-	BNE SetBBox2                                 ; set specific value for bounding box control [unconditional branch]
+	STA Enemy_BoundBoxCtrl,x                     ; set bounding box control then leave
+	RTS
 
 ; --------------------------------
 
@@ -7887,11 +7900,6 @@ InitEnemyFrenzy:
 
 ; --------------------------------
 
-NoFrenzyCode:
-	RTS
-
-; --------------------------------
-
 EndFrenzy:
 	LDY #$05                                     ; start at last slot
 LakituChk:
@@ -7906,19 +7914,10 @@ NextFSlot:
 	LDA #$00
 	STA EnemyFrenzyBuffer                        ; empty enemy frenzy buffer
 	STA Enemy_Flag,x                             ; disable enemy buffer flag for this object
-	RTS
 
 ; --------------------------------
 
-InitJumpGPTroopa:
-	LDA #$02                                     ; set for movement to the left
-	STA Enemy_MovingDir,x
-	LDA #$f8                                     ; set horizontal speed
-	STA Enemy_X_Speed,x
-TallBBox2:
-	LDA #$03                                     ; set specific value for bounding box control
-SetBBox2:
-	STA Enemy_BoundBoxCtrl,x                     ; set bounding box control then leave
+NoFrenzyCode:
 	RTS
 
 ; --------------------------------
@@ -8672,7 +8671,9 @@ NotDefB:
 
 SwimCCXMoveData:
 	.db $40, $80
-;	.db $04, $04                                 ; residual data, not used
+
+SwimCCYSpdData:
+	.db $20, $40
 
 MoveSwimmingCheepCheep:
 	LDA Enemy_State,x                            ; check cheep-cheep's enemy object state
@@ -8697,7 +8698,8 @@ CCSwim:
 	LDA Enemy_PageLoc,x
 	SBC #$00                                     ; subtract borrow again, this time from the
 	STA Enemy_PageLoc,x                          ; page location, then save
-	LDA #$40
+	LDY SecondaryHardMode                        ; if 5-3 or beyond, set the Y-speed to its SMB2J value
+	LDA SwimCCYSpdData,y
 	STA $02                                      ; save new value here
 	CPX #$02                                     ; check enemy object offset
 	BCC ExSwCC                                   ; if in first or second slot, branch to leave
@@ -10452,7 +10454,8 @@ KickedShellXSpdData:
 	.db $30, $d0
 
 DemotedKoopaXSpdData:
-	.db $08, $f8
+	.db $08, $0C 
+	.db $f8, $f4
 
 PlayerEnemyCollision:
 	LDA FrameCounter                             ; check counter for d0 set
@@ -10526,8 +10529,13 @@ HandlePECollisions:
 	LDA Enemy_State,x                            ; set d7 in enemy state, thus become moving shell
 	ORA #%10000000
 	STA Enemy_State,x
-	JSR EnemyFacePlayer                          ; set moving direction and get offset
-	LDA KickedShellXSpdData,y                    ; load and set horizontal speed data with offset
+	LDY #$01                                     ; set to move right by default
+	JSR PlayerEnemyDiff                          ; get horizontal difference between player and enemy
+	BPL SFcRt                                    ; if enemy is to the right of player, do not increment
+	INY                                          ; otherwise, increment to set to move to the left
+SFcRt:
+	STY Enemy_MovingDir,x                        ; set moving direction here
+	LDA KickedShellXSpdData-1,y                  ; load and set horizontal speed data with offset (adjusted by -1)
 	STA Enemy_X_Speed,x
 	LDA #$03                                     ; add three to whatever the stomp counter contains
 	CLC                                          ; to give points for kicking the shell
@@ -10648,7 +10656,7 @@ EnemyStompedPts:
 	STA Enemy_State,x                            ; set d5 in enemy state
 	JSR InitVStf                                 ; nullify vertical speed, physics-related thing,
 	STA Enemy_X_Speed,x                          ; and horizontal speed
-	JMP HandleJumpSwim                           ; handle bounce physics
+	BEQ SetBounce                                ; handle bounce physics
 
 ChkForDemoteKoopa:
 	CMP #$09                                     ; branch elsewhere if enemy object < $09
@@ -10657,6 +10665,7 @@ ChkForDemoteKoopa:
 	BNE Green                                    ; no, so branch ahead
 	AND #%00000011                               ; yes, so demote to red koopa
 	.db $2c                                      ; [skip 2 bytes]
+
 Green:
 	AND #%00000001                               ; demote koopa paratroopas to ordinary troopas
 	STA Enemy_ID,x
@@ -10665,10 +10674,13 @@ Green:
 	LDA #$03                                     ; award 400 points to the player
 	JSR SetupFloateyNumber
 	JSR InitVStf                                 ; nullify physics-related thing and vertical speed
-	JSR EnemyFacePlayer                          ; turn enemy around if necessary
-	LDA DemotedKoopaXSpdData,y
+	LDA Enemy_MovingDir,x                        ; load the current movement direction (possible values are 1:right or 2:left)
+	ASL                                          ; multiply by two (1 -> 2; 2 -> 4)
+	ADC PrimaryHardMode							 ; add the quest 2 flag (possible results: 2,3,4,5)
+	TAY                                          ; transfer to Y to use as an index
+	LDA DemotedKoopaXSpdData-2,y                 ; load speed data, adjusted by -2 (possible effective indicies: 0,1,2,3)
 	STA Enemy_X_Speed,x                          ; set appropriate moving speed based on direction
-	JMP HandleJumpSwim                           ; handle bounce physics
+	BNE SetBounce                                ; handle bounce physics
 
 RevivalRateData:
 	.db $10, $0b
@@ -10685,27 +10697,8 @@ HandleStompedShellE:
 	LDY PrimaryHardMode                          ; check primary hard mode flag
 	LDA RevivalRateData,y                        ; load timer setting according to flag
 	STA EnemyIntervalTimer,x                     ; set as enemy timer to revive stomped enemy
+SetBounce:
 	JMP HandleJumpSwim                           ; handle bounce physics
-
-ChkEnemyFaceRight:
-	LDA Enemy_MovingDir,x                        ; check to see if enemy is moving to the right
-	CMP #$01
-	BNE LInj                                     ; if not, branch
-	JMP InjurePlayer                             ; otherwise go back to hurt player
-LInj:
-	JSR EnemyTurnAround                          ; turn the enemy around, if necessary
-	JMP InjurePlayer                             ; go back to hurt player
-
-
-EnemyFacePlayer:
-	LDY #$01                                     ; set to move right by default
-	JSR PlayerEnemyDiff                          ; get horizontal difference between player and enemy
-	BPL SFcRt                                    ; if enemy is to the right of player, do not increment
-	INY                                          ; otherwise, increment to set to move to the left
-SFcRt:
-	STY Enemy_MovingDir,x                        ; set moving direction here
-	DEY                                          ; then decrement to use as a proper offset
-	RTS
 
 SetupFloateyNumber:
 	STA FloateyNum_Control,x                     ; set number of points control for floatey numbers
