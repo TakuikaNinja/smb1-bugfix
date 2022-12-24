@@ -10451,7 +10451,8 @@ KickedShellXSpdData:
 	.db $30, $d0
 
 DemotedKoopaXSpdData:
-	.db $08, $f8
+	.db $08, $0C 
+	.db $f8, $f4
 
 PlayerEnemyCollision:
 	LDA FrameCounter                             ; check counter for d0 set
@@ -10525,8 +10526,13 @@ HandlePECollisions:
 	LDA Enemy_State,x                            ; set d7 in enemy state, thus become moving shell
 	ORA #%10000000
 	STA Enemy_State,x
-	JSR EnemyFacePlayer                          ; set moving direction and get offset
-	LDA KickedShellXSpdData,y                    ; load and set horizontal speed data with offset
+	LDY #$01                                     ; set to move right by default
+	JSR PlayerEnemyDiff                          ; get horizontal difference between player and enemy
+	BPL SFcRt                                    ; if enemy is to the right of player, do not increment
+	INY                                          ; otherwise, increment to set to move to the left
+SFcRt:
+	STY Enemy_MovingDir,x                        ; set moving direction here
+	LDA KickedShellXSpdData-1,y                  ; load and set horizontal speed data with offset (adjusted by -1)
 	STA Enemy_X_Speed,x
 	LDA #$03                                     ; add three to whatever the stomp counter contains
 	CLC                                          ; to give points for kicking the shell
@@ -10647,7 +10653,7 @@ EnemyStompedPts:
 	STA Enemy_State,x                            ; set d5 in enemy state
 	JSR InitVStf                                 ; nullify vertical speed, physics-related thing,
 	STA Enemy_X_Speed,x                          ; and horizontal speed
-	JMP HandleJumpSwim                           ; handle bounce physics
+	BEQ SetBounce                                ; handle bounce physics
 
 ChkForDemoteKoopa:
 	CMP #$09                                     ; branch elsewhere if enemy object < $09
@@ -10656,6 +10662,7 @@ ChkForDemoteKoopa:
 	BNE Green                                    ; no, so branch ahead
 	AND #%00000011                               ; yes, so demote to red koopa
 	.db $2c                                      ; [skip 2 bytes]
+
 Green:
 	AND #%00000001                               ; demote koopa paratroopas to ordinary troopas
 	STA Enemy_ID,x
@@ -10664,10 +10671,13 @@ Green:
 	LDA #$03                                     ; award 400 points to the player
 	JSR SetupFloateyNumber
 	JSR InitVStf                                 ; nullify physics-related thing and vertical speed
-	JSR EnemyFacePlayer                          ; turn enemy around if necessary
-	LDA DemotedKoopaXSpdData,y
+	LDA Enemy_MovingDir,x                        ; load the current movement direction (possible values are 1:right or 2:left)
+	ASL                                          ; multiply by two (1 -> 2; 2 -> 4)
+	ADC PrimaryHardMode							 ; add the quest 2 flag (possible results: 2,3,4,5)
+	TAY                                          ; transfer to Y to use as an index
+	LDA DemotedKoopaXSpdData-2,y                 ; load speed data, adjusted by -2 (possible effective indicies: 0,1,2,3)
 	STA Enemy_X_Speed,x                          ; set appropriate moving speed based on direction
-	JMP HandleJumpSwim                           ; handle bounce physics
+	BNE SetBounce                                ; handle bounce physics
 
 RevivalRateData:
 	.db $10, $0b
@@ -10684,27 +10694,8 @@ HandleStompedShellE:
 	LDY PrimaryHardMode                          ; check primary hard mode flag
 	LDA RevivalRateData,y                        ; load timer setting according to flag
 	STA EnemyIntervalTimer,x                     ; set as enemy timer to revive stomped enemy
+SetBounce:
 	JMP HandleJumpSwim                           ; handle bounce physics
-
-ChkEnemyFaceRight:
-	LDA Enemy_MovingDir,x                        ; check to see if enemy is moving to the right
-	CMP #$01
-	BNE LInj                                     ; if not, branch
-	JMP InjurePlayer                             ; otherwise go back to hurt player
-LInj:
-	JSR EnemyTurnAround                          ; turn the enemy around, if necessary
-	JMP InjurePlayer                             ; go back to hurt player
-
-
-EnemyFacePlayer:
-	LDY #$01                                     ; set to move right by default
-	JSR PlayerEnemyDiff                          ; get horizontal difference between player and enemy
-	BPL SFcRt                                    ; if enemy is to the right of player, do not increment
-	INY                                          ; otherwise, increment to set to move to the left
-SFcRt:
-	STY Enemy_MovingDir,x                        ; set moving direction here
-	DEY                                          ; then decrement to use as a proper offset
-	RTS
 
 SetupFloateyNumber:
 	STA FloateyNum_Control,x                     ; set number of points control for floatey numbers
