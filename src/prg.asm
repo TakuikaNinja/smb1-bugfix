@@ -6897,10 +6897,10 @@ CheckEndofBuffer:
 	CPX #$05                                     ; otherwise check current index against end of buffer
 	BCC CheckRightBounds                         ; if not past end of buffer, branch
 	INY
-	LDA (EnemyData),y                            ; get next enemy to load
+	LDA (EnemyData),y                            ; get second byte of enemy to load
 	AND #%00111111                               ; mask out bits to get enemy identifier
 	CMP #PowerUpObject                           ; check for powerup
-	BEQ CheckRightBounds                         ; branch if true
+	BEQ CheckRightBounds                         ; branch if true (allow enemies to overwrite index 5)
 	RTS                                          ; otherwise leave (i.e don't load enemy)
 
 CheckRightBounds:
