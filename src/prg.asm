@@ -8097,7 +8097,7 @@ JmpEO:
 	.dw NoRunCode                                ; for objects $30-$35
 	.dw RunStarFlagObj
 	.dw JumpspringHandler
-	.dw EnemiesCollision
+	.dw EnemiesCollision                         ; allow Bullet Bill (cannon variant) to collide with enemies
 	.dw WarpZoneObject
 	.dw RunRetainerObj
 
@@ -10734,7 +10734,7 @@ EnemiesCollision:
 	LDA AreaType
 	BEQ ExSFN                                    ; if water area type, leave
 	LDA Enemy_ID,x
-	CMP #BulletBill_CannonVar                    ; check for bullet bill (cannon varient) first
+	CMP #BulletBill_CannonVar                    ; check for bullet bill (cannon variant) first
 	BEQ SkipChecks1                              ; branch ahead if true
 	CMP #$15                                     ; if enemy object => $15, branch to leave
 	BCS ExitECRoutine
@@ -10755,7 +10755,7 @@ ECLoop:
 	LDA Enemy_Flag,x                             ; check enemy object enable flag
 	BEQ ReadyNextEnemy                           ; branch if flag not set
 	LDA Enemy_ID,x
-	CMP #BulletBill_CannonVar                    ; check for bullet bill (cannon varient) first
+	CMP #BulletBill_CannonVar                    ; check for bullet bill (cannon variant) first
 	BEQ SkipChecks2                              ; branch ahead if true
 	CMP #$15                                     ; check for enemy object => $15
 	BCS ReadyNextEnemy                           ; branch if true
