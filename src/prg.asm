@@ -3180,13 +3180,13 @@ FrenzyIDData:
 	.db FlyCheepCheepFrenzy, BBill_CCheep_Frenzy, Stop_Frenzy
 
 AreaFrenzy:
-	LDX $00                                      ; use area object identifier bit as offset
-	LDA FrenzyIDData-8,x                         ; note that it starts at 8, thus weird address here
-	LDY #$05
+	LDY $00                                      ; use area object identifier bit as offset
+	LDA FrenzyIDData-8,y                         ; note that it starts at 8, thus weird address here
+	LDX #$05
 FreCompLoop:
-	DEY                                          ; check regular slots of enemy object buffer
+	DEX                                          ; check regular slots of enemy object buffer
 	BMI ExitAFrenzy                              ; if all slots checked and enemy object not found, branch to store
-	CMP Enemy_ID,y                               ; check for enemy object in buffer versus frenzy object
+	CMP Enemy_ID,X                               ; check for enemy object in buffer versus frenzy object
 	BNE FreCompLoop
 	LDA #$00                                     ; if enemy object already present, nullify queue and leave
 ExitAFrenzy:
@@ -6902,7 +6902,7 @@ CheckEndofBuffer:
 	INY
 	LDA (EnemyData),y                            ; get second byte of enemy to load
 	AND #%00111111                               ; mask out bits to get enemy identifier
-	CMP #PowerUpObject                           ; check for powerup
+	CMP #PowerUpObject                           ; check for power-up
 	BEQ CheckRightBounds                         ; branch if true (allow enemies to overwrite index 5)
 	RTS                                          ; otherwise leave (i.e don't load enemy)
 
