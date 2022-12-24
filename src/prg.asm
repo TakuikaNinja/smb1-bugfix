@@ -865,9 +865,9 @@ BackgroundColors:
 
 PlayerColors:
 	.db $22, $16, $27, $18                       ; mario's colors
-	.db $22, $19, $27, $2d                       ; luigi's colors
+	.db $22, $30, $27, $19                       ; luigi's colors
 	.db $22, $37, $27, $16                       ; fiery mario's colors
-	.db $22, $30, $27, $19                       ; fiery luigi's colors
+	.db $22, $29, $27, $16                       ; fiery luigi's colors (from SMM2)
 
 GetBackgroundColor:
 	LDY BackgroundColorCtrl                      ; check background color control
