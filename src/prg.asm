@@ -11394,6 +11394,8 @@ FlagpoleCollision:
 	BEQ PutPlayerOnVine                          ; if running, branch to end of climbing code
 	LDA #$01
 	STA PlayerFacingDir                          ; set player's facing direction to right
+	LSR
+	STA StarInvincibleTimer						 ; FIX: starman doesn't mess up the level complete music anymore
 	INC ScrollLock                               ; set scroll lock flag
 	LDA GameEngineSubroutine
 	CMP #$04                                     ; check for flagpole slide routine running
