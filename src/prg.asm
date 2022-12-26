@@ -885,8 +885,6 @@ GetPlayerColors:
 	ASL                     					 ;shift to the left twice, to multiply by 4, the amount of colours in the palette...
 	ASL
 	TAY                     					 ;... and we get our table offset to put in the Y register!
-StartClrGet:
-	TAY
 	LDA #$03                                     ; do four colors
 	STA $00
 ClrGetLoop:
@@ -11387,8 +11385,6 @@ ChkForFlagpole:
 	BNE VineCollision                            ; branch to alternate code if flagpole shaft not found
 
 FlagpoleCollision:
-	LDA #$00
-	STA StarInvincibleTimer                      ; clear star invincible timer (prevent music glitch)
 	LDA GameEngineSubroutine
 	CMP #$05                                     ; check for end-of-level routine running
 	BEQ PutPlayerOnVine                          ; if running, branch to end of climbing code
