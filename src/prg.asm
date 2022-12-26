@@ -1102,7 +1102,7 @@ WorldLivesDisplay:
 	.db $21, $4b, $09, $20, $18                  ; "WORLD  - " used on lives display
 	.db $1b, $15, $0d, $24, $24, $28, $24
 	.db $22, $0c, $47, $24                       ; possibly used to clear time up
-	.db $00, $00, $00, $00                       ; attribute table data for crown if more than 9 lives
+	.db $23, $dc, $01, $ba                       ; attribute table data for crown if more than 9 lives
 	.db $ff
 
 TwoPlayerTimeUp:
@@ -1177,33 +1177,35 @@ EndGameText:
 	BCS PrintWarpZoneNumbers
 	DEX                                          ; are we printing the world/lives display?
 	BNE CheckPlayerName                          ; if not, branch to check player's name
-	STX VRAM_Buffer1+6							 ; initialise numbers for the life counter to 0
-	STX VRAM_Buffer1+7
-	LDY #$24									 ; load the empty tile in Y. We're gonna need it.
-	LDA NumberofLives							 ; load the number of lives to our accumulator: we're gonna take it for a ride
-LivesLoop:
-	CMP #100									 
-	BCC LivesBelowHundred						 ; if our lives are below 100, skip ahead
-	SBC #100									 ; otherwise, subtract 100 
-	INC VRAM_Buffer1+6							 ; and increment the 100's digit
-	BNE LivesLoop
-LivesBelowHundred:
-	CMP #10
-	BCC LivesBelowTen						 	 ; if our lives are below 10, skip ahead
-	SBC #10										 ; otherwise, subtract 10 
-	INC VRAM_Buffer1+7							 ; and increment the 10's digit
-	BNE LivesBelowHundred
-LivesBelowTen:
-	STA VRAM_Buffer1+8							 ; finally, we store the remainder in the 1's digit
-	INX
-DitchDigit:
-	LDA VRAM_Buffer1+6,x					     ; if our digit is not zero
-	BNE KeepDigits								 ; ignore the next bit of code
-	LDA #$24									 ; otherwise, overwrite it with empty space
-	STA VRAM_Buffer1+6,x
-	DEX
-	BEQ DitchDigit
+
+	LDA NumberofLives        					 ;otherwise, check number of lives
+	LDY #$00
+LivesLoop:     
+	TAX
+    CMP #10                  					 ;more than 9 lives in a?
+    BCC PutLives
+	SBC #10                  					 ;if so, subtract 10 and
+	INY                     					 ;increment the left digit
+	BNE LivesLoop 
+PutLives:      
+	CPY #10                 					 ;check if the 10's digit is 10
+	BCC NoCrown             					 ;if not, we did our job
+	CPY #11                 					 ;check if the 10's digit is 11 instead (in advance because we use Y afterwards)
+	LDY #$ba
+	STY VRAM_Buffer1+29
+	LDY #$9f                					 ;otherwise, the 10's digit is a crown
+	BCC NoCrown             					 ;if not, we did our job
+	LDX #$fa
+	STX VRAM_Buffer1+29
+	LDX #$9f                					 ;now also the 1's digit is a crown!
+NoCrown:  
+	CPY #$00
+	BNE KeepDigits
+	LDY #$24
 KeepDigits:
+	LDY VRAM_Buffer1+7
+	STX VRAM_Buffer1+8
+
 	LDY WorldNumber                              ; write world and level numbers (incremented for display)
 	INY                                          ; to the buffer in the spaces surrounding the dash
 	STY VRAM_Buffer1+19
@@ -6051,9 +6053,10 @@ StatusBarNybbles:
 	.db $02, $13
 
 IncrementLives:
-	INC NumberofLives                            ; give the player an extra life
-	BNE NoFix                                    ; overflowed to 0?
-	DEC NumberofLives                            ; if so revert the increment
+	LDA NumberofLives
+    CMP #110                     ;if the player has 👑👑 lives, which is technically 110
+    bcs NoFix	                 ;Do not increment life counter
+    inc NumberofLives            ;give player one extra life (1-up)
 NoFix:
 	LDA #Sfx_ExtraLife
 	STA Square2SoundQueue                        ; play 1-up sound
