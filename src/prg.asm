@@ -879,16 +879,12 @@ NoBGColor:
 
 GetPlayerColors:
 	LDX VRAM_Buffer1_Offset                      ; get current buffer offset
-	LDA #$00
-	LDY CurrentPlayer                            ; check which player is on the screen
-	BEQ ChkFiery
-	LDA #$04                                     ; load offset for luigi
-ChkFiery:
-	LDY PlayerStatus                             ; check player status
-	CPY #$02
-	BNE StartClrGet                              ; if fiery, load alternate offset for fiery player
-	CLC
-	ADC #$08
+	LDA PlayerStatus        					 ;check player status
+	AND #$02                 					 ;we only care if the player is firey, which is in bit 1.
+	ORA CurrentPlayer       					 ;add the current player in bit 0.
+	ASL                     					 ;shift to the left twice, to multiply by 4, the amount of colours in the palette...
+	ASL
+	TAY                     					 ;... and we get our table offset to put in the Y register!
 StartClrGet:
 	TAY
 	LDA #$03                                     ; do four colors
