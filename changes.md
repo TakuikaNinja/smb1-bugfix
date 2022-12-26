@@ -23,7 +23,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Small Mario's walking animation now flows better.
 - [ ] Stars are now guaranteed to jump out of their blocks, as opposed to sometimes falling down.
 + [x] The lives system now uses the zero flag instead of the negative flag for game over detection. (no more 128 lives glitch)
-- [ ] The lives counter now displays the number of lives above 9 like normal. (todo?)
+- [x] The lives counter now displays the number of lives above 9 like normal.
 - [ ] Lives are now capped at 99(?) to prevent overflows.
 - [ ] The lives screen now properly reflects Mario's power-up state.
 - [x] Player status is now correctly set to falling while collecting a power-up. (no more item jump)
