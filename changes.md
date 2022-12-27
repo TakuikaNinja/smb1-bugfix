@@ -14,34 +14,35 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays. (unrelated to the aforementioned bug).
 
 ## Bug Fixes & Small Tweaks
-+ [x] Scroll lock object in underground warpzone now works as intended. (no more minus world)
-+ [x] An erroneous increment of the warpzone value has been removed. (1-2 warpzone pipe destination stays at 1-2 exit until warp zone loads)
++ [x] Scroll lock object in underground warp zone now works as intended. (no more minus world)
++ [x] An erroneous increment of the warp zone value has been removed. (1-2 warpzone pipe destination stays at 1-2 exit until warp zone loads)
 - [x] Lakitus now throw their spinies as originally intended.
 + [x] Warm start detection & continue functions now check ContinueWorld for a valid value. (no more glitch worlds)
-- [x] Falling while crouching now keeps your sprite crouched.
+- [x] Falling while crouching now keeps your sprite crouched. Additionally, the down input now nullifies left/right inputs while crouching on the ground.
 - [x] While underwater, crouching no longer messes up the hitbox.
 - [x] Small Mario's walking animation now flows better.
-- [ ] Stars are now guaranteed to jump out of their blocks, as opposed to sometimes falling down.
+- [x] Stars are now guaranteed to jump out of their blocks, as opposed to sometimes falling down.
 + [x] The lives system now uses the zero flag instead of the negative flag for game over detection. (no more 128 lives glitch)
 - [ ] The lives counter now displays the number of lives above 9 like normal. (todo?)
 - [ ] Lives are now capped at 99(?) to prevent overflows.
 - [ ] The lives screen now properly reflects Mario's power-up state.
 - [x] Player status is now correctly set to falling while collecting a power-up. (no more item jump)
 - [x] Getting the flagpole stops the star invincibility, to prevent audio glitches.
-- [ ] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
-- [ ] Holding the jump button no longer makes Mario jump while entering an area.
+- [x] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
+- [x] Holding the jump button no longer makes Mario jump while entering an area.
 + [x] PlayerStatus & PlayerSize is now kept in sync when getting hit on the same frame as touching the axe. (no more Small Fire Mario, sorry)
 + [x] Dying on the same frame as touching the axe no longer decrements the lives counter. (you can still do this without penalty, though)
 + [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
-- [ ] Kicked shells now keep their momentum while going off a ledge.
+- [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
-- [x] Fire Mario and Fire Luigi now have separate palettes. (new colors for normal luigi, whereas fiery uses the old normal palette)
+- [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)
-- [x] When entering a warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
+- [x] When entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
++ [x] When entering a vertical warp-pipe, Mario will now always stand still like in later entries.
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
 + [ ] The locations of some warp destination change and enemy despawn triggers have been tweaked.
-+ [ ] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
++ [x] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
 + [ ] Scroll padding/centering is more robust. (todo?)
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
@@ -61,8 +62,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 
 ## Enemy Behaviour Changes
 - [x] Hammers now travel along their arc, regardless of whether they touch Mario.
-- [x] Enemies like Goombas, Koopas, Buzzy Beetles and Spinies will no longer turn around when colliding with Mario.
-- [ ] It is now possible to defeat Spinies by hitting blocks underneath them.
+- [x] Enemies like Goombas, Koopas, Buzzy Beetles and Spinies will only turn around when colliding with walls or other enemies.
+- [x] It is now possible to defeat Spinies by hitting blocks underneath them.
 + [x] Paratroopas will now be set to the falling state instead of the grounded state when stomped. 
 + [x] Red Paratroopas will now be properly demoted to Red Koopas when stomped.
 + [x] Bullet Bills fired from cannons are now able to collide with enemies, including kicked shells. (notably 7-1, now you can farm lives there)
@@ -81,10 +82,10 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Springboard vertical acceleration is now defined. (whatever that means)
 
 ## Graphics Changes
-- [ ] Added small one-pixel graphics tweaks to Buzzy Beetles, Hammer Bros. and Toad.
-- [ ] Made the outlines of bushes and clouds continuous.
+- [x] Added small one-pixel graphics tweaks to Buzzy Beetles, Hammer Bros. and Toad.
+- [x] Made the outlines of bushes and clouds continuous.
 - [ ] Utulised an extra sprite to add a small animation to Piranha Plants.
-- [ ] Made Toad smile more. :) (might revert this change honestly)
-- [ ] The hands of Mario's growing sprite and jump sprite have been fixed. (partial)
+- [x] Made Toad smile more. :)
+- [x] The hands of Mario's growing sprite and jump sprite have been fixed.
 - [ ] Hammer Bros. now bob up and down in their animation as well.
-- [ ] Super Mario's jump sprite has been fixed to match the eyes and cap of the other sprites. (partial)
+- [x] Super Mario's jump sprite has been fixed to match the eyes and cap of the other sprites.
