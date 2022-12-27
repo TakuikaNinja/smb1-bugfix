@@ -4833,13 +4833,18 @@ ProcSwim:
 	JSR GetPlayerAnimSpeed                       ; do a sub to get animation frame timing
 	LDA Player_Y_Position
 	CMP #$14                                     ; check vertical position against preset value
-	BCS LRAir                                    ; if not yet reached a certain position, branch ahead
+	BCS LRWater                                  ; if not yet reached a certain position, branch ahead
+;	BCS LRAir                                    ; if not yet reached a certain position, branch ahead
 	LDA #$18
 	STA VerticalForce                            ; otherwise set fractional
+LRWater:
+	LDA Left_Right_Buttons                       ; check left/right controller bits (check for swimming)
+	BEQ LRAir                                    ; if not pressing any, skip
+	STA PlayerFacingDir                          ; otherwise set facing direction accordingly
 LRAir:
 	LDA Left_Right_Buttons                       ; check left/right controller bits (check for jumping/falling)
 	BEQ JSMove                                   ; if not pressing any, skip
-	STA PlayerFacingDir                          ; otherwise set facing direction accordingly
+;	STA PlayerFacingDir                          ; otherwise set facing direction accordingly
 	JSR ImposeFriction                           ; otherwise process horizontal movement
 JSMove:
 	JSR JmpMove
@@ -5026,7 +5031,7 @@ ProcJumping:
 	BNE InitJS
 	LDA Player_Y_Speed                           ; check player's vertical speed
 	BPL InitJS                                   ; if player's vertical speed motionless or down, branch
-	JMP X_Physics                                ; if timer at zero and player still rising, do not swim
+	BMI X_Physics                                ; if timer at zero and player still rising, do not swim
 InitJS:
 	JSR HandleJumpSwim
 	LDA SwimmingFlag                             ; if swimming flag disabled, branch
@@ -5038,7 +5043,7 @@ InitJS:
 	BCS X_Physics                                ; if below a certain point, branch
 	LDA #$00                                     ; otherwise reset player's vertical speed
 	STA Player_Y_Speed                           ; and jump to something else to keep player
-	JMP X_Physics                                ; from swimming above water level
+	BEQ X_Physics                                ; from swimming above water level
 PJumpSnd:
 	LDA #Sfx_BigJump                             ; load big mario's jump sound by default
 	LDY PlayerSize                               ; is mario big?
@@ -5090,11 +5095,11 @@ GetXPhy2:
 	STA FrictionAdderLow
 	LDA #$00
 	STA FrictionAdderHigh                        ; init something here
-	LDA PlayerFacingDir
-	CMP Player_MovingDir                         ; check facing direction against moving direction
-	BEQ ExitPhy                                  ; if the same, branch to leave
 	LDA Left_Right_Buttons                       ; get left/right controller bits
 	BEQ ExitPhy                                  ; if not pressed, branch to leave
+	;LDA PlayerFacingDir
+	CMP Player_MovingDir                         ; check facing direction against moving direction
+	BEQ ExitPhy                                  ; if the same, branch to leave
 	ASL FrictionAdderLow                         ; otherwise shift d7 of friction adder low into carry
 	ROL FrictionAdderHigh                        ; then rotate carry onto d0 of friction adder high
 ExitPhy:
