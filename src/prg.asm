@@ -4357,6 +4357,9 @@ PlayerRdy:
 	STA AltEntranceControl                       ; init mode of entry
 	STA DisableCollisionDet                      ; init collision detection disable flag
 	STA JoypadOverride                           ; nullify controller override bits
+	lda #A_Button | #B_Button                    ; store A and B button presses in current A_B         
+	sta A_B_Buttons                              ; and pretend they're pressed right now.
+	sta PreviousA_B_Buttons                      ; and last frame. (prevents bufferred A/B presses)
 ExitEntr:
 	RTS                                          ; leave!
 
@@ -4395,11 +4398,10 @@ SaveJoyp:
 	BEQ SizeChk                                  ; if not, branch
 	LDA Player_State                             ; check player's state
 	BNE SizeChk                                  ; if not on the ground, branch
-	LDY Left_Right_Buttons                       ; check left and right
-	BEQ SizeChk                                  ; if neither pressed, branch
-	LDA #$00
-	STA Left_Right_Buttons                       ; if pressing down while on the ground,
-	STA Up_Down_Buttons                          ; nullify directional bits
+	lda PlayerSize
+	bne SizeChk
+	lda #$00                                     ; don't press left and right
+	sta Left_Right_Buttons                       ; if we're crouching
 SizeChk:
 	JSR PlayerMovementSubs                       ; run movement subroutines
 	LDY #$01                                     ; is player small?
@@ -4508,6 +4510,7 @@ VerticalPipeEntry:
 	LDA #$00                                     ; reset horizontal speed
 	STA Player_X_Speed
 	STA SavedJoypadBits                          ; nullify input (prevents running while entering pipes)
+	sta CrouchingFlag                            ; nullify the crouching flag as well
 	LDA #$01                                     ; set 1 as movement amount
 	JSR MovePlayerYAxis                          ; do sub to move player downwards
 	JSR ScrollHandler                            ; do sub to scroll screen with saved force if necessary
@@ -4731,6 +4734,8 @@ PlayerMovementSubs:
 	BNE ProcMove                                 ; if not on the ground, branch
 	LDA Up_Down_Buttons                          ; load controller bits for up and down
 	AND #%00000100                               ; single out bit for down button
+	lsr
+	lsr
 SetCrouch:
 	STA CrouchingFlag                            ; store value in crouch flag
 ProcMove:
@@ -6167,6 +6172,11 @@ ChkPUSte:
 	LDA Enemy_State+5                            ; check power-up object's state
 	CMP #$06                                     ; for if power-up has risen enough
 	BCC ExitPUp                                  ; if not, don't even bother running these routines
+	lda PowerUpType
+	cmp #$02                                     ; check if this is a star
+	bne RunPUSubs                                ; if not, move along.
+	lda #$fd
+	sta Enemy_Y_Speed,x                          ; otherwise, set y speed to force bounce
 RunPUSubs:
 	JSR RelativeEnemyPosition                    ; get coordinates relative to screen
 	JSR GetEnemyOffscreenBits                    ; get offscreen bits
@@ -8257,9 +8267,6 @@ PdbM:
 HammerThrowTmrData:
 	.db $30, $1c
 
-XSpeedAdderData:
-	.db $00, $e8, $00, $18
-
 RevivedXSpeed:
 	.db $08, $f8, $0c, $f4
 
@@ -8369,46 +8376,15 @@ MoveNormalEnemy:
 	BCS ReviveStunned                            ; if enemy in states $03 or $04, skip ahead to yet another part
 FallE:
 	JSR MoveD_EnemyVertically                    ; do a sub here to move enemy downwards
-	LDY #$00
-	LDA Enemy_State,x                            ; check for enemy state $02
-	CMP #$02
-	BEQ MEHor                                    ; if found, branch to move enemy horizontally
-	AND #%01000000                               ; check for d6 set
-	BEQ SteadM                                   ; if not set, branch to something else
-	LDA Enemy_ID,x
-	CMP #PowerUpObject                           ; check for power-up object
-	BEQ SteadM
-	BNE SlowM                                    ; if any other object where d6 set, jump to set Y
-MEHor:
-	JMP MoveEnemyHorizontally                    ; jump here to move enemy horizontally for <> $2e and d6 set
-
-SlowM:
-	LDY #$01                                     ; if branched here, increment Y to slow horizontal movement
 SteadM:
-	LDA Enemy_X_Speed,x                          ; get current horizontal speed
-	PHA                                          ; save to stack
-	BPL AddHS                                    ; if not moving or moving right, skip, leave Y alone
-	INY
-	INY                                          ; otherwise increment Y to next data
-AddHS:
-	CLC
-	ADC XSpeedAdderData,y                        ; add value here to slow enemy down if necessary
-	STA Enemy_X_Speed,x                          ; save as horizontal speed temporarily
-	JSR MoveEnemyHorizontally                    ; then do a sub to move horizontally
-	PLA
-	STA Enemy_X_Speed,x                          ; get old horizontal speed from stack and return to
-	RTS                                          ; original memory location, then leave
+	jmp MoveEnemyHorizontally                    ; jump to move enemy horizontally
 
 ReviveStunned:
 	LDA EnemyIntervalTimer,x                     ; if enemy timer not expired yet,
 	BNE ChkKillGoomba                            ; skip ahead to something else
 	STA Enemy_State,x                            ; otherwise initialize enemy state to normal
-	LDA FrameCounter
-	AND #$01                                     ; get d0 of frame counter
-	TAY                                          ; use as Y and increment for movement direction
-	INY
-	STY Enemy_MovingDir,x                        ; store as pseudorandom movement direction
-	DEY                                          ; decrement for use as pointer
+	ldy Enemy_MovingDir,x                        ; get enemy movement direction
+	dey                                          ; decrement for use as pointer
 	LDA PrimaryHardMode                          ; check primary hard mode flag
 	BEQ SetRSpd                                  ; if not set, use pointer as-is
 	INY
@@ -10676,7 +10652,7 @@ Green:
 	JSR InitVStf                                 ; nullify physics-related thing and vertical speed
 	LDA Enemy_MovingDir,x                        ; load the current movement direction (possible values are 1:right or 2:left)
 	ASL                                          ; multiply by two (1 -> 2; 2 -> 4)
-	ADC PrimaryHardMode							 ; add the quest 2 flag (possible results: 2,3,4,5)
+	ADC PrimaryHardMode                          ; add the quest 2 flag (possible results: 2,3,4,5)
 	TAY                                          ; transfer to Y to use as an index
 	LDA DemotedKoopaXSpdData-2,y                 ; load speed data, adjusted by -2 (possible effective indicies: 0,1,2,3)
 	STA Enemy_X_Speed,x                          ; set appropriate moving speed based on direction
@@ -11178,9 +11154,15 @@ DoFootCheck:
 	STA $00                                      ; save bottom right metatile here
 	PLA
 	STA $01                                      ; pull bottom left metatile and save here
-	BNE ChkFootMTile                             ; if anything here, skip this part
+	beq SkipFoot                                 ; if nothing here, skip this foot.
+	jsr ChkInvisibleMTiles                       ; do sub to check for hidden coin or 1-up blocks
+	beq SkipFoot                                 ; if either found, skip this foot.
+	BNE ChkFootMTile                             ; if anything here, skip this part (collision found)
+SkipFoot:
 	LDA $00                                      ; otherwise check for anything in bottom right metatile
 	BEQ DoPlayerSideCheck                        ; and skip ahead if not
+	jsr ChkInvisibleMTiles                       ; do sub to check for hidden coin or 1-up blocks
+	beq DoPlayerSideCheck                        ; if either found, skip this foot as well	
 	JSR CheckForCoinMTiles                       ; check to see if player touched coin with their right foot
 	BCC ChkFootMTile                             ; if not, skip unconditional jump and continue code
 
@@ -11196,8 +11178,6 @@ ChkFootMTile:
 	BNE ContChk                                  ; if player did not touch axe, skip ahead
 	JMP HandleAxeMetatile                        ; otherwise jump to set modes of operation
 ContChk:
-	JSR ChkInvisibleMTiles                       ; do sub to check for hidden coin or 1-up blocks
-	BEQ DoPlayerSideCheck                        ; if either found, branch
 	LDY JumpspringAnimCtrl                       ; if jumpspring animating right now,
 	BNE InitSteP                                 ; branch ahead
 	LDY $04                                      ; check lower nybble of vertical coordinate returned
@@ -11671,8 +11651,12 @@ HandleEToBGCollision:
 	CMP #$15                                     ; if enemy object => $15, branch ahead
 	BCS ChkToStunEnemies
 	CMP #Goomba                                  ; if enemy object not goomba, branch ahead of this routine
-	BNE GiveOEPoints
-	JSR KillEnemyAboveBlock                      ; if enemy object IS goomba, do this sub
+	beq KEAB
+	cmp #Spiny
+	beq KEAB
+	bne GiveOEPoints
+KEAB:
+	jsr KillEnemyAboveBlock                      ; if enemy object is goomba or spiky, do this sub
 
 GiveOEPoints:
 	LDA #$01                                     ; award 100 points for hitting block beneath enemy
@@ -11766,28 +11750,14 @@ SetForStn:
 ;	RTS                                          ; then leave
 
 ProcEnemyDirection:
-	LDA Enemy_ID,x                               ; check enemy identifier for goomba
-	CMP #Goomba                                  ; branch if found
-	BEQ LandEnemyInitState
-	CMP #Spiny                                   ; check for spiny
-	BNE InvtD                                    ; branch if not found
-	LDA #$01
-	STA Enemy_MovingDir,x                        ; send enemy moving to the right by default
-	LDA #$08
-	STA Enemy_X_Speed,x                          ; set horizontal speed accordingly
-	LDA FrameCounter
-	AND #%00000111                               ; if timed appropriately, spiny will skip over
-	BEQ LandEnemyInitState                       ; trying to face the player
-InvtD:
-	LDY #$01                                     ; load 1 for enemy to face the left (inverted here)
-	JSR PlayerEnemyDiff                          ; get horizontal difference between player and enemy
-	BPL CNwCDir                                  ; if enemy to the right of player, branch
-	INY                                          ; if to the left, increment by one for enemy to face right (inverted)
-CNwCDir:
-	TYA
-	CMP Enemy_MovingDir,x                        ; compare direction in A with current direction in memory
-	BNE LandEnemyInitState
-	JSR ChkForBump_HammerBroJ                    ; if equal, not facing in correct dir, do sub to turn around
+	lda #$08
+	sta Enemy_X_Speed,x                         ; set horizontal speed to the right
+	ldy Enemy_MovingDir,x                       ; load enemy movement direction
+	lda #$01
+	sta Enemy_MovingDir,x                       ; set enemy movement direction to the right as well
+	cpy #$01                                    ; if we were indeed moving to the right,
+	beq LandEnemyInitState                      ; nothing left to do
+	jsr InvEnemyDir                             ; otherwise, invert direction.
 
 LandEnemyInitState:
 	JSR EnemyLanding                             ; land enemy properly
