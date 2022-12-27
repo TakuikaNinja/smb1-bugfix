@@ -33,7 +33,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] PlayerStatus & PlayerSize is now kept in sync when getting hit on the same frame as touching the axe. (no more Small Fire Mario, sorry)
 + [x] Dying on the same frame as touching the axe no longer decrements the lives counter. (you can still do this without penalty, though)
 + [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
-- [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but some oddities may still be visible.
+- [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
