@@ -887,18 +887,12 @@ NoBGColor:
 
 GetPlayerColors:
 	LDX VRAM_Buffer1_Offset                      ; get current buffer offset
-	LDA #$00
-	LDY CurrentPlayer                            ; check which player is on the screen
-	BEQ ChkFiery
-	LDA #$04                                     ; load offset for luigi
-ChkFiery:
-	LDY PlayerStatus                             ; check player status
-	CPY #$02
-	BNE StartClrGet                              ; if fiery, load alternate offset for fiery player
-	CLC
-	ADC #$08
-StartClrGet:
-	TAY
+	LDA PlayerStatus        					 ;check player status
+	AND #$02                 					 ;we only care if the player is firey, which is in bit 1.
+	ORA CurrentPlayer       					 ;add the current player in bit 0.
+	ASL                     					 ;shift to the left twice, to multiply by 4, the amount of colours in the palette...
+	ASL
+	TAY                     					 ;... and we get our table offset to put in the Y register!
 	LDA #$03                                     ; do four colors
 	STA $00
 ClrGetLoop:
@@ -1191,14 +1185,35 @@ EndGameText:
 	BCS PrintWarpZoneNumbers
 	DEX                                          ; are we printing the world/lives display?
 	BNE CheckPlayerName                          ; if not, branch to check player's name
-	LDA NumberofLives                            ; otherwise, check number of lives
-	CMP #10                                      ; more than 9 lives?
-	BCC PutLives
-	SBC #10                                      ; if so, subtract 10 and put a crown tile
-	LDY #$9f                                     ; next to the difference...strange things happen if
-	STY VRAM_Buffer1+7                           ; the number of lives exceeds 19
-PutLives:
-	STA VRAM_Buffer1+8
+
+	LDA NumberofLives        					 ;otherwise, check number of lives
+	LDY #$00
+LivesLoop:     
+	TAX
+    CMP #10                  					 ;more than 9 lives in a?
+    BCC PutLives
+	SBC #10                  					 ;if so, subtract 10 and
+	INY                     					 ;increment the left digit
+	BNE LivesLoop 
+PutLives:      
+	CPY #10                 					 ;check if the 10's digit is 10
+	BCC NoCrown             					 ;if not, we did our job
+	CPY #11                 					 ;check if the 10's digit is 11 instead (in advance because we use Y afterwards)
+	LDY #$ba
+	STY VRAM_Buffer1+29
+	LDY #$9f                					 ;otherwise, the 10's digit is a crown
+	BCC NoCrown             					 ;if not, we did our job
+	LDX #$fa
+	STX VRAM_Buffer1+29
+	LDX #$9f                					 ;now also the 1's digit is a crown!
+NoCrown:  
+	CPY #$00
+	BNE KeepDigits
+	LDY #$24
+KeepDigits:
+	LDY VRAM_Buffer1+7
+	STX VRAM_Buffer1+8
+
 	LDY WorldNumber                              ; write world and level numbers (incremented for display)
 	INY                                          ; to the buffer in the spaces surrounding the dash
 	STY VRAM_Buffer1+19
@@ -6078,9 +6093,10 @@ StatusBarNybbles:
 	.db $02, $13
 
 IncrementLives:
-	INC NumberofLives                            ; give the player an extra life
-	BNE NoFix                                    ; overflowed to 0?
-	DEC NumberofLives                            ; if so revert the increment
+	LDA NumberofLives
+    CMP #110                     ;if the player has 👑👑 lives, which is technically 110
+    bcs NoFix	                 ;Do not increment life counter
+    inc NumberofLives            ;give player one extra life (1-up)
 NoFix:
 	LDA #Sfx_ExtraLife
 	STA Square2SoundQueue                        ; play 1-up sound
@@ -11378,13 +11394,13 @@ ChkForFlagpole:
 	BNE VineCollision                            ; branch to alternate code if flagpole shaft not found
 
 FlagpoleCollision:
-	LDA #$00
-	STA StarInvincibleTimer                      ; clear star invincible timer (prevent music glitch)
 	LDA GameEngineSubroutine
 	CMP #$05                                     ; check for end-of-level routine running
 	BEQ PutPlayerOnVine                          ; if running, branch to end of climbing code
 	LDA #$01
 	STA PlayerFacingDir                          ; set player's facing direction to right
+	LSR
+	STA StarInvincibleTimer						 ; FIX: starman doesn't mess up the level complete music anymore
 	INC ScrollLock                               ; set scroll lock flag
 	LDA GameEngineSubroutine
 	CMP #$04                                     ; check for flagpole slide routine running
