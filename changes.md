@@ -84,6 +84,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 ## Graphics Changes
 - [x] Added small one-pixel graphics tweaks to Buzzy Beetles, Hammer Bros. and Toad.
 + [x] Tweaked Koopa & Buzzy Beetle shells to look like their SMM2 counterparts. 
++ [x] Bowser's flames have been mirrored.
 - [x] Made the outlines of bushes and clouds continuous.
 - [ ] Utulised an extra sprite to add a small animation to Piranha Plants.
 - [x] Made Toad smile more. :)
