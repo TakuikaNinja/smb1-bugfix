@@ -212,7 +212,7 @@ L_GroundArea7:
 
 ; level 2-3/7-3
 L_GroundArea8:
-	.db $90, $11
+	.db $93, $11 ; water waves level backdrop tweak
 	.db $0f, $26, $6e, $10, $8b, $17, $af, $32, $d8, $62
 	.db $e8, $62, $fc, $3f, $ad, $c8, $f8, $64, $0c, $be
 	.db $43, $43, $f8, $64, $0c, $be, $73, $40, $84, $40 ; bridge railing overshoot fix
@@ -251,7 +251,7 @@ L_GroundArea10:
 
 ; level 5-1
 L_GroundArea11:
-	.db $52, $B1 ; starting castle fix
+	.db $52, $b1 ; starting castle fix
 	.db $0f, $20, $6e, $45, $0d, $02, $c8, $72, $1c, $81, $38, $72 ; starting castle fix
 	.db $0d, $05, $97, $34, $98, $62, $a3, $20, $b3, $06
 	.db $c3, $20, $cc, $03, $f9, $91, $2c, $81, $48, $62
@@ -262,9 +262,10 @@ L_GroundArea11:
 
 ; cloud level used in levels 2-1 and 5-2
 L_GroundArea12:
-	.db $00, $c1
+	.db $00, $d1 ; cloud scenery tweak
 	.db $4c, $00, $f4, $4f, $0d, $02, $02, $42, $43, $4f
-	.db $52, $c2, $de, $00, $5a, $c2, $4d, $c7
+	.db $2e, $81, $52, $42, $6e, $11, $de, $10 ; cloud scenery tweak
+	.db $5a, $c2, $4d, $c7
 	.db $fd
 
 ; level 4-3
@@ -394,12 +395,13 @@ L_GroundArea20:
 
 ; cloud level used in levels 3-1 and 6-2
 L_GroundArea21:
-	.db $06, $c1
+	.db $06, $d1 ; cloud scenery tweak
 	.db $4c, $00, $f4, $4f, $0d, $02, $06, $20, $24, $4f
+	.db $5e, $01, $8e, $11 ; cloud scenery tweak
 	.db $35, $a0, $36, $20, $53, $46, $d5, $20, $d6, $20
 	.db $34, $a1, $73, $49, $74, $20, $94, $20, $b4, $20
-	.db $d4, $20, $f4, $20, $2e, $80, $59, $42, $4d, $c7
-	.db $fd
+	.db $d4, $20, $f4, $20, $2e, $90 ; cloud scenery tweak 
+	.db $59, $42, $4d, $c7, $fd
 
 ; level 3-2
 L_GroundArea22:

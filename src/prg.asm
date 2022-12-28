@@ -49,6 +49,7 @@ GameLoop:
 	LSR
 	BCS SkipMainOper
 	JSR OperModeExecutionTree                    ; otherwise do one of many, many possible subroutines
+	JSR UpdateTopScore
 SkipMainOper:
 	INC NMISyncFlag
 NMIWait:
@@ -87,6 +88,11 @@ NonMaskableInterrupt:
 	PHA                                          ; backup X
 	TYA
 	PHA                                          ; backup Y
+	LDA $00
+	PHA
+	LDA $01
+	PHA                                          ; backup zpg vars used by nmi
+
 	LDA Mirror_PPU_CTRL_REG1                     ; disable NMIs in mirror reg
 	AND #%01111111                               ; save all other bits
 	STA Mirror_PPU_CTRL_REG1
@@ -134,10 +140,8 @@ InitBuffer:
 	STA VRAM_Buffer_AddrCtrl                     ; reinit address control to $0301
 	LDA Mirror_PPU_CTRL_REG2                     ; copy mirror of $2001 to register
 	STA PPU_CTRL_REG2
-;	JSR SoundEngine                              ; play sound
 	JSR ReadJoypads                              ; read joypads
 	JSR PauseRoutine                             ; handle pause
-	JSR UpdateTopScore
 	LDA GamePauseStatus                          ; check for pause status
 	LSR
 	BCS PauseSkip
@@ -149,7 +153,6 @@ DecTimers:
 	LDX #$14                                     ; load end offset for end of frame timers
 	DEC IntervalTimerControl                     ; decrement interval timer control,
 	BPL DecTimersLoop                            ; if not expired, only frame timers will decrement
-;	LDA #$14
 	STX IntervalTimerControl                     ; if control for interval timers expired,
 	LDX #$23                                     ; interval timers will decrement along with frame timers
 DecTimersLoop:
@@ -219,6 +222,11 @@ HUDSkip:
 	STA PPU_SCROLL_REG
 	JSR EnableNMI
 	JSR SoundEngine                              ; play sound
+
+	PLA
+	STA $01
+	PLA
+	STA $00                                      ; restore zpg vars
 	PLA                                         
 	TAY                                          ; restore Y
 	PLA                                         
@@ -1690,6 +1698,12 @@ Palette1_MTiles:
 	.db $8e, $91, $8f, $92                       ; water pipe bottom
 	.db $24, $2f, $24, $3d                       ; flag ball (residual object)
 
+; --WIP--
+;	.db $24, $24, $24, $ce                       ; short cave mushroom
+;	.db $ce, $9a, $24, $ce                       ; double cave mushroom
+;	.db $ce, $9a, $24, $24                       ; tall cave mushroom
+; --WIP--
+
 Palette2_MTiles:
 	.db $24, $24, $24, $35                       ; cloud left
 	.db $36, $25, $37, $25                       ; cloud middle
@@ -2188,10 +2202,7 @@ SetInitNTHigh:
 	STY CurrentNTAddr_High                       ; store name table address
 	LDY #$80
 	STY CurrentNTAddr_Low
-	ASL                                          ; store LSB of page number in high nybble
-	ASL                                          ; of block buffer column position
-	ASL
-	ASL
+	JSR MathASL4                                 ; store LSB of page number in high nybble of block buffer column position
 	STA BlockBufferColumnPos
 	DEC AreaObjectLength                         ; set area object lengths for all empty
 	DEC AreaObjectLength+1
@@ -2607,6 +2618,11 @@ NoColWrap:
 BSceneDataOffsets:
 	.db $00, $30, $60
 
+; --WIP--
+;BAltSceneDataOffsets:
+;	.db $90, $A0
+; --WIP--
+
 BackSceneryData:
 	.db $93, $00, $00, $11, $12, $12, $13, $00   ; clouds
 	.db $00, $51, $52, $53, $00, $00, $00, $00
@@ -2629,6 +2645,14 @@ BackSceneryData:
 	.db $12, $13, $00, $00, $00, $00, $aa, $aa
 	.db $9c, $aa, $00, $8b, $00, $01, $02, $03
 
+; --WIP--
+;	.db $00, $00, $00, $00, $00, $00, $00, $00   ; underground
+;	.db $00, $00, $00, $00, $00, $00, $00, $00
+
+;	.db $00, $00, $00, $00, $00, $00, $00, $00   ; castle
+;	.db $00, $00, $00, $00, $00, $00, $00, $00
+; --WIP--
+
 BackSceneryMetatiles:
 	.db $80, $83, $00                            ; cloud left
 	.db $81, $84, $00                            ; cloud middle
@@ -2642,6 +2666,12 @@ BackSceneryMetatiles:
 	.db $4d, $00, $00                            ; fence
 	.db $0d, $0f, $4e                            ; tall tree
 	.db $0e, $4e, $4e                            ; short tree
+
+; --WIP--	
+;	.db $00, $00, $00                            ; short cave mushroom 
+;	.db $00, $00, $00                            ; double cave mushroom
+;	.db $00, $00, $00                            ; tall cave mushroom
+; --WIP--
 
 FSceneDataOffsets:
 	.db $00, $0d, $1a
@@ -2692,18 +2722,25 @@ ClrMTBuf:
 	LDY BackgroundScenery                        ; do we need to render the background scenery?
 	BEQ RendFore                                 ; if not, skip to check the foreground
 	LDA CurrentPageLoc                           ; otherwise check for every third page
-ThirdP:
+; --WIP--
+;	LDX AreaType                                 ; check area type
+;	CPX #$02                                     ; are we underground or in a castle?
+;	BCC NormalScene                              ; if not, render the one of the 3 original backgrounds
+;AltScene:
+;	LDA BAltSceneDataOffsets-1,y                 ; otherwise, get the offset for an alternate area background (1 = underground, 2 = castle)
+;	CLC
+;	BNE AddCurrColumn                            ; [unconditional branch]
+; --WIP--
+NormalScene:
 	CMP #$03
 	BMI RendBack                                 ; if less than three we're there
 	SEC
 	SBC #$03                                     ; if 3 or more, subtract 3 and
-	BPL ThirdP                                   ; do an unconditional branch
+	BPL NormalScene                              ; do an unconditional branch
 RendBack:
-	ASL                                          ; move results to higher nybble
-	ASL
-	ASL
-	ASL
-	ADC BSceneDataOffsets-1,y                    ; add to it offset loaded from here
+	JSR MathASL4                                 ; move results to higher nybble
+	ADC BSceneDataOffsets-1,y                    ; get the offset for an overworld area background
+AddCurrColumn:
 	ADC CurrentColumnPos                         ; add to the result our current column position
 	TAX
 	LDA BackSceneryData,x                        ; load data from sum of offsets
@@ -3830,10 +3867,7 @@ Hole_Empty:
 	INY
 	INY                                          ; increment length by 2
 	TYA
-	ASL                                          ; multiply by 16 to get size of whirlpool
-	ASL                                          ; note that whirlpool will always be
-	ASL                                          ; two blocks bigger than actual size of hole
-	ASL                                          ; and extend one block beyond each edge
+	JSR MathASL4                                 ; multiply by 16 to get size of whirlpool (note that whirlpool will always be two blocks bigger than actual size of hole and extend one block beyond each edge)
 	STA Whirlpool_Length,x                       ; save size of whirlpool here
 	INX
 	CPX #$05                                     ; increment and check offset
@@ -3908,6 +3942,8 @@ GetLrgObjAttrib:
 
 GetAreaObjXPosition:
 	LDA CurrentColumnPos                         ; multiply current offset where we're at by 16
+
+MathASL4:
 	ASL                                          ; to obtain horizontal pixel coordinate
 	ASL
 	ASL
@@ -3918,10 +3954,7 @@ GetAreaObjXPosition:
 
 GetAreaObjYPosition:
 	LDA $07                                      ; multiply value by 16
-	ASL
-	ASL                                          ; this will give us the proper vertical pixel coordinate
-	ASL
-	ASL
+	JSR MathASL4                                 ; this will give us the proper vertical pixel coordinate
 	CLC
 	ADC #32                                      ; add 32 pixels for the status bar
 	RTS
@@ -4805,13 +4838,18 @@ ProcSwim:
 	JSR GetPlayerAnimSpeed                       ; do a sub to get animation frame timing
 	LDA Player_Y_Position
 	CMP #$14                                     ; check vertical position against preset value
-	BCS LRAir                                    ; if not yet reached a certain position, branch ahead
+	BCS LRWater                                  ; if not yet reached a certain position, branch ahead
+;	BCS LRAir                                    ; if not yet reached a certain position, branch ahead
 	LDA #$18
 	STA VerticalForce                            ; otherwise set fractional
+LRWater:
+	LDA Left_Right_Buttons                       ; check left/right controller bits (check for swimming)
+	BEQ LRAir                                    ; if not pressing any, skip
+	STA PlayerFacingDir                          ; otherwise set facing direction accordingly
 LRAir:
 	LDA Left_Right_Buttons                       ; check left/right controller bits (check for jumping/falling)
 	BEQ JSMove                                   ; if not pressing any, skip
-	STA PlayerFacingDir                          ; otherwise set facing direction accordingly
+;	STA PlayerFacingDir                          ; otherwise set facing direction accordingly
 	JSR ImposeFriction                           ; otherwise process horizontal movement
 JSMove:
 	JSR JmpMove
@@ -4998,7 +5036,7 @@ ProcJumping:
 	BNE InitJS
 	LDA Player_Y_Speed                           ; check player's vertical speed
 	BPL InitJS                                   ; if player's vertical speed motionless or down, branch
-	JMP X_Physics                                ; if timer at zero and player still rising, do not swim
+	BMI X_Physics                                ; if timer at zero and player still rising, do not swim
 InitJS:
 	JSR HandleJumpSwim
 	LDA SwimmingFlag                             ; if swimming flag disabled, branch
@@ -5010,7 +5048,7 @@ InitJS:
 	BCS X_Physics                                ; if below a certain point, branch
 	LDA #$00                                     ; otherwise reset player's vertical speed
 	STA Player_Y_Speed                           ; and jump to something else to keep player
-	JMP X_Physics                                ; from swimming above water level
+	BEQ X_Physics                                ; from swimming above water level
 PJumpSnd:
 	LDA #Sfx_BigJump                             ; load big mario's jump sound by default
 	LDY PlayerSize                               ; is mario big?
@@ -5062,11 +5100,11 @@ GetXPhy2:
 	STA FrictionAdderLow
 	LDA #$00
 	STA FrictionAdderHigh                        ; init something here
-	LDA PlayerFacingDir
-	CMP Player_MovingDir                         ; check facing direction against moving direction
-	BEQ ExitPhy                                  ; if the same, branch to leave
 	LDA Left_Right_Buttons                       ; get left/right controller bits
 	BEQ ExitPhy                                  ; if not pressed, branch to leave
+	;LDA PlayerFacingDir
+	CMP Player_MovingDir                         ; check facing direction against moving direction
+	BEQ ExitPhy                                  ; if the same, branch to leave
 	ASL FrictionAdderLow                         ; otherwise shift d7 of friction adder low into carry
 	ROL FrictionAdderHigh                        ; then rotate carry onto d0 of friction adder high
 ExitPhy:
@@ -5931,10 +5969,7 @@ SetupJumpCoin:
 	LDA Block_PageLoc2,x                         ; get page location saved earlier
 	STA Misc_PageLoc,y                           ; and save as page location for misc object
 	LDA $06                                      ; get low byte of block buffer offset
-	ASL
-	ASL                                          ; multiply by 16 to use lower nybble
-	ASL
-	ASL
+	JSR MathASL4                                 ; multiply by 16 to use lower nybble
 	ORA #$05                                     ; add five pixels
 	STA Misc_X_Position,y                        ; save as horizontal coordinate for misc object
 	LDA $02                                      ; get vertical high nybble offset from earlier
@@ -6540,10 +6575,7 @@ MovePlayerHorizontally:
 
 MoveObjectHorizontally:
 	LDA SprObject_X_Speed,x                      ; get currently saved value (horizontal
-	ASL                                          ; speed, secondary counter, whatever)
-	ASL                                          ; and move low nybble to high
-	ASL
-	ASL
+	JSR MathASL4                                 ; speed, secondary counter, whatever) and move low nybble to high
 	STA $01                                      ; store result here
 	LDA SprObject_X_Speed,x                      ; get saved value again
 	LSR                                          ; move high nybble to low
@@ -6977,10 +7009,7 @@ CheckRightExtBounds:
 	LDA #$01                                     ; store value in vertical high byte
 	STA Enemy_Y_HighPos,x
 	LDA (EnemyData),y                            ; get first byte again
-	ASL                                          ; multiply by four to get the vertical
-	ASL                                          ; coordinate
-	ASL
-	ASL
+	JSR MathASL4                                 ; multiply by four to get the vertical coordinate
 	STA Enemy_Y_Position,x
 	CMP #$e0                                     ; do one last check for special row $0e
 	BEQ ParseRow0e                               ; (necessary if branched to $c1cb)
@@ -9616,10 +9645,7 @@ EndAreaPoints:
 ELPGive:
 	JSR DigitsMathRoutine                        ; award 50 points per game timer interval
 	LDA CurrentPlayer                            ; get player on the screen (or 500 points per
-	ASL                                          ; fireworks explosion if branched here from there)
-	ASL                                          ; shift to high nybble
-	ASL
-	ASL
+	JSR MathASL4                                 ; fireworks explosion if branched here from there) shift to high nybble
 	ORA #%00000100                               ; add four to set nybble for game timer
 	JMP UpdateNumber                             ; jump to print the new score and game timer
 
@@ -11410,10 +11436,7 @@ PutPlayerOnVine:
 SetVXPl:
 	LDY PlayerFacingDir                          ; get current facing direction, use as offset
 	LDA $06                                      ; get low byte of block buffer address
-	ASL
-	ASL                                          ; move low nybble to high
-	ASL
-	ASL
+	JSR MathASL4                                 ; move low nybble to high
 	CLC
 	ADC ClimbXPosAdder-1,y                       ; add pixels depending on facing direction
 	STA Player_X_Position                        ; store as player's horizontal coordinate
@@ -13424,10 +13447,7 @@ DChunks:
 	INY                                          ; increment to start with tile bytes in OAM
 	JSR DumpFourSpr                              ; do sub to dump tile number into all four sprites
 	LDA FrameCounter                             ; get frame counter
-	ASL
-	ASL
-	ASL                                          ; move low nybble to high
-	ASL
+	JSR MathASL4                                 ; move low nybble to high
 	AND #$c0                                     ; get what was originally d3-d2 of low nybble
 	ORA $00                                      ; add palette bits
 	INY                                          ; increment offset for attribute bytes
@@ -14157,10 +14177,7 @@ GetOffScreenBitsSet:
 	TYA                                          ; save offscreen bits offset to stack for now
 	PHA
 	JSR RunOffscrBitsSubs
-	ASL                                          ; move low nybble to high nybble
-	ASL
-	ASL
-	ASL
+	JSR MathASL4                                 ; move low nybble to high nybble
 	ORA $00                                      ; mask together with previously saved low nybble
 	STA $00                                      ; store both here
 	PLA                                          ; get offscreen bits offset from stack
