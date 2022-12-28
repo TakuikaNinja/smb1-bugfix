@@ -4,7 +4,7 @@
 Thumbs.db
 *.cdl
 asm6f
-
+*.chr
 *.bat
 *.exe
-*.chr
+
