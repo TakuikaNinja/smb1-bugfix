@@ -164,7 +164,7 @@ SetFreq_Squ1:
 		ldx #$00										; set frequency reg offset for square 1 sound channel
 
 Dump_Freq_Regs:
-		tya
+		tay
 		lda FreqRegLookupTbl+1,y						; use previous contents of A for sound reg offset
 		beq NoTone										; if zero, then do not load
 		
@@ -459,7 +459,7 @@ ContinuePowerUpGrab:
 		lda Squ2_SfxLenCounter							; load frequency reg based on length left over
 		lsr 											; divide by 2
 		bcs DecrementSfx2Length							; alter frequency every other frame
-		tya
+		tay
 		lda PowerUpGrabFreqData-1,y						; use length left over / 2 for frequency offset
 		ldx #$5d										; store reg contents of power-up grab sound
 		ldy #$7f
@@ -567,7 +567,7 @@ DivLLoop:
 		bcs JumpToDecLength2							; if any bits set here, branch to dec the length
 		dex
 		bne DivLLoop									; do this until all bits checked, if none set, continue
-		tya
+		tay
 		lda ExtraLifeFreqData-1,y						; load our reg contents
 		ldx #$82
 		ldy #$7f
@@ -591,7 +591,7 @@ ContinueGrowItems:
 		inc Sfx_SecondaryCounter						; increment secondary counter for both sounds
 		lda Sfx_SecondaryCounter						; this sound doesn't decrement the usual counter
 		lsr 											; divide by 2 to get the offset
-		tya
+		tay
 		cpy Squ2_SfxLenCounter							; have we reached the end yet?
 		beq StopGrowItems								; if so, branch to jump, and stop playing sounds
 		lda #$9d										; load contents of other reg directly
@@ -619,7 +619,7 @@ PlaySkidSfx:
 
 ContinueSkidSfx:
 		lda Noise_SfxLenCounter
-		tya
+		tay
 		lda SkidSfxFreqData-1,y
 		sta SND_TRIANGLE_REG+2
 		lda #$18
@@ -636,7 +636,7 @@ ContinueBrickShatter:
 		lda Noise_SfxLenCounter
 		lsr 											; divide by 2 and check for bit set to use offset
 		bcc DecrementSfx3Length
-		tya
+		tay
 		ldx BrickShatterFreqData,y						; load reg contents of brick shatter sound
 		lda ShatterFlameEnvData,y
 
@@ -685,7 +685,7 @@ PlayBowserFlame:
 ContinueBowserFlame:
 		lda Noise_SfxLenCounter
 		lsr
-		tya
+		tay
 		ldx #$0f										; load reg contents of bowser flame sound
 		lda ShatterFlameEnvData-1,y
 		bne PlayNoiseSfx								; unconditional branch here
@@ -773,7 +773,7 @@ FindEventMusicHeader:
 
 LoadHeader:
 		lda MusicHeaderOffsetData,y						; load offset for header
-		tya
+		tay
 		lda MusicHeaderData,y							; now load the header
 		sta NoteLenLookupTblOfs
 		lda MusicHeaderData+1,y
@@ -1041,7 +1041,7 @@ ProcessLengthData:
 		clc
 		adc NoteLenLookupTblOfs							; add offset loaded from first header byte
 		adc NoteLengthTblAdder							; add extra if time running out music
-		tya
+		tay
 		lda MusicLengthLookupTbl,y						; load length
 		rts
 
