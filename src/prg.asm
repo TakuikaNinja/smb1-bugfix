@@ -4873,10 +4873,10 @@ ClimbAdderHigh:
 	.db $00, $00, $ff, $ff
 
 ClimbingSub:
-		lda Player_YMF_Dummy
-		clc                                          ; add movement force to dummy variable
+		lda Player_YMF_Low
+		clc                                          ; add movement force to low byte
 		adc Player_Y_MoveForce                       ; save with carry
-		sta Player_YMF_Dummy
+		sta Player_YMF_Low
 		ldy #$00                                     ; set default adder here
 		lda Player_Y_Speed                           ; get player's vertical speed
 		bpl MoveOnVine                               ; if not moving upwards, branch
@@ -4977,8 +4977,8 @@ SetCAnim:
 HandleJumpSwim:
 		lda #$20                                     ; set jump/swim timer
 		sta JumpSwimTimer
-		ldy #$00                                     ; initialize vertical force and dummy variable
-		sty Player_YMF_Dummy
+		ldy #$00                                     ; initialize vertical force and low byte
+		sty Player_YMF_Low
 		sty Player_Y_MoveForce
 		lda Player_Y_HighPos                         ; get vertical high and low bytes of jump origin
 		sta JumpOrigin_Y_HighPos                     ; and store them next to each other here
@@ -5149,7 +5149,7 @@ ProcSkid:
 		sta Player_MovingDir                         ; otherwise use facing direction to set moving direction
 		lda #$00
 		sta Player_X_Speed                           ; nullify player's horizontal speed
-		sta Player_X_MoveForce                       ; and dummy variable for player
+		sta Player_X_MoveForce                       ; and low byte for player
 
 SetAnimSpd:
 		lda PlayerAnimTmrData,y                      ; get animation timer setting using Y as offset
@@ -5362,10 +5362,10 @@ PosBubl:
 		sta AirBubbleTimer                           ; set air bubble timer
 MoveBubl:
 		ldy $07                                      ; get pseudorandom bit again, use as offset
-		lda Bubble_YMF_Dummy,x
-		sec                                          ; subtract pseudorandom amount from dummy variable
+		lda Bubble_YMF_Low,x
+		sec                                          ; subtract pseudorandom amount from low byte
 		sbc Bubble_MForceData,y
-		sta Bubble_YMF_Dummy,x                       ; save dummy variable
+		sta Bubble_YMF_Low,x                         ; save low byte
 		lda Bubble_Y_Position,x
 		sbc #$00                                     ; subtract borrow from airbubble's vertical coordinate
 		cmp #$20                                     ; if below the status bar,
@@ -5554,16 +5554,16 @@ FlagpoleRoutine:
 		lda Player_Y_Position                        ; check player's vertical coordinate
 		cmp #$a2                                     ; if player down to a certain point,
 		bcs GiveFPScr                                ; branch to end the level
-		lda Enemy_YMF_Dummy,x
-		adc #$ff                                     ; add movement amount to dummy variable
-		sta Enemy_YMF_Dummy,x                        ; save dummy variable
+		lda Enemy_YMF_Low,x
+		adc #$ff                                     ; add movement amount to low byte
+		sta Enemy_YMF_Low,x                          ; save low byte
 		lda Enemy_Y_Position,x                       ; get flag's vertical coordinate
 		adc #$01                                     ; add 1 plus carry to move flag, and
 		sta Enemy_Y_Position,x                       ; store vertical coordinate
-		lda FlagpoleFNum_YMFDummy
-		sec                                          ; subtract movement amount from dummy variable
+		lda FlagpoleFNum_YMF_Low
+		sec                                          ; subtract movement amount from low byte
 		sbc #$ff
-		sta FlagpoleFNum_YMFDummy                    ; save dummy variable
+		sta FlagpoleFNum_YMF_Low                     ; save low byte
 		lda FlagpoleFNum_Y_Pos
 		sbc #$01                                     ; subtract one plus borrow to move floatey number,
 		sta FlagpoleFNum_Y_Pos                       ; and store vertical coordinate here
@@ -6554,7 +6554,7 @@ UpdateLoop:
 		tay
 		lda Block_Metatile,x                         ; get metatile to be written
 		sta ($06),y                                  ; write it to the block buffer
-		jsr WriteBlockMetatile                     ; do sub to replace metatile where block object is
+		jsr WriteBlockMetatile                       ; do sub to replace metatile where block object is
 		lda #$00
 		sta Block_RepFlag,x                          ; clear block object flag
 NextBUpd:
@@ -6738,10 +6738,10 @@ RedPTroopaGrav:
 
 ImposeGravity:
 		pha                                          ; push value to stack
-		lda SprObject_YMF_Dummy,x
-		clc                                          ; add value in movement force to contents of dummy variable
+		lda SprObject_YMF_Low,x
+		clc                                          ; add value in movement force to contents of low byte
 		adc SprObject_Y_MoveForce,x
-		sta SprObject_YMF_Dummy,x
+		sta SprObject_YMF_Low,x
 		ldy #$00                                     ; set Y to zero by default
 		lda SprObject_Y_Speed,x                      ; get current vertical speed
 		bpl AlterYP                                  ; if currently moving downwards, do not decrement Y
@@ -7675,7 +7675,7 @@ SpawnFromMouth:
 		sta Enemy_Y_Position,x                       ; save as flame's vertical position
 		lda PseudoRandomBitReg,x
 		and #%00000011                               ; get 2 LSB from first part of LSFR
-		sta Enemy_YMF_Dummy,x                        ; save here
+		sta Enemy_YMF_Low,x                          ; save here
 		tay                                          ; use as offset
 		lda FlameYPosData,y                          ; get value here using bits as offset
 		ldy #$00                                     ; load default offset
@@ -7806,7 +7806,7 @@ AddFBit:
 		sta BitMFilter                               ; and store
 		lda Enemy17YPosData,y                        ; load vertical position using offset
 		jsr PutAtRightExtent                         ; set vertical position and other values
-		sta Enemy_YMF_Dummy,x                        ; initialize dummy variable
+		sta Enemy_YMF_Low,x                          ; initialize low byte
 		lda #$20                                     ; set timer
 		sta FrenzyEnemyTimer
 		jmp CheckpointEnemyID                        ; process our new enemy object
@@ -8448,7 +8448,7 @@ ProcMoveRedPTroopa:
 		lda Enemy_Y_Speed,x
 		ora Enemy_Y_MoveForce,x                      ; check for any vertical force or speed
 		bne MoveRedPTUpOrDown                        ; branch if any found
-		sta Enemy_YMF_Dummy,x                        ; initialize something here
+		sta Enemy_YMF_Low,x                          ; initialize low byte
 		lda Enemy_Y_Position,x                       ; check current vs. original vertical coordinate
 		cmp RedPTroopaOrigXPos,x
 		bcs MoveRedPTUpOrDown                        ; if current => original, skip ahead to more code
@@ -8710,10 +8710,10 @@ CCSwim:
 		lda CheepCheepMoveMFlag,x                    ; check movement flag
 		cmp #$10                                     ; if movement speed set to $00,
 		bcc CCSwimUpwards                            ; branch to move upwards
-		lda Enemy_YMF_Dummy,x
+		lda Enemy_YMF_Low,x
 		clc
-		adc $02                                      ; add preset value to dummy variable to get carry
-		sta Enemy_YMF_Dummy,x                        ; and save dummy
+		adc $02                                      ; add preset value to low byte to get carry
+		sta Enemy_YMF_Low,x                          ; and save low byte
 		lda Enemy_Y_Position,x                       ; get vertical coordinate
 		adc $03                                      ; add carry to it plus enemy state to slowly move it downwards
 		sta Enemy_Y_Position,x                       ; save as new vertical coordinate
@@ -8722,10 +8722,10 @@ CCSwim:
 		jmp ChkSwimYPos                              ; jump to end of movement code
 
 CCSwimUpwards:
-		lda Enemy_YMF_Dummy,x
+		lda Enemy_YMF_Low,x
 		sec
-		sbc $02                                      ; subtract preset value to dummy variable to get borrow
-		sta Enemy_YMF_Dummy,x                        ; and save dummy
+		sbc $02                                      ; subtract preset value to low byte to get borrow
+		sta Enemy_YMF_Low,x                          ; and save low byte
 		lda Enemy_Y_Position,x                       ; get vertical coordinate
 		sbc $03                                      ; subtract borrow to it plus enemy state to slowly move it upwards
 		sta Enemy_Y_Position,x                       ; save as new vertical coordinate
@@ -9467,7 +9467,7 @@ SFlmX:
 		sta Enemy_PageLoc,x
 		ldy BowserFlamePRandomOfs,x                  ; get some value here and use as offset
 		lda Enemy_Y_Position,x                       ; load vertical coordinate
-		cmp FlameYPosData,y                          ; compare against coordinate data using $0417,x as offset
+		cmp FlameYPosData,y                          ; compare against coordinate data using loaded offset
 		beq SetGfxF                                  ; if equal, branch and do not modify coordinate
 		clc
 		adc Enemy_Y_MoveForce,x                      ; otherwise add value here to coordinate and store
@@ -10045,7 +10045,7 @@ YMovingPlatform:
 		lda Enemy_Y_Speed,x                          ; if platform moving up or down, skip ahead to
 		ora Enemy_Y_MoveForce,x                      ; check on other position
 		bne ChkYCenterPos
-		sta Enemy_YMF_Dummy,x                        ; initialize dummy variable
+		sta Enemy_YMF_Low,x                          ; initialize low byte
 		lda Enemy_Y_Position,x
 		cmp YPlatformTopYPos,x                       ; if current vertical position => top position, branch
 		bcs ChkYCenterPos                            ; ahead of all this
@@ -10138,10 +10138,10 @@ MoveSmallPlatform:
 MoveLiftPlatforms:
 		lda TimerControl                             ; if master timer control set, skip all of this
 		bne ExLiftP                                  ; and branch to leave
-		lda Enemy_YMF_Dummy,x
+		lda Enemy_YMF_Low,x
 		clc                                          ; add contents of movement amount to whatever's here
 		adc Enemy_Y_MoveForce,x
-		sta Enemy_YMF_Dummy,x
+		sta Enemy_YMF_Low,x
 		lda Enemy_Y_Position,x                       ; add whatever vertical speed is set to current
 		adc Enemy_Y_Speed,x                          ; vertical position plus carry to move up or down
 		sta Enemy_Y_Position,x                       ; and then leave

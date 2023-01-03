@@ -156,7 +156,7 @@ FloateyNum_Timer      = $012c
 FloateyNum_X_Pos      = $0117
 FloateyNum_Y_Pos      = $011e
 FlagpoleFNum_Y_Pos    = $010d
-FlagpoleFNum_YMFDummy = $010e
+FlagpoleFNum_YMF_Low  = $010e
 FlagpoleScore         = $010f
 FlagpoleCollisionYPos = $070f
 StompChainCounter     = $0484
@@ -333,10 +333,10 @@ Enemy_SprAttrib       = $03c5
 SprObject_X_MoveForce = $0400
 Enemy_X_MoveForce     = $0401
 
-SprObject_YMF_Dummy   = $0416
-Player_YMF_Dummy      = $0416
-Enemy_YMF_Dummy       = $0417
-Bubble_YMF_Dummy      = $042c
+SprObject_YMF_Low     = $0416
+Player_YMF_Low        = $0416
+Enemy_YMF_Low         = $0417
+Bubble_YMF_Low        = $042c
 
 SprObject_Y_MoveForce = $0433
 Player_Y_MoveForce    = $0433
