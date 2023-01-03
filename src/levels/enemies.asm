@@ -44,7 +44,7 @@ E_CastleArea6:
 	.db $0f, $03, $8e, $65, $e1, $bb, $38, $6d, $a8, $3e, $e5, $e7
 	.db $0f, $08, $0b, $02, $2b, $02, $5e, $65, $e1, $bb, $0e
 	.db $db, $0e, $bb, $8e, $db, $0e, $fe, $65, $ec, $0f, $0d
-	.db $4e, $65, $e1, $0f, $0e, $4e, $02, $e0, $0f, $10, $fe, $e5, $e1
+	.db $4e, $65, $e1, $0f, $0e, $8e, $02, $e0, $0f, $10, $fe, $e5, $e1 ; move cheep-cheep room pipe change to prevent wrong warp
 	.db $1b, $85, $7b, $0c, $5b, $95, $78, $2d, $90, $b5
 	.db $ff
 
@@ -213,7 +213,7 @@ E_UndergroundArea1:
 ; level 4-2
 E_UndergroundArea2:
 	.db $0f, $02, $1e, $2f, $60, $e0, $3a, $a5, $a7, $db, $80
-	.db $3b, $82, $8b, $02, $fe, $42, $68, $70, $bb, $25, $a7
+	.db $3b, $82, $4e, $42, $68, $8b, $02, $70, $bb, $25, $a7 ; move bonus room warp change to prevent wrong warp
 	.db $2c, $27, $b2, $26, $b9, $26, $9b, $80, $a8, $82
 	.db $b5, $27, $bc, $27, $b0, $bb, $3b, $82, $87, $34
 	.db $ee, $25, $6b

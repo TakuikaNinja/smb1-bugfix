@@ -15,6 +15,11 @@ what hasn't changed?
 - Every bug/oddity which either isn't documented well, or I lack the understanding/capacity to fix 
 - The ROM file size & mapper type. This will also never change as I want to show that these improvements would have been possible in the 80's. 
 
+where's the CHR file?
+========================================
+It has been purged from this repo to minimize copyright issues. An IPS patch file will be provided in its place. 
+Finding the CHR file and patching it is up to the user. 
+
 special thanks
 ========================================
 - Nintendo - for creating such a legendary yet broken game, plus their console line
@@ -25,6 +30,10 @@ special thanks
 - Every speedrunner, glitch-hunter, researcher & wiki contributor - for extensively breaking, researching & documenting the games they love
 - Ribiveer - for originally doing some of the QoL improvements which got me interested in this project
 - NaotoNTP - for moving the game logic out of NMI to improve lag frame handling
+
+wait, is that Rare rumour even true?
+========================================
+Very unlikely given how packed the codebase is, but who knows?
 
 (original readme) smb1 disassembly but it works with asm6f
 ========================================

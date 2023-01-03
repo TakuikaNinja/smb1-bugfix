@@ -6829,7 +6829,7 @@ LoopCmdWorldNumber:
 	.db $03, $03, $06, $06, $06, $06, $06, $06, $07, $07, $07
 
 LoopCmdPageNumber:
-	.db $05, $09, $04, $05, $06, $08, $09, $0a, $06, $0b, $10
+	.db $05, $09, $04, $05, $06, $08, $09, $0a, $07, $0b, $10 ; move first 8-4 LoopCmd Page back a screen?
 
 LoopCmdYPosition:
 	.db $40, $b0, $b0, $80, $40, $40, $80, $40, $f0, $f0, $f0
@@ -6882,9 +6882,9 @@ FindLoop:
 		lda Player_Y_Position                        ; check to see if the player is at the correct position
 		cmp LoopCmdYPosition,y                       ; if not, branch to check for world 7
 		bne WrongChk
-		lda Player_State                             ; check to see if the player is
-		cmp #$00                                     ; on solid ground (i.e. not jumping or falling)
-		bne WrongChk                                 ; if not, player fails to pass loop, and loopback
+		lda Player_State                             ; check to see if the player is on solid ground (i.e. not jumping or falling)
+;		cmp #$00                                     ; (redundant compare, zero flag would already be set)
+		bne WrongChk                                 ; if not, player fails to pass loop, and loopback (but why?)
 		lda WorldNumber                              ; are we in world 7? (check performed on correct
 		cmp #World7                                  ; vertical position and on solid ground)
 		bne InitMLp                                  ; if not, initialize flags used there, otherwise
@@ -14322,14 +14322,25 @@ SetHFAt:
 		ora $04                                      ; add other OAM attributes if necessary
 		sta Sprite_Attributes,y                      ; store sprite attributes
 		sta Sprite_Attributes+4,y
-		lda $02                                      ; now the y coordinates
-		sta Sprite_Y_Position,y                      ; note because they are
-		sta Sprite_Y_Position+4,y                    ; side by side, they are the same
+		
+		lda Sprite_Tilenumber,y                      ; load left sprite tile
+		cmp #$fc                                     ; blank tile?
+		beq SkipLeftTile                             ; if so, skip setting coordinates for this sprite
+		lda $02
+		sta Sprite_Y_Position,y                      ; first sprite, y coordinate
 		lda $05
-		sta Sprite_X_Position,y                      ; store x coordinate, then
+		sta Sprite_X_Position,y                      ; first sprite, x coordinate
+SkipLeftTile:
+		lda Sprite_Tilenumber+4,y                    ; load right sprite tile
+		cmp #$fc                                     ; blank tile?
+		beq SkipRightTile                            ; if so, skip setting coordinates for this sprite
+		lda $02
+		sta Sprite_Y_Position+4,y                    ; second sprite, y coordinate
+		lda $05
 		clc                                          ; add 8 pixels and store another to
 		adc #$08                                     ; put them side by side
-		sta Sprite_X_Position+4,y
+		sta Sprite_X_Position+4,y                    ; second sprite, x coordinate
+SkipRightTile:
 		lda $02                                      ; add eight pixels to the next y
 		clc                                          ; coordinate
 		adc #$08

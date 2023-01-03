@@ -41,7 +41,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] When entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
 + [x] When entering a vertical warp-pipe, Mario will now always stand still like in later entries.
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
-+ [ ] The locations of some warp destination change and enemy despawn triggers have been tweaked.
++ [x] The locations of some warp destination change and loop command triggers have been tweaked. (no more wrong warps; notably 4-2, 8-4)
 + [x] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
 + [ ] Scroll padding/centering is more robust. (todo?)
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
@@ -81,8 +81,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Mario's initial downward acceleration is higher.
 - [x] Springboard vertical acceleration is now defined. (whatever that means)
 
-## Graphics Changes
-- [x] Added small one-pixel graphics tweaks to Buzzy Beetles, Hammer Bros. and Toad.
+## Graphics Changes (Use IPS patch to apply CHR changes)
+- [x] Added small one-pixel graphics tweaks to Buzzy Beetles, Hammer Bros. (including hammers), and Toad.
 + [x] Tweaked Koopa & Buzzy Beetle shells to look like their SMM2 counterparts. 
 + [x] Bowser's flames have been mirrored.
 - [x] Made the outlines of bushes and clouds continuous.
@@ -91,3 +91,4 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] The hands of Mario's growing sprite and jump sprite have been fixed.
 - [ ] Hammer Bros. now bob up and down in their animation as well.
 - [x] Super Mario's jump sprite has been fixed to match the eyes and cap of the other sprites.
++ [x] Blank tiles ($fc) are now kept offscreen to ease the 8 sprites per scanline limit.
