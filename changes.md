@@ -57,6 +57,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Fireballs will now remain onscreen when Fire Mario has been hit. They will freeze during the hit animation, just like enemies do.
 - [x] Hidden 1-up blocks no longer despawn after dying. The requirement to spawn them has been retained.
 - [ ] Hitting the top of the flagpole now gives Mario a 1-up.
+- [ ] The scoring system has been adjusted to that of later entries.
 - [ ] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
 - [ ] Defeating consecutive enemies now increases the sound effect pitch with every enemy.
 
@@ -70,6 +71,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Jumping Green Paratroopas now move faster in Quest 2 and demote to the appropriate speed in Quest 2.
 + [x] Swimming Cheep Cheeps now move up and down farther after 5-3.
 + [x] Lakitus respawn more quickly after 5-3.
++ [x] Enemies will now clear more of their variables when unloading, in order to minimize oddities. (e.g. Collecting a star when it has negative Y speed no longer causes mushrooms to jump)
 
 ## PAL Version Changes
 - [x] Cheep Cheep code has been optimised.

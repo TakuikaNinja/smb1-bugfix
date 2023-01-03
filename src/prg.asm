@@ -8270,6 +8270,17 @@ EraseEnemyObject:
 		sta ShellChainCounter,x
 		sta Enemy_SprAttrib,x
 		sta EnemyFrameTimer,x
+		
+		sta Enemy_X_Position,x                       ; and these too, to minimize oddities
+		sta Enemy_Y_Position,x
+		sta Enemy_X_Speed,x
+		sta Enemy_Y_Speed,x
+		sta Enemy_X_MoveForce,x
+		sta Enemy_Y_MoveForce,x
+		sta Enemy_YMF_Low,x
+		sta Enemy_Y_HighPos,x
+		sta Enemy_MovingDir,x
+		sta Enemy_PageLoc,x
 		rts
 
 ; -------------------------------------------------------------------------------------
