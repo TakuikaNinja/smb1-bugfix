@@ -81,12 +81,13 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Mario's initial downward acceleration is higher.
 - [x] Springboard vertical acceleration is now defined. (whatever that means)
 
-## Graphics Changes (Use IPS patch to apply CHR changes)
+## Graphics Changes (IPS patch required)
 - [x] Added small one-pixel graphics tweaks to Buzzy Beetles, Hammer Bros. (including hammers), and Toad.
 + [x] Tweaked Koopa & Buzzy Beetle shells to look like their SMM2 counterparts. 
 + [x] Bowser's flames have been mirrored.
 - [x] Made the outlines of bushes and clouds continuous.
-- [ ] Utulised an extra sprite to add a small animation to Piranha Plants.
++ [x] The top half of Goombas are now mirrored to save a tile. (based on Ribiveer's sprite optimisations)
+- [x] Utulised an extra sprite to add a small animation to Piranha Plants.
 - [x] Made Toad smile more. :)
 - [x] The hands of Mario's growing sprite and jump sprite have been fixed.
 - [ ] Hammer Bros. now bob up and down in their animation as well.

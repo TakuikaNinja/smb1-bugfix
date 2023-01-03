@@ -12817,7 +12817,7 @@ EnemyGraphicsTable:
 	.db $dc, $dc, $dd, $dd, $de, $de             ;         frame 2
 	.db $fc, $fc, $b2, $b3, $b4, $b5             ; cheep-cheep frame 1
 	.db $fc, $fc, $b6, $b3, $b7, $b5             ;             frame 2
-	.db $fc, $fc, $70, $71, $72, $73             ; goomba
+	.db $fc, $fc, $70, $70, $72, $73             ; goomba (mirror top half to save a tile)
 	.db $fc, $fc, $6e, $6e, $6f, $6f             ; koopa shell frame 1 (upside-down)
 	.db $fc, $fc, $6d, $6d, $6f, $6f             ;             frame 2
 	.db $fc, $fc, $6f, $6f, $6e, $6e             ; koopa shell frame 1 (rightsideup)
@@ -13205,6 +13205,8 @@ ContES:
 		cpx #$05                                     ; check spiny's state
 		bne CheckToMirrorLakitu                      ; branch if not an egg, otherwise
 ESRtnr:
+		cmp #Goomba
+		beq MirrorEnemyGfx
 		cmp #$15                                     ; check for princess/mushroom retainer object
 		bne SpnySC
 		lda #$42                                     ; set horizontal flip on bottom right sprite
