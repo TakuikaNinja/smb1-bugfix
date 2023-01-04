@@ -92,6 +92,6 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Utulised an extra sprite to add a small animation to Piranha Plants.
 - [x] Made Toad smile more. :)
 - [x] The hands of Mario's growing sprite and jump sprite have been fixed.
-- [ ] Hammer Bros. now bob up and down in their animation as well.
+- [x] Hammer Bros. now bob up and down in their animation as well.
 - [x] Super Mario's jump sprite has been fixed to match the eyes and cap of the other sprites.
 + [x] Blank tiles ($fc) are now kept offscreen to ease the 8 sprites per scanline limit.

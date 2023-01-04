@@ -13131,6 +13131,10 @@ CheckAnimationStop:
 		clc
 		adc #$06                                     ; add $06 to current enemy offset
 		tax                                          ; to animate various enemy objects
+		lda $ef                                      ; get saved enemy object
+		cmp #HammerBro                               ; hammer bro?
+		bne CheckDefeatedState                       ; branch if not
+		inc $02                                      ; otherwise increment y coordinate for this frame
 
 CheckDefeatedState:
 		lda $ed                                      ; check saved enemy state
