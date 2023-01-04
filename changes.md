@@ -83,7 +83,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Mario's initial downward acceleration is higher.
 - [x] Springboard vertical acceleration is now defined. (whatever that means)
 
-## Graphics Changes (IPS patch required)
+## Graphical Changes (IPS patch required)
 - [x] Added small one-pixel graphics tweaks to Buzzy Beetles, Hammer Bros. (including hammers), and Toad.
 + [x] Tweaked Koopa & Buzzy Beetle shells to look like their SMM2 counterparts. 
 + [x] Bowser's flames have been mirrored.

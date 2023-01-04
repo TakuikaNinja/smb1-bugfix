@@ -17,7 +17,7 @@ what hasn't changed?
 
 where's the CHR file?
 ========================================
-It has been purged from this repo to minimize copyright issues. An IPS patch file will be provided in its place. 
+It has been purged from this repo to minimize copyright issues. An IPS patch file is provided in its place to apply the graphical changes. 
 Finding the CHR file and patching it is up to the user. 
 
 special thanks
