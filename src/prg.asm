@@ -11,21 +11,24 @@
 ; ----------------------------------------------------------------------------------------------------------------------------------
 
 Start:
-		sei												; pretty standard 6502 type init here
-		cld
-		
-		lda #%00010000									; init PPU control register 1
-		sta PPU_CTRL_REG1
+		sei												; ignore IRQs
+		cld												; disable decimal mode (for 6502 compatibility)
+		ldx #%01000000									; 4-step sequence mode, interrupt inhibit
+		stx JOYPAD_PORT2								; $4017 write = APU Frame Counter
+		lda #%00010000									; no NMI, 8x8 sprites, BG pattern table = $1000, 0 elsewhere
+		sta PPU_CTRL_REG1								; init PPU control register 1
 		
 		ldx #$ff										; reset stack pointer
 		txs
-;VBlank1:
-;		lda PPU_STATUS									; wait two frames
-;		bpl VBlank1
+		inx												; now X = 0
+		stx PPU_CTRL_REG2								; disable NMI
+		stx SND_DELTA_REG								; disable DMC IRQs
 
-;VBlank2:
-;		lda PPU_STATUS
-;		bpl VBlank2
+		bit PPU_STATUS									; clear vblank flag as it is unknown after reset
+
+VBlank1:
+		bit PPU_STATUS									; wait a frame
+		bpl VBlank1										; once this terminates, do warm boot check
 
 		ldy #ColdBootOffset								; load default cold boot pointer
 		ldx #$05										; this is where we check for a warm boot
@@ -43,7 +46,7 @@ WBootCheck:
 		bne ColdBoot
 
 		lda ContinueWorld								; glitch world fix
-		cmp #$08										; max world value + 1 (world 9)
+		cmp #$08										; check against max world value + 1 (world 9)
 		bcs ColdBoot									; cold boot if greater than or equal
 
 		ldy #WarmBootOffset								; if passed, load warm boot pointer
@@ -59,6 +62,10 @@ ColdBoot:
 
 		lda #%00001111
 		sta SND_MASTERCTRL_REG							; enable all sound channels except dmc
+
+VBlank2:
+		bit PPU_STATUS									; wait another frame until PPU registers are available
+		bpl VBlank2										; once this terminates, carry on with game init
 
 		lda #%00000110
 		sta PPU_CTRL_REG2								; turn off clipping for OAM and background
@@ -583,7 +590,7 @@ ChkContinue:
 		bcc StartWorld1									; if not, don't load continue function's world number
 		
 		lda ContinueWorld								; load previously saved world number for secret
-		cmp #$08										; max world value + 1 (world 9)
+		cmp #$08										; check against max world value + 1 (world 9)
 		bcc DontFix										; valid world, so don't fix
 		
 		lda #$00										; glitch world fix: otherwise force world 1
@@ -10229,17 +10236,25 @@ LargePlatformSubroutines:
 ; -------------------------------------------------------------------------------------
 
 EraseEnemyObject:
+		lda Enemy_ID,x									; get ID first
+		cmp #PowerUpObject								; check for powerup object
+		php												; and backup zero flag
 		lda #$00										; clear all enemy object variables
 		sta Enemy_Flag,x
 		sta Enemy_ID,x
 		sta Enemy_State,x
-		sta FloateyNum_Control,x
-		sta EnemyIntervalTimer,x
+
+		plp												; get zero flag from earlier
+		beq SkipFloatey									; and branch ahead if it was set
+		sta FloateyNum_Control,x						; otherwise clear floatey number control
+
+SkipFloatey:
+		sta EnemyIntervalTimer,x						; clear the rest of the enemy object variables
 		sta ShellChainCounter,x
 		sta Enemy_SprAttrib,x
 		sta EnemyFrameTimer,x
 		
-		sta Enemy_X_Position,x							; and these too, to minimize oddities
+		sta Enemy_X_Position,x							; clear these too, to minimize oddities
 		sta Enemy_Y_Position,x
 		sta Enemy_X_Speed,x
 		sta Enemy_Y_Speed,x
@@ -12652,6 +12667,8 @@ ExLiftP:
 ; $03 - extended right boundary position
 
 OffscreenBoundsCheck:
+		lda Enemy_Flag,x								; get enemy flag first
+		beq ExScrnBd									; branch to leave if not set
 		lda Enemy_ID,x									; check for cheep-cheep object
 		cmp #FlyingCheepCheep							; branch to leave if found
 		beq ExScrnBd
@@ -12952,10 +12969,10 @@ ExPHC:
 ; -------------------------------------------------------------------------------------
 
 HandlePowerUpCollision:
-		jsr EraseEnemyObject							; erase the power-up object
-
 		lda #$06
 		jsr SetupFloateyNumber							; award 1000 points to player by default
+
+		jsr EraseEnemyObject							; then erase the power-up object
 
 		lda #Sfx_PowerUpGrab
 		sta Square2SoundQueue							; play the power-up sound
@@ -15920,7 +15937,7 @@ PUpDrawLoop:
 		dex												; check power-up type for fire flower
 		beq FlipPUpRightSide							; if found, skip this part
 
-		sta Sprite_Attributes+8,y						; otherwise set new palette bits  for bottom left
+		sta Sprite_Attributes+8,y						; otherwise set new palette bits for bottom left
 		sta Sprite_Attributes+12,y						; and bottom right sprites as well for star only
 
 FlipPUpRightSide:

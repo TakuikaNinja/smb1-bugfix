@@ -34,8 +34,11 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Dying on the same frame as touching the axe no longer decrements the lives counter. (you can still do this without penalty, though)
 + [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
 - [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.
++ [x] The offscreen bounds check will now check if the enemy is active first, to prevent enemies from being erased twice.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
++ [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
++ [x] Coin Heavens (cloud levels accessed via vines) now have the cloud backdrop.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)
 - [x] When entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
@@ -48,6 +51,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
 + [x] Moved the main game loop out of NMI and added proper interrupt and lag frame handling to the NMI routine.
++ [x] The reset handler has been tweaked to better resemble the sample implementation on NESdev Wiki.
 + [x] Optimized, tweaked, and trimmed code wherever possible. (ongoing effort)
 
 ## Modernised Quality of Life Mechanics

@@ -29,7 +29,7 @@ special thanks
 - Retro Game Mechanics Explained, Displaced Gamers, Bismuth, Kosmic & other YouTubers I may have missed - for making excellent videos about SMB1 oddities
 - Every speedrunner, glitch-hunter, researcher & wiki contributor - for extensively breaking, researching & documenting the games they love
 - Ribiveer - for originally doing some of the QoL improvements which got me interested in this project
-- NaotoNTP - for moving the game logic out of NMI to improve lag frame handling
+- NaotoNTP - for doing a massive formatting overhaul + moving the game logic out of NMI to improve lag frame handling
 
 wait, is that Rare rumour even true?
 ========================================
