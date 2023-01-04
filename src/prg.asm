@@ -1116,7 +1116,7 @@ WorldLivesDisplay:
 	.db $21, $4b, $09, $20, $18                  ; "WORLD  - " used on lives display
 	.db $1b, $15, $0d, $24, $24, $28, $24
 	.db $22, $0c, $47, $24                       ; possibly used to clear time up
-	.db $23, $dc, $01, $ba                       ; attribute table data for crown if more than 9 lives
+	.db $23, $dc, $01, $aa                       ; attribute data for lives display
 	.db $ff
 
 TwoPlayerTimeUp:
@@ -1192,32 +1192,32 @@ EndGameText:
 		dex                                          ; are we printing the world/lives display?
 		bne CheckPlayerName                          ; if not, branch to check player's name
 
-		lda NumberofLives        										 ;otherwise, check number of lives
+		lda NumberofLives                            ; otherwise, check number of lives
 		ldy #$00
-LivesLoop:     
+LivesLoop:
 		tax
-    cmp #10                  										 ;more than 9 lives in a?
-    bcc PutLives
-		sbc #10                  										 ;if so, subtract 10 and
-		iny                     										 ;increment the left digit
+		cmp #10                                      ; more than 9 lives in a?
+		bcc PutLives
+		sbc #10                                      ; if so, subtract 10 and
+		iny                                          ; increment the left digit
 		bne LivesLoop 
-PutLives:      
-		cpy #10                 										 ;check if the 10's digit is 10
-		bcc NoCrown             										 ;if not, we did our job
-		cpy #11                 										 ;check if the 10's digit is 11 instead (in advance because we use Y afterwards)
+PutLives:
+		cpy #10                                      ; check if the 10's digit is 10
+		bcc NoCrown                                  ; if not, we did our job
+		cpy #11                                      ; check if the 10's digit is 11 instead
 		ldy #$ba
 		sty VRAM_Buffer1+29
-		ldy #$9f                										 ;otherwise, the 10's digit is a crown
-		bcc NoCrown             										 ;if not, we did our job
+		ldy #$9f                                     ; otherwise, the 10's digit is a crown
+		bcc NoCrown                                  ; if not, we did our job
 		ldx #$fa
 		stx VRAM_Buffer1+29
-		ldx #$9f                										 ;now also the 1's digit is a crown!
+		ldx #$9f                                     ; now also the 1's digit is a crown!
 NoCrown:  
 		cpy #$00
 		bne KeepDigits
 		ldy #$24
 KeepDigits:
-		ldy VRAM_Buffer1+7
+		sty VRAM_Buffer1+7
 		stx VRAM_Buffer1+8
 
 		ldy WorldNumber                              ; write world and level numbers (incremented for display)
@@ -6083,10 +6083,10 @@ StatusBarNybbles:
 
 IncrementLives:
 		lda NumberofLives
-    cmp #110                     ;if the player has 👑👑 lives, which is technically 110
-    bcs NoFix		                 ;Do not increment life counter
-    inc NumberofLives            ;give player one extra life (1-up)
-NoFix:
+    	cmp #110                                     ; if the player has 👑👑 lives, which is technically 110
+    	bcs NoInc		                             ; Do not increment life counter
+    	inc NumberofLives                            ; give player one extra life (1-up)
+NoInc:
 		lda #Sfx_ExtraLife
 		sta Square2SoundQueue                        ; play 1-up sound
 		rts

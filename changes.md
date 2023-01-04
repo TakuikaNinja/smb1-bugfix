@@ -22,9 +22,9 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] While underwater, crouching no longer messes up the hitbox.
 - [x] Small Mario's walking animation now flows better.
 - [x] Stars are now guaranteed to jump out of their blocks, as opposed to sometimes falling down.
-+ [x] The lives system now uses the zero flag instead of the negative flag for game over detection. (no more 128 lives glitch)
-- [x] The lives counter now displays the number of lives above 9 like normal.
-- [ ] Lives are now capped at 99(?) to prevent overflows.
++ [x] The lives system now uses the zero flag instead of the negative flag for game over detection. (no more 128 lives glitch, even if you could reach it)
+- [x] The lives counter now displays the number of lives above 9 like normal, until the 10's digit exceeds 10 in which it will be displayed as 👑 (crown).
+- [x] Lives are now capped at 👑👑 (two crowns) to prevent overflows.
 - [ ] The lives screen now properly reflects Mario's power-up state.
 - [x] Player status is now correctly set to falling while collecting a power-up. (no more item jump)
 - [x] Getting the flagpole stops the star invincibility, to prevent audio glitches.
