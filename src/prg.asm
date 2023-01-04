@@ -12338,7 +12338,7 @@ DrawEraseRope:
 
 		lda #$a3										; and right sides of rope in vram buffer
 		sta VRAM_Buffer1+4,x
-		bne EndRp										; jump to skip this part [unconditional branch]
+		bne OtherRope									; jump to skip this part [unconditional branch]
 
 EraseR1:
 		lda #$24										; put blank tiles in vram buffer
