@@ -8833,7 +8833,7 @@ Inc2B:
 
 CheckpointEnemyID:
 		lda Enemy_ID,x
-		cmp #$15										; check enemy object identifier for $15 or greater
+		cmp #$11										; check enemy object identifier for $11 or greater
 		bcs InitEnemyRoutines							; and branch straight to the jump engine if found
 
 		tay												; save identifier in Y register for now
@@ -9479,6 +9479,9 @@ InitBowserFlame:
 		ora #Sfx_BowserFlame							; load bowser's flame sound into queue
 		sta NoiseSoundQueue
 
+		lda #$08										; set $08 for bounding box control
+		sta Enemy_BoundBoxCtrl,x
+
 		ldy BowserFront_Offset							; get bowser's buffer offset
 		lda Enemy_ID,y									; check for bowser
 		cmp #Bowser
@@ -9552,9 +9555,6 @@ SetMF:
 		sta EnemyFrenzyBuffer							; clear enemy frenzy buffer
 
 FinishFlame:
-		lda #$08										; set $08 for bounding box control
-		sta Enemy_BoundBoxCtrl,x
-
 		lda #$01										; set high byte of vertical and
 		sta Enemy_Y_HighPos,x							; enemy buffer flag
 		sta Enemy_Flag,x
@@ -13698,15 +13698,25 @@ ChkForTopCollision:
 
 		ldy Enemy_ID,x
 		cpy #$2b										; if either of the two small platform objects are found,
-		beq SetCollisionFlag							; regardless of which one, branch to use bounding box counter
+		beq CollisionFlagChk							; regardless of which one, branch to use bounding box counter
 
 		cpy #$2c										; as contents of collision flag
-		beq SetCollisionFlag
+		beq CollisionFlagChk
 
 		txa												; otherwise use enemy object buffer offset
 
-SetCollisionFlag:
+CollisionFlagChk:
 		ldx ObjectOffset								; get enemy object buffer offset
+		
+		ldy Player_Y_HighPos
+		cpy #$01										; check the high byte of the player Y position
+		bne SetCollisionFlag
+
+		ldy Player_Y_Position
+		cpy #$df										; check the low byte of the player Y position
+		bcs ExPlPos
+
+SetCollisionFlag:
 		sta PlatformCollisionFlag,x						; save either bounding box counter or enemy offset here
 
 		lda #$00
