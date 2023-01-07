@@ -11008,8 +11008,7 @@ AddHA:
 		jmp ChkFOfs
 
 SubtR1:
-;		sec												; subtract original X from the
-		sbc Enemy_Rel_XPos								; current sprite X
+		sbc Enemy_Rel_XPos								; subtract original X from the current sprite X
 
 ChkFOfs:
 		cmp #$59										; if difference of coordinates within a certain range,
@@ -11054,7 +11053,10 @@ FirebarCollision:
 		dey												; if player's vertical high byte offscreen,
 		bne NoColFB										; skip all of this
 
-		ldy Player_Y_Position							; get player's vertical position
+		lda Player_Y_Position							; get player's vertical position
+		clc												; then add 4 pixels to the player's vertical coordinate
+		adc #$04										; to give some leeway (prevents the firebar block
+		tay												; head injury glitch with big mario)
 
 		lda PlayerSize									; get player's size
 		bne AdjSm										; if player small, branch to alter variables
@@ -11067,8 +11069,8 @@ AdjSm:
 		inc $05											; first increment our counter twice (setting $02 as flag)
 
 		tya
-		clc												; then add 24 pixels to the player's
-		adc #$18										; vertical coordinate
+		clc												; then add 20 pixels to the player's
+		adc #$14										; vertical coordinate (adjusted to account for adding 4 earlier)
 		tay
 
 BigJp:
@@ -11091,7 +11093,7 @@ ChkVFBD:
 		cmp #$f0										; because, really, what's the point?
 		bcs Chk2Ofs
 
-		lda Sprite_X_Position+4							; get OAM X coordinate for sprite #1
+		lda Player_Rel_XPos								; get screen-relative player X coordinate
 		clc
 		adc #$04										; add four pixels
 		sta $04											; store here
@@ -11125,7 +11127,7 @@ Chk2Ofs:
 ChgSDir:
 		ldx #$01										; set movement direction by default
 
-		lda $04											; if OAM X coordinate of player's sprite 1
+		lda $04											; if screen-relative player X coordinate
 		cmp $06											; is greater than horizontal coordinate of firebar
 		bcs SetSDir										; then do not alter movement direction
 
