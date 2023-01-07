@@ -278,21 +278,29 @@ Square1SfxHandler:
 		ldy #$00
 		lda Square1SoundQueue							; check for sfx in queue
 		beq CheckSfx1Buffer
+		
 		sty Square1SoundQueue
 		sta Square1SoundBuffer							; if found, put in buffer
 		bmi PlaySmallJump								; small jump
+		
 		lsr
 		bcs PlayBigJump									; big jump
+		
 		lsr
 		bcs PlayBump									; bump
+		
 		lsr
 		bcs PlaySwimStomp								; swim/stomp
+		
 		lsr
 		bcs PlaySmackEnemy								; smack enemy
+		
 		lsr
 		bcs PlayPipeDownInj								; pipedown/injury
+		
 		lsr
 		bcs PlayFireballThrow							; fireball throw
+		
 		lsr
 		bcs PlayFlagpoleSlide							; slide flagpole
 
@@ -300,38 +308,48 @@ CheckSfx1Buffer:
 		lda Square1SoundBuffer							; check for sfx in buffer
 		beq ExS1H										; if not found, exit sub
 		bmi ContinueSndJump								; small mario jump
+		
 		lsr
 		bcs ContinueSndJump								; big mario jump
+		
 		lsr
 		bcs ContinueBumpThrow							; bump
+		
 		lsr
 		bcs ContinueSwimStomp							; swim/stomp
+		
 		lsr
 		bcs ContinueSmackEnemy							; smack enemy
+		
 		lsr
 		bcs ContinuePipeDownInj							; pipedown/injury
+		
 		lsr
 		bcs ContinueBumpThrow							; fireball throw
+		
 		lsr
 		bcs DecrementSfx1Length							; slide flagpole
+
 ExS1H:
 		rts
 
 PlaySwimStomp:
 		lda #$0e										; store length of swim/stomp sound
 		sta Squ1_SfxLenCounter
+		
 		ldy #$9c										; store reg contents for swim/stomp sound
 		ldx #$9e
 		lda #$26
 		jsr PlaySqu1Sfx
 
 ContinueSwimStomp:
-
 		ldy Squ1_SfxLenCounter							; look up reg contents in data section based on
 		lda SwimStompEnvelopeData-1,y					; length of sound left, used to control sound's
 		sta SND_SQUARE1_REG								; envelope
+
 		cpy #$06
 		bne BranchToDecLength1
+
 		lda #$9e										; when the length counts down to a certain point, put this
 		sta SND_SQUARE1_REG+2							; directly into the LSB of square 1's frequency divider
 
@@ -343,6 +361,7 @@ PlaySmackEnemy:
 		ldy #$cb
 		ldx #$9f
 		sta Squ1_SfxLenCounter
+
 		lda #$28										; store reg contents for smack enemy sound
 		jsr PlaySqu1Sfx
 		bne DecrementSfx1Length							; unconditional branch
@@ -351,12 +370,16 @@ ContinueSmackEnemy:
 		ldy Squ1_SfxLenCounter							; check about halfway through
 		cpy #$08
 		bne SmSpc
+
 		lda #$a0										; if we're at the about-halfway point, make the second tone
 		sta SND_SQUARE1_REG+2							; in the smack enemy sound
+
 		lda #$9f
 		bne SmTick
+
 SmSpc:
 		lda #$90										; this creates spaces in the sound, giving it its distinct noise
+
 SmTick:
 		sta SND_SQUARE1_REG
 
@@ -367,15 +390,17 @@ DecrementSfx1Length:
 StopSquare1Sfx:
 		ldx #$00										; if end of sfx reached, clear buffer
 		stx $f1											; and stop making the sfx
+
 		ldx #$0e
 		stx SND_MASTERCTRL_REG
+
 		ldx #$0f
 		stx SND_MASTERCTRL_REG
+
 ExSfx1:
 		rts
 
 PlayPipeDownInj:
-
 		lda #$2f										; load length of pipedown sound
 		sta Squ1_SfxLenCounter
 
@@ -383,14 +408,18 @@ ContinuePipeDownInj:
 		lda Squ1_SfxLenCounter							; some bitwise logic, forces the regs
 		lsr 											; to be written to only during six specific times
 		bcs NoPDwnL										; during which d3 must be set and d1-0 must be clear
+
 		lsr
 		bcs NoPDwnL
+
 		and #%00000010
 		beq NoPDwnL
+
 		ldy #$91										; and this is where it actually gets written in
 		ldx #$9a
 		lda #$44
 		jsr PlaySqu1Sfx
+
 NoPDwnL:
 		jmp DecrementSfx1Length
 
@@ -422,6 +451,7 @@ PlayTimerTick:
 
 CGrab_TTickRegL:
 		sta Squ2_SfxLenCounter
+
 		ldy #$7f										; load the rest of reg contents
 		lda #$42										; of coin grab and timer tick sound
 		jsr PlaySqu2Sfx
@@ -430,14 +460,17 @@ ContinueCGrabTTick:
 		lda Squ2_SfxLenCounter							; check for time to play second tone yet
 		cmp #$30										; timer tick sound also executes this, not sure why
 		bne N2Tone
+
 		lda #$54										; if so, load the tone directly into the reg
 		sta SND_SQUARE2_REG+2
+
 N2Tone:
 		bne DecrementSfx2Length
 
 PlayBlast:
 		lda #$20										; load length of fireworks/gunfire sound
 		sta Squ2_SfxLenCounter
+
 		ldy #$94										; load reg contents of fireworks/gunfire sound
 		lda #$5e
 		bne SBlasJ
@@ -446,8 +479,10 @@ ContinueBlast:
 		lda Squ2_SfxLenCounter							; check for time to play second part
 		cmp #$18
 		bne DecrementSfx2Length
+
 		ldy #$93										; load second part reg contents then
 		lda #$18
+
 SBlasJ:
 		bne BlstSJp										; unconditional branch to load rest of reg contents
 
@@ -459,6 +494,7 @@ ContinuePowerUpGrab:
 		lda Squ2_SfxLenCounter							; load frequency reg based on length left over
 		lsr 											; divide by 2
 		bcs DecrementSfx2Length							; alter frequency every other frame
+
 		tay
 		lda PowerUpGrabFreqData-1,y						; use length left over / 2 for frequency offset
 		ldx #$5d										; store reg contents of power-up grab sound
@@ -478,8 +514,10 @@ EmptySfx2Buffer:
 StopSquare2Sfx:
 		ldx #$0d										; stop playing the sfx
 		stx SND_MASTERCTRL_REG
+
 		ldx #$0f
 		stx SND_MASTERCTRL_REG
+
 ExSfx2:
 		rts
 
@@ -488,23 +526,33 @@ Square2SfxHandler:
 		bmi ContinueExtraLife							; from being interrupted by other sounds on square 2
 		
 		ldy #$00
+
 		lda Square2SoundQueue							; check for sfx in queue
 		beq CheckSfx2Buffer
+
 		sty Square2SoundQueue							; check for sfx in queue
+
 		sta Square2SoundBuffer							; if found, put in buffer and check for the following
 		bmi PlayExtraLife								; 1-up
+
 		lsr
 		bcs PlayCoinGrab								; coin grab
+
 		lsr
 		bcs PlayGrowPowerUp								; power-up reveal
+
 		lsr
 		bcs PlayGrowVine								; vine grow
+
 		lsr
 		bcs PlayBlast									; fireworks/gunfire
+
 		lsr
 		bcs PlayTimerTick								; timer tick
+
 		lsr
 		bcs PlayPowerUpGrab								; power-up grab
+
 		lsr
 		bcs PlayBowserFall								; bowser fall
 
@@ -512,20 +560,28 @@ CheckSfx2Buffer:
 		lda Square2SoundBuffer							; check for sfx in buffer
 		beq ExS2H										; if not found, exit sub
 		bmi ContinueExtraLife							; 1-up
+
 		lsr
 		bcs Cont_CGrab_TTick							; coin grab
+
 		lsr
 		bcs ContinueGrowItems							; power-up reveal
+
 		lsr
 		bcs ContinueGrowItems							; vine grow
+
 		lsr
 		bcs ContinueBlast								; fireworks/gunfire
+
 		lsr
 		bcs Cont_CGrab_TTick							; timer tick
+
 		lsr
 		bcs ContinuePowerUpGrab							; power-up grab
+
 		lsr
 		bcs ContinueBowserFall							; bowser fall
+
 ExS2H:
 		rts
 
@@ -536,11 +592,12 @@ JumpToDecLength2:
 		jmp DecrementSfx2Length
 
 PlayBowserFall:
-
 		lda #$38										; load length of bowser defeat sound
 		sta Squ2_SfxLenCounter
+
 		ldy #$c4										; load contents of reg for bowser defeat sound
 		lda #$18
+
 BlstSJp:
 		bne PBFRegs
 
@@ -548,10 +605,13 @@ ContinueBowserFall:
 		lda Squ2_SfxLenCounter							; check for almost near the end
 		cmp #$08
 		bne DecrementSfx2Length
+
 		ldy #$a4										; if so, load the rest of reg contents for bowser defeat sound
 		lda #$5a
+
 PBFRegs:
 		ldx #$9f										; the fireworks/gunfire sound shares part of reg contents here
+
 EL_LRegs:
 		bne LoadSqu2Regs								; this is an unconditional branch outta here
 
@@ -562,11 +622,14 @@ PlayExtraLife:
 ContinueExtraLife:
 		lda Squ2_SfxLenCounter
 		ldx #$03										; load new tones only every eight frames
+
 DivLLoop:
 		lsr
 		bcs JumpToDecLength2							; if any bits set here, branch to dec the length
+
 		dex
 		bne DivLLoop									; do this until all bits checked, if none set, continue
+
 		tay
 		lda ExtraLifeFreqData-1,y						; load our reg contents
 		ldx #$82
@@ -582,8 +645,10 @@ PlayGrowVine:
 
 GrowItemRegs:
 		sta Squ2_SfxLenCounter
+
 		lda #$7f										; load contents of reg for both sounds directly
 		sta SND_SQUARE2_REG+1
+
 		lda #$00										; start secondary counter for both sounds
 		sta Sfx_SecondaryCounter
 
@@ -594,11 +659,12 @@ ContinueGrowItems:
 		tay
 		cpy Squ2_SfxLenCounter							; have we reached the end yet?
 		beq StopGrowItems								; if so, branch to jump, and stop playing sounds
+
 		lda #$9d										; load contents of other reg directly
 		sta SND_SQUARE2_REG
+
 		lda PUp_VGrow_FreqData,y						; use secondary counter / 2 as offset for frequency regs
-		jsr SetFreq_Squ2
-		rts
+		jmp SetFreq_Squ2
 
 StopGrowItems:
 		jmp EmptySfx2Buffer								; branch to stop playing sounds
@@ -614,6 +680,7 @@ SkidSfxFreqData:
 
 PlaySkidSfx:
 		sty NoiseSoundBuffer
+
 		lda #$06
 		sta Noise_SfxLenCounter
 
@@ -622,6 +689,7 @@ ContinueSkidSfx:
 		tay
 		lda SkidSfxFreqData-1,y
 		sta SND_TRIANGLE_REG+2
+
 		lda #$18
 		sta SND_TRIANGLE_REG
 		sta SND_TRIANGLE_REG+3
@@ -629,6 +697,7 @@ ContinueSkidSfx:
 
 PlayBrickShatter:
 		sty NoiseSoundBuffer
+
 		lda #$20										; load length of brick shatter sound
 		sta Noise_SfxLenCounter
 
@@ -636,6 +705,7 @@ ContinueBrickShatter:
 		lda Noise_SfxLenCounter
 		lsr 											; divide by 2 and check for bit set to use offset
 		bcc DecrementSfx3Length
+
 		tay
 		ldx BrickShatterFreqData,y						; load reg contents of brick shatter sound
 		lda ShatterFlameEnvData,y
@@ -643,42 +713,53 @@ ContinueBrickShatter:
 PlayNoiseSfx:
 		sta SND_NOISE_REG								; play the sfx
 		stx SND_NOISE_REG+2
+
 		lda #$18
 		sta SND_NOISE_REG+3
 
 DecrementSfx3Length:
 		dec Noise_SfxLenCounter							; decrement length of sfx
 		bne ExSfx3
+
 		lda #$f0										; if done, stop playing the sfx
 		sta SND_NOISE_REG
+
 		lda #$00
 		sta SND_TRIANGLE_REG
 		sta NoiseSoundBuffer
+
 ExSfx3:
 		rts
 
 NoiseSfxHandler:
 		lda NoiseSoundBuffer
 		bmi ContinueSkidSfx
+
 		ldy NoiseSoundQueue
 		bmi PlaySkidSfx
+
 		lsr NoiseSoundQueue
 		bcs PlayBrickShatter							; brick shatter
+
 		lsr NoiseSoundQueue
 		bcs PlayBowserFlame								; bowser flame
 
 CheckNoiseBuffer:
 		lda NoiseSoundBuffer							; check for sfx in buffer
 		beq ExNH										; if not found, exit sub
+
 		lsr
 		bcs ContinueBrickShatter						; brick shatter
+
 		lsr
 		bcs ContinueBowserFlame							; bowser flame
+
 ExNH:
 		rts
 
 PlayBowserFlame:
 		sty NoiseSoundBuffer
+
 		lda #$40										; load length of bowser flame sound
 		sta Noise_SfxLenCounter
 
@@ -698,33 +779,43 @@ ContinueMusic:
 MusicHandler:
 		lda EventMusicQueue								; check event music queue
 		bne LoadEventMusic
+
 		lda AreaMusicQueue								; check area music queue
 		bne LoadAreaMusic
+
 		lda EventMusicBuffer							; check both buffers
 		ora AreaMusicBuffer
 		bne ContinueMusic
+
 		rts												; no music, then leave
 
 LoadEventMusic:
 		ldy #$31
 		sty VictoryMusicHeaderOfs						; start counter used only by victory music
+
 		sta EventMusicBuffer							; copy event music queue contents to buffer
 		cmp #DeathMusic									; is it death music?
 		bne NoStopSfx									; if not, jump elsewhere
+
 		jsr StopSquare1Sfx								; stop sfx in square 1 and 2
 		jsr StopSquare2Sfx								; but clear only square 1's sfx buffer
+
 		ldy #$00
 		sty NoteLengthTblAdder							; default value for additional length byte offset
 		sty AreaMusicBuffer								; clear area music buffer
 		beq FindEventMusicHeader
+
 NoStopSfx:
 		ldx AreaMusicBuffer
 		stx AreaMusicBuffer_Alt							; save current area music buffer to be re-obtained later
+
 		ldy #$00
 		sty NoteLengthTblAdder							; default value for additional length byte offset
 		sty AreaMusicBuffer								; clear area music buffer
+
 		cmp #TimeRunningOutMusic						; is it time running out music?
 		bne CheckVictoryMusic
+
 		ldx #$08										; load offset to be added to length byte of header
 		stx NoteLengthTblAdder
 		bne FindEventMusicHeader						; unconditional branch
@@ -738,27 +829,34 @@ HandleVictMusicLoopB:
 		ldy VictoryMusicHeaderOfs						; is it time to loopback victory music?
 		cpy #$37
 		bne LoadHeader									; branch ahead with alternate offset
+
 		jmp EndPlayback
 
 LoadAreaMusic:
 		cmp #UndergroundMusic							; is it underground music?
 		bne NoStop1										; no, do not stop square 1 sfx
+
 		jsr StopSquare1Sfx
+
 NoStop1:
 		ldy #$10										; start counter used only by ground level music
+
 GMLoopB:
 		sty GroundMusicHeaderOfs
 
 HandleAreaMusicLoopB:
 		ldy #$00										; clear event music buffer
 		sty EventMusicBuffer
+
 		sta AreaMusicBuffer								; copy area music queue contents to buffer
 		cmp #$01										; is it ground level music?
 		bne FindAreaMusicHeader
+
 		inc GroundMusicHeaderOfs						; increment but only if playing ground level music
 		ldy GroundMusicHeaderOfs						; is it time to loopback ground level music?
 		cpy #$32
 		bne LoadHeader									; branch ahead with alternate offset
+
 		ldy #$11
 		bne GMLoopB										; unconditional branch
 
@@ -776,33 +874,43 @@ LoadHeader:
 		tay
 		lda MusicHeaderData,y							; now load the header
 		sta NoteLenLookupTblOfs
+
 		lda MusicHeaderData+1,y
 		sta MusicDataLow
+
 		lda MusicHeaderData+2,y
 		sta MusicDataHigh
+
 		lda MusicHeaderData+3,y
 		sta MusicOffset_Triangle
+
 		lda MusicHeaderData+4,y
 		sta MusicOffset_Square1
+
 		lda MusicHeaderData+5,y
 		sta MusicOffset_Noise
 		sta NoiseDataLoopbackOfs
+
 		lda #$01										; initialize music note counters
 		sta Squ2_NoteLenCounter
 		sta Squ1_NoteLenCounter
 		sta Tri_NoteLenCounter
 		sta Noise_BeatLenCounter
-		lda #$00										; initialize music data offset for square 2
+
+		lsr												; initialize music data offset for square 2
 		sta MusicOffset_Square2
 		sta AltRegContentFlag							; initialize alternate control reg data used by square 1
+
 		lda #$0b										; disable triangle channel and reenable it
 		sta SND_MASTERCTRL_REG
+
 		lda #$0f
 		sta SND_MASTERCTRL_REG
 
 HandleSquare2Music:
 		dec Squ2_NoteLenCounter							; decrement square 2 note length
 		bne MiscSqu2MusicTasks							; is it time for more data?if not, branch to end tasks
+
 		ldy MusicOffset_Square2							; increment square 2 music offset and fetch data
 		inc MusicOffset_Square2
 		lda (MusicData),y
@@ -814,11 +922,14 @@ EndOfMusicData:
 		lda EventMusicBuffer							; check secondary buffer for time running out music
 		cmp #TimeRunningOutMusic
 		bne NotTRO
+
 		lda AreaMusicBuffer_Alt							; load previously saved contents of primary buffer
 		bne MusicLoopBack								; and start playing the song again if there is one
+
 NotTRO:
 		and #VictoryMusic								; check for victory music (the only secondary that loops)
 		bne VictoryMLoopBack
+
 		lda AreaMusicBuffer								; check primary buffer for any music except pipe intro
 		and #%01011111
 		bne MusicLoopBack								; if any area music except pipe intro, music loops
@@ -828,6 +939,7 @@ EndPlayback:
 		sta AreaMusicBuffer								; control regs of square and triangle channels
 		sta EventMusicBuffer
 		sta SND_TRIANGLE_REG
+
 		lda #$90
 		sta SND_SQUARE1_REG
 		sta SND_SQUARE2_REG
@@ -842,6 +954,7 @@ VictoryMLoopBack:
 Squ2LengthHandler:
 		jsr ProcessLengthData							; store length of note
 		sta Squ2_NoteLenBuffer
+
 		ldy MusicOffset_Square2							; fetch another byte (MUST NOT BE LENGTH BYTE!)
 		inc MusicOffset_Square2
 		lda (MusicData),y
@@ -849,12 +962,16 @@ Squ2LengthHandler:
 Squ2NoteHandler:
 		ldx Square2SoundBuffer							; is there a sound playing on this channel?
 		bne SkipFqL1
+
 		jsr SetFreq_Squ2								; no, then play the note
 		beq Rest										; check to see if note is rest
+
 		jsr LoadControlRegs								; if not, load control regs for square 2
+
 Rest:
 		sta Squ2_EnvelopeDataCtrl						; save contents of A
 		jsr Dump_Sq2_Regs								; dump X and Y into square 2 control regs
+
 SkipFqL1:
 		lda Squ2_NoteLenBuffer							; save length in square 2 note counter
 		sta Squ2_NoteLenCounter
@@ -862,21 +979,27 @@ SkipFqL1:
 MiscSqu2MusicTasks:
 		lda Square2SoundBuffer							; is there a sound playing on square 2?
 		bne HandleSquare1Music
+
 		lda EventMusicBuffer							; check for death music or d4 set on secondary buffer
 		and #%10010001									; note that regs for death music or d4 are loaded by default
 		bne HandleSquare1Music
+
 		ldy Squ2_EnvelopeDataCtrl						; check for contents saved from LoadControlRegs
 		beq NoDecEnv1
+
 		dec Squ2_EnvelopeDataCtrl						; decrement unless already zero
+
 NoDecEnv1:
 		jsr LoadEnvelopeData							; do a load of envelope data to replace default
 		sta SND_SQUARE2_REG								; based on offset set by first load unless playing
+
 		ldx #$7f										; death music or d4 set on secondary buffer
 		stx SND_SQUARE2_REG+1
 
 HandleSquare1Music:
 		ldy MusicOffset_Square1							; is there a nonzero offset here?
 		beq HandleTriangleMusic							; if not, skip ahead to the triangle channel
+
 		dec Squ1_NoteLenCounter							; decrement square 1 note length
 		bne MiscSqu1MusicTasks							; is it time for more data?
 
@@ -885,8 +1008,10 @@ FetchSqu1MusicData:
 		inc MusicOffset_Square1
 		lda (MusicData),y
 		bne Squ1NoteHandler								; if nonzero, then skip this part
+
 		lda #$83
 		sta SND_SQUARE1_REG								; store some data into control regs for square 1
+
 		lda #$94										; and fetch another byte of data, used to give
 		sta SND_SQUARE1_REG+1							; death music its unique sound
 		sta AltRegContentFlag
@@ -895,13 +1020,17 @@ FetchSqu1MusicData:
 Squ1NoteHandler:
 		jsr AlternateLengthHandler
 		sta Squ1_NoteLenCounter							; save contents of A in square 1 note counter
+
 		ldy Square1SoundBuffer							; is there a sound playing on square 1?
 		bne HandleTriangleMusic
+
 		txa
 		and #%00111110									; change saved data to appropriate note format
 		jsr SetFreq_Squ1								; play the note
 		beq SkipCtrlL
+
 		jsr LoadControlRegs
+
 SkipCtrlL:
 		sta Squ1_EnvelopeDataCtrl						; save envelope offset
 		jsr Dump_Squ1_Regs
@@ -909,19 +1038,26 @@ SkipCtrlL:
 MiscSqu1MusicTasks:
 		lda Square1SoundBuffer							; is there a sound playing on square 1?
 		bne HandleTriangleMusic
+
 		lda EventMusicBuffer							; check for death music or d4 set on secondary buffer
 		and #%10010001
 		bne DeathMAltReg
+
 		ldy Squ1_EnvelopeDataCtrl						; check saved envelope offset
 		beq NoDecEnv2
+
 		dec Squ1_EnvelopeDataCtrl						; decrement unless already zero
+
 NoDecEnv2:
 		jsr LoadEnvelopeData							; do a load of envelope data
 		sta SND_SQUARE1_REG								; based on offset set by first load
+
 DeathMAltReg:
 		lda AltRegContentFlag							; check for alternate control reg data
 		bne DoAltLoad
+
 		lda #$7f										; load this value if zero, the alternate value
+
 DoAltLoad:
 		sta SND_SQUARE1_REG+1							; if nonzero, and let's move on
 
@@ -929,15 +1065,19 @@ HandleTriangleMusic:
 		lda MusicOffset_Triangle
 		dec Tri_NoteLenCounter							; decrement triangle note length
 		bne HandleNoiseMusic							; is it time for more data?
+
 		ldy MusicOffset_Triangle						; increment square 1 music offset and fetch data
 		inc MusicOffset_Triangle
 		lda (MusicData),y
 		beq LoadTriCtrlReg								; if zero, skip all this and move on to noise
 		bpl TriNoteHandler								; if non-negative, data is note
+
 		jsr ProcessLengthData							; otherwise, it is length data
 		sta Tri_NoteLenBuffer							; save contents of A
+
 		lda #$1f
 		sta SND_TRIANGLE_REG							; load some default data for triangle control reg
+
 		ldy MusicOffset_Triangle						; fetch another byte
 		inc MusicOffset_Triangle
 		lda (MusicData),y
@@ -945,37 +1085,45 @@ HandleTriangleMusic:
 
 TriNoteHandler:
 		jsr SetFreq_Tri
+
 		ldx Tri_NoteLenBuffer							; save length in triangle note counter
 		stx Tri_NoteLenCounter
+
 		lda EventMusicBuffer
 		and #%01101110									; check for death music or d4 set on secondary buffer
 		bne NotDOrD4									; if playing any other secondary, skip primary buffer check
+
 		lda AreaMusicBuffer								; check primary buffer for water or castle level music
 		and #%00001010
 		beq HandleNoiseMusic							; if playing any other primary, or death or d4, go on to noise routine
+
 NotDOrD4:
 		txa												; if playing water or castle music or any secondary
 		cmp #$12										; besides death music or d4 set, check length of note
 		bcs LongN
+
 		lda EventMusicBuffer							; check for win castle music again if not playing a long note
 		and #EndOfCastleMusic
 		beq MediN
+
 		lda #$0f										; load value $0f if playing the win castle music and playing a short
 		bne LoadTriCtrlReg								; note, load value $1f if playing water or castle level music or any
+
 MediN:
 		lda #$1f										; secondary besides death and d4 except win castle or win castle and playing
 		bne LoadTriCtrlReg								; a short note, and load value $ff if playing a long note on water, castle
+
 LongN:
 		lda #$ff										; or any secondary (including win castle) except death and d4
 
 LoadTriCtrlReg:
-
 		sta SND_TRIANGLE_REG							; save final contents of A into control reg for triangle
 
 HandleNoiseMusic:
 		lda AreaMusicBuffer								; check if playing underground or castle music
 		and #%11110011
 		beq ExitMusicHandler							; if so, skip the noise routine
+
 		dec Noise_BeatLenCounter						; decrement noise beat length
 		bne ExitMusicHandler							; is it time for more data?
 
@@ -984,6 +1132,7 @@ FetchNoiseBeatData:
 		inc MusicOffset_Noise
 		lda (MusicData),y								; get noise beat data, if nonzero, branch to handle
 		bne NoiseBeatHandler
+
 		lda NoiseDataLoopbackOfs						; if data is zero, reload original noise beat offset
 		sta MusicOffset_Noise							; and loopback next time around
 		bne FetchNoiseBeatData							; unconditional branch
@@ -991,15 +1140,20 @@ FetchNoiseBeatData:
 NoiseBeatHandler:
 		jsr AlternateLengthHandler
 		sta Noise_BeatLenCounter						; store length in noise beat counter
+
 		txa
 		and #%00111110									; reload data and erase length bits
 		beq SilentBeat									; if no beat data, silence
+
 		cmp #$30										; check the beat data and play the appropriate
 		beq LongBeat									; noise accordingly
+
 		cmp #$20
 		beq StrongBeat
+
 		and #%00010000
 		beq SilentBeat
+
 		lda #$1c										; short beat data
 		ldx #$03
 		ldy #$18
@@ -1049,16 +1203,21 @@ LoadControlRegs:
 		lda EventMusicBuffer							; check secondary buffer for win castle music
 		and #EndOfCastleMusic
 		beq NotECstlM
+
 		lda #$04										; this value is only used for win castle music
 		bne AllMus										; unconditional branch
+
 NotECstlM:
 		lda AreaMusicBuffer
 		and #%01111101									; check primary buffer for water music
 		beq WaterMus
+
 		lda #$08										; this is the default value for all other music
 		bne AllMus
+
 WaterMus:
 		lda #$28										; this value is used for water music and all other event music
+
 AllMus:
 		ldx #$82										; load contents of other sound regs for square 2
 		ldy #$7f
@@ -1068,6 +1227,7 @@ LoadEnvelopeData:
 		lda EventMusicBuffer							; check secondary buffer for win castle music
 		and #EndOfCastleMusic
 		beq LoadUsualEnvData
+
 		lda EndOfCastleMusicEnvData,y					; load data from offset for win castle music
 		rts
 
@@ -1075,6 +1235,7 @@ LoadUsualEnvData:
 		lda AreaMusicBuffer								; check primary buffer for water music
 		and #%01111101
 		beq LoadWaterEventMusEnvData
+
 		lda AreaMusicEnvData,y							; load default data from offset for all other music
 		rts
 

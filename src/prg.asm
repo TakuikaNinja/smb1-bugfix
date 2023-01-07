@@ -8865,7 +8865,7 @@ Inc2B:
 
 CheckpointEnemyID:
 		lda Enemy_ID,x
-		cmp #$15										; check enemy object identifier for $15 or greater
+		cmp #$11										; check enemy object identifier for $11 or greater
 		bcs InitEnemyRoutines							; and branch straight to the jump engine if found
 
 		tay												; save identifier in Y register for now
@@ -9511,6 +9511,9 @@ InitBowserFlame:
 		ora #Sfx_BowserFlame							; load bowser's flame sound into queue
 		sta NoiseSoundQueue
 
+		lda #$08										; set $08 for bounding box control
+		sta Enemy_BoundBoxCtrl,x
+
 		ldy BowserFront_Offset							; get bowser's buffer offset
 		lda Enemy_ID,y									; check for bowser
 		cmp #Bowser
@@ -9584,9 +9587,6 @@ SetMF:
 		sta EnemyFrenzyBuffer							; clear enemy frenzy buffer
 
 FinishFlame:
-		lda #$08										; set $08 for bounding box control
-		sta Enemy_BoundBoxCtrl,x
-
 		lda #$01										; set high byte of vertical and
 		sta Enemy_Y_HighPos,x							; enemy buffer flag
 		sta Enemy_Flag,x
@@ -11048,8 +11048,7 @@ AddHA:
 		jmp ChkFOfs
 
 SubtR1:
-;		sec												; subtract original X from the
-		sbc Enemy_Rel_XPos								; current sprite X
+		sbc Enemy_Rel_XPos								; subtract original X from the current sprite X
 
 ChkFOfs:
 		cmp #$59										; if difference of coordinates within a certain range,
@@ -11094,7 +11093,10 @@ FirebarCollision:
 		dey												; if player's vertical high byte offscreen,
 		bne NoColFB										; skip all of this
 
-		ldy Player_Y_Position							; get player's vertical position
+		lda Player_Y_Position							; get player's vertical position
+		clc												; then add 4 pixels to the player's vertical coordinate
+		adc #$04										; to give some leeway (prevents the firebar block
+		tay												; head injury glitch with big mario)
 
 		lda PlayerSize									; get player's size
 		bne AdjSm										; if player small, branch to alter variables
@@ -11107,8 +11109,8 @@ AdjSm:
 		inc $05											; first increment our counter twice (setting $02 as flag)
 
 		tya
-		clc												; then add 24 pixels to the player's
-		adc #$18										; vertical coordinate
+		clc												; then add 20 pixels to the player's
+		adc #$14										; vertical coordinate (adjusted to account for adding 4 earlier)
 		tay
 
 BigJp:
@@ -11131,7 +11133,7 @@ ChkVFBD:
 		cmp #$f0										; because, really, what's the point?
 		bcs Chk2Ofs
 
-		lda Sprite_X_Position+4							; get OAM X coordinate for sprite #1
+		lda Player_Rel_XPos								; get screen-relative player X coordinate
 		clc
 		adc #$04										; add four pixels
 		sta $04											; store here
@@ -11165,7 +11167,7 @@ Chk2Ofs:
 ChgSDir:
 		ldx #$01										; set movement direction by default
 
-		lda $04											; if OAM X coordinate of player's sprite 1
+		lda $04											; if screen-relative player X coordinate
 		cmp $06											; is greater than horizontal coordinate of firebar
 		bcs SetSDir										; then do not alter movement direction
 
@@ -13740,15 +13742,25 @@ ChkForTopCollision:
 
 		ldy Enemy_ID,x
 		cpy #$2b										; if either of the two small platform objects are found,
-		beq SetCollisionFlag							; regardless of which one, branch to use bounding box counter
+		beq CollisionFlagChk							; regardless of which one, branch to use bounding box counter
 
 		cpy #$2c										; as contents of collision flag
-		beq SetCollisionFlag
+		beq CollisionFlagChk
 
 		txa												; otherwise use enemy object buffer offset
 
-SetCollisionFlag:
+CollisionFlagChk:
 		ldx ObjectOffset								; get enemy object buffer offset
+		
+		ldy Player_Y_HighPos
+		cpy #$01										; check the high byte of the player Y position
+		bne SetCollisionFlag
+
+		ldy Player_Y_Position
+		cpy #$df										; check the low byte of the player Y position
+		bcs ExPlPos
+
+SetCollisionFlag:
 		sta PlatformCollisionFlag,x						; save either bounding box counter or enemy offset here
 
 		lda #$00
