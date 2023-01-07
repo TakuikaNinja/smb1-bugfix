@@ -46,7 +46,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
 + [x] The locations of some warp destination change and loop command triggers have been tweaked. (no more wrong warps; notably 4-2, 8-4)
 + [x] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
-+ [ ] Scroll padding/centering is more robust. (todo?)
++ [x] The scroll handler is more robust. (e.g. getting stuck in a wall updates the scroll properly)
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.

@@ -5206,16 +5206,43 @@ ScrollHandler:
 		adc Platform_X_Scroll							; add value used by left/right platforms
 		sta Player_X_Scroll								; save as new value here to impose force on scroll
 		
+		lda GameEngineSubroutine
+		cmp #$04										; if running flagpole slide routine, branch ahead
+		beq SkipScrollLock
+
 		lda ScrollLock									; check scroll lock flag
 		bne InitScrlAmt									; skip a bunch of code here if set
 		
+SkipScrollLock:
+		lda Player_Pos_ForScroll						; check player's horizontal screen position
+		cmp #$50										; >= 80 pixels to the right? set carry
+		php												; save carry flag
+		
+
+		lda SideCollisionTimer							; get timer related to player's side collision
+		beq NoCollision_PLP								; if expired, branch
+
+		plp												; get carry flag from earlier
+		bcc InitScrlAmt									; branch to init scroll if not set
+
+		lda Player_Pos_ForScroll						; check player's horizontal screen position
+		cmp #$70										; >= 112 pixels to the right?
+		bcc InitScrlAmt									; no, so branch to init scroll
+
+		sec
 		lda Player_Pos_ForScroll
-		cmp #$50										; check player's horizontal screen position
-		bcc InitScrlAmt									; if less than 80 pixels to the right, branch
-		
-		lda SideCollisionTimer							; if timer related to player's side collision
-		bne InitScrlAmt									; not expired, branch
-		
+		sbc #$6f										; subtract $6f to get scroll amount
+		sta Player_X_Scroll
+
+		sec												; set carry to skip branch
+
+	.db $24												; (zero page BIT instruction) [skip 1 byte]
+
+NoCollision_PLP:
+		plp												; get carry flag from earlier
+		bcc InitScrlAmt									; branch to init scroll if not set
+
+NoCollision:
 		ldy Player_X_Scroll								; get value and decrement by one
 		dey												; if value originally set to zero or otherwise
 		bmi InitScrlAmt									; negative for left movement, branch
@@ -5260,9 +5287,7 @@ ScrollScreen:
 		sta Mirror_PPU_CTRL_REG1						; mirror to be used to set name table later
 		
 		jsr GetScreenPosition							; figure out where the right side is
-		lda #$08
-;		sta ScrollIntervalTimer							; set scroll timer (residual, not used elsewhere)
-		bne ChkPOffscr									; skip this part (unconditional)
+		jmp ChkPOffscr									; and skip this part
 
 InitScrlAmt:
 		lda #$00
@@ -14226,7 +14251,7 @@ FlagpoleCollision:
 		lsr
 		sta StarInvincibleTimer							; FIX: starman doesn't mess up the level complete music anymore
 
-		inc ScrollLock									; set scroll lock flag
+		inc ScrollLock									; set scroll lock flag (more or less just for the music)
 
 		lda GameEngineSubroutine
 		cmp #$04										; check for flagpole slide routine running
@@ -14451,7 +14476,7 @@ NXSpd:
 
 		ldy #$00
 		sty Player_X_Speed								; nullify player's horizontal speed
-
+		sty Player_X_Scroll
 		cmp #$00										; if value set in A not set to $ff,
 		bpl PlatF										; branch ahead, do not decrement Y
 
