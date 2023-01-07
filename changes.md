@@ -51,6 +51,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Firebar collision detection now checks the relative player position instead of querying the OAM buffer. (yes, really)
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
++ [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
 + [x] Moved the main game loop out of NMI and added proper interrupt and lag frame handling to the NMI routine.
 + [x] The reset handler has been tweaked to better resemble the sample implementation on NESdev Wiki.
