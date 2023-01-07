@@ -47,6 +47,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The locations of some warp destination change and loop command triggers have been tweaked. (no more wrong warps; notably 4-2, 8-4)
 + [x] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
 + [x] The scroll handler is more robust. (e.g. getting stuck in a wall updates the scroll properly)
++ [x] Firebar blocks will no longer cause head injuries as big Mario.
++ [x] Firebar collision detection now checks the relative player position instead of querying the OAM buffer. (yes, really)
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
@@ -74,7 +76,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Bullet Bills fired from cannons are now able to collide with enemies, including kicked shells. (notably 7-1, now you can farm lives there)
 + [x] Jumping Green Paratroopas now move faster in Quest 2 and demote to the appropriate speed in Quest 2.
 + [x] Swimming Cheep Cheeps now move up and down farther after 5-3.
-+ [x] Lakitus respawn more quickly after 5-3.
++ [x] Lakitus respawn more quickly after 5-3. Additionally, they will now always spawn at the correct height with the correct hitbox.
++ [x] Platforms moving downwards will now properly drop the player into pits.
 + [x] Enemies will now clear more of their variables when unloading, in order to minimize oddities. (e.g. Collecting a star when it has negative Y speed no longer causes mushrooms to jump)
 
 ## PAL Version Changes
