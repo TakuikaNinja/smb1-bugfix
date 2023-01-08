@@ -14488,7 +14488,7 @@ NXSpd:
 
 		ldy #$00
 		sty Player_X_Speed								; nullify player's horizontal speed
-		sty Player_X_Scroll
+
 		cmp #$00										; if value set in A not set to $ff,
 		bpl PlatF										; branch ahead, do not decrement Y
 
