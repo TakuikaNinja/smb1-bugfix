@@ -17,6 +17,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Scroll lock object in underground warp zone now works as intended. (no more minus world)
 + [x] An erroneous increment of the warp zone value has been removed. (1-2 warpzone pipe destination stays at 1-2 exit until warp zone loads)
 - [x] Lakitus now throw their spinies as originally intended.
++ [x] The initial number of lives is now set to 5 like in later entries, to compensate for the difficulty change.
 + [x] Warm start detection & continue functions now check ContinueWorld for a valid value. (no more glitch worlds)
 - [x] Falling while crouching now keeps your sprite crouched. Additionally, the down input now nullifies left/right inputs while crouching on the ground.
 - [x] While underwater, crouching no longer messes up the hitbox.
@@ -53,7 +54,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
-+ [x] Moved the main game loop out of NMI and added proper interrupt and lag frame handling to the NMI routine.
++ [x] Tweaked controller reading code to mask out left+right/up+down inputs. Additionally, the polling loop now uses the ring counter technique.
++ [x] Moved the main game loop out of NMI and added proper interrupt and lag frame handling to the NMI routine. (no more glitched scanlines, HUD flickering, or music slowdown)
 + [x] The reset handler has been tweaked to better resemble the sample implementation on NESdev Wiki.
 + [x] Optimized, tweaked, and trimmed code wherever possible. (ongoing effort)
 

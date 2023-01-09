@@ -2386,53 +2386,67 @@ InitATLoop:
 		jmp InitScroll									; initialize scroll registers to zero
 
 ; -------------------------------------------------------------------------------------
-; $00 - temp joypad bit
+; $00 - temp joypad byte 1
+; $01 - temp joypad byte 2
 
 ReadJoypads:
 		lda #$01										; reset and clear strobe of joypad ports
 		sta JOYPAD_PORT
-		
-		lsr
-		tax												; start with joypad 1's port
+		sta $01											; player 2's buttons double as ring counter
+		lsr												; now A is 0
 		sta JOYPAD_PORT
-		
-		jsr ReadPortBits
-		inx												; increment for joypad 2's port
-
-ReadPortBits:
-		ldy #$08
+		tax												; start with joypad 1's port for input masking later
 
 PortLoop:
-		pha												; push previous bit onto stack
-		
-		lda JOYPAD_PORT,x								; read current bit on joypad port
-		sta $00											; check d1 and d0 of port output
-		
-		lsr												; this is necessary on the old
-		ora $00											; famicom systems in japan
+		lda JOYPAD_PORT1								; read joypad 1
+		and #%00000011									; ignore bits other than controller
+		cmp #$01										; set carry if and only if nonzero
+		rol $00											; carry -> bit 0; bit 7 -> carry
+
+		lda JOYPAD_PORT2								; repeat for joypad 2
+		and #%00000011
+		cmp #$01
+		rol $01
+		bcc PortLoop									; loop until the ring counter sets the carry flag
+
+MaskInputLoop:
+		lda $00,x										; get input from temp variable
+		tay												; back up input to Y
+
+		and #%00001010									; compare up & left...
 		lsr
-		
-		pla												; read bits from stack
-		rol												; rotate bit from carry flag
-		dey
-		bne PortLoop									; count down bits left
-		
-		sta SavedJoypadBits,x							; save controller status here always
-		pha
+		and $00,x										; to down & right
+		beq NotUpDown									; not pressed at the same time, so branch
+
+		tya												; otherwise get input back from Y
+		eor SavedJoypadBits,x							; and do bit operations
+		and #%11110000									; on the input
+		eor SavedJoypadBits,x							; to use the previous frame's directions instead
+		tay												; back up input to Y
+
+NotUpDown:
+		tya												; get input back from Y
+		sta SavedJoypadBits,x							; and properly save it
+		tay												; back up input to Y
 		
 		and #%00110000									; check for select or start
-		and JoypadBitMask,x								; if neither saved state nor current state
-		beq Save8Bits									; have any of these two set, branch
-		
-		pla
-		and #%11001111									; otherwise store without select
-		sta SavedJoypadBits,x							; or start bits and leave
-		rts
+		and JoypadBitMask,x								; if saved state and current state
+		bne SSMask										; have any of these two set, branch
 
-Save8Bits:
-		pla
-		sta JoypadBitMask,x								; save with all bits in another place and leave
-		rts
+		tya
+		sta JoypadBitMask,x								; otherwise save input as the bit mask
+		jmp NoSSMask									; and jump ahead
+
+SSMask:
+		tya												; get input back from Y
+		and #%11001111									; store without select
+		sta SavedJoypadBits,x							; or start bits
+
+NoSSMask:
+		inx												; increment joypad
+		cpx #$02										; have we finished joypad 2?
+		bne MaskInputLoop								; branch to loop if not
+		rts												; otherwise leave
 
 ; -------------------------------------------------------------------------------------
 ; $00 - vram buffer address table low
