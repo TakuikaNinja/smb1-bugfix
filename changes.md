@@ -40,6 +40,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
 + [x] Coin Heavens (cloud levels accessed via vines) now have the cloud backdrop.
++ [x] The underwater section of 8-4 now uses the grey colour scheme for better continuity within the level.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)
 - [x] When entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.

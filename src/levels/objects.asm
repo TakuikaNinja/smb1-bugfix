@@ -504,7 +504,7 @@ L_WaterArea2:
 
 ; water area used in level 8-4
 L_WaterArea3:
-	.db $49, $0f
+	.db $4f, $0f ; use "all grey" backdrop since this is in a castle
 	.db $1e, $01, $39, $73, $5e, $07, $ae, $0b, $1e, $82
 	.db $6e, $88, $9e, $02, $0d, $04, $2e, $0b, $3e, $0f ; PAL bugfix: Close 1-tile gap above exit pipe
 	.db $45, $09, $ed, $47
