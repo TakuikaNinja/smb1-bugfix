@@ -3976,7 +3976,7 @@ WarpNum:
 		jsr WriteGameText								; print text and warp zone numbers
 		
 		lda #PiranhaPlant
-		jsr KillEnemies									; load identifier for piranha plants and do sub
+		jmp KillEnemies									; load identifier for piranha plants and do sub
 
 ScrollLockObject:
 		lda ScrollLock									; invert scroll lock to turn it on

@@ -14,8 +14,9 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays. (unrelated to the aforementioned bug).
 
 ## Bug Fixes & Small Tweaks
-+ [x] Scroll lock object in underground warp zone now works as intended. (no more minus world)
++ [x] Scroll unlock object in underground warp zone now works as intended. (no more minus world)
 + [x] An erroneous increment of the warp zone value has been removed. (1-2 warpzone pipe destination stays at 1-2 exit until warp zone loads)
++ [x] Warp zone triggers have been adjusted so that they are now loaded before the player can enter the pipes early. (1-2, 4-2)
 - [x] Lakitus now throw their spinies as originally intended.
 + [x] The initial number of lives is now set to 5 like in later entries, to compensate for the difficulty change.
 + [x] Warm start detection & continue functions now check ContinueWorld for a valid value. (no more glitch worlds)

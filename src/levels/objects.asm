@@ -322,7 +322,7 @@ L_GroundArea16:
 	.db $29, $12, $63, $12, $62, $42, $69, $14, $a5, $12
 	.db $a4, $42, $e2, $14, $e1, $44, $f8, $16, $37, $c1
 	.db $8f, $38, $02, $bb, $28, $7a, $68, $7a, $a8, $7a
-	.db $e0, $6a, $f0, $6a, $6d, $c5
+	.db $e0, $6a, $f0, $6a, $0d, $c5, $6d, $47 ; move warp zone trigger forward + extra scroll lock
 	.db $fd
 
 ; level 8-1
@@ -431,7 +431,8 @@ L_UndergroundArea1:
 	.db $5f, $b3, $97, $63, $9e, $00, $0e, $81, $16, $24
 	.db $66, $04, $8e, $00, $fe, $01, $08, $d2, $0e, $06
 	.db $6f, $47, $9e, $0f, $0e, $82, $2d, $47, $28, $7a
-	.db $68, $7a, $a8, $7a, $ae, $01, $de, $0f, $6d, $c5
+	.db $68, $7a, $a8, $7a, $ae, $01, $de, $0f, $0d, $c5
+	.db $6d, $47 ; move warp zone trigger forward + extra scroll lock
 	.db $fd
 
 ; level 4-2
@@ -452,7 +453,7 @@ L_UndergroundArea2:
 	.db $ae, $00, $fe, $04, $04, $d1, $17, $04, $26, $49
 	.db $27, $29, $df, $33, $fe, $02, $44, $f6, $7c, $01
 	.db $8e, $06, $bf, $47, $ee, $0f, $4d, $c7, $0e, $82
-	.db $68, $7a, $ae, $01, $de, $0f, $6d, $c5
+	.db $68, $7a, $ae, $01, $de, $0f, $0d, $c5, $6d, $47 ; move warp zone trigger forward + extra scroll lock
 	.db $fd
 
 ; underground bonus rooms area used in many levels
