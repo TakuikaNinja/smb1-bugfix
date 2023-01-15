@@ -16296,7 +16296,6 @@ CheckUpsideDownShell:
 		bne CheckRightSideUpShell
 
 		ldx #$7e										; set for upside-down buzzy beetle shell if found
-		inc $02											; increment vertical position by one pixel
 
 CheckRightSideUpShell:
 		lda $ec											; check for value set here
