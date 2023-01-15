@@ -5220,14 +5220,14 @@ ScrollHandler:
 		adc Platform_X_Scroll							; add value used by left/right platforms
 		sta Player_X_Scroll								; save as new value here to impose force on scroll
 		
-		lda GameEngineSubroutine
-		cmp #$04										; if running flagpole slide routine, branch ahead
-		beq SkipScrollLock
+;		lda GameEngineSubroutine
+;		cmp #$04										; if running flagpole slide routine, branch ahead
+;		beq SkipScrollLock
 
 		lda ScrollLock									; check scroll lock flag
 		bne InitScrlAmt									; skip a bunch of code here if set
 		
-SkipScrollLock:
+;SkipScrollLock:
 		lda Player_Pos_ForScroll						; check player's horizontal screen position
 		cmp #$50										; >= 80 pixels to the right? set carry
 		php												; save carry flag
@@ -5872,14 +5872,13 @@ PlayerEndLevel:
 		cmp #$ae
 		bcc ChkStop										; if player is not yet off the flagpole, skip this part
 		
-		lda ScrollLock									; if scroll lock not set, branch ahead to next part
-		beq ChkStop										; because we only need to do this part once
+		lda FlagpoleSoundQueue							; if flagpole sound queue set, branch ahead to next part
+		bne ChkStop										; because we only need to do this part once
 		
 		lda #EndOfLevelMusic
 		sta EventMusicQueue								; load win level music in event music queue
-		
-		lda #$00
-		sta ScrollLock									; turn off scroll lock to skip this part later
+		sta FlagpoleSoundQueue							; and set flagpole sound queue to skip this part later
+		inc ScrollLock									; set scroll lock
 
 ChkStop:
 		lda Player_CollisionBits						; get player collision bits
@@ -14277,7 +14276,7 @@ FlagpoleCollision:
 		lsr
 		sta StarInvincibleTimer							; FIX: starman doesn't mess up the level complete music anymore
 
-		inc ScrollLock									; set scroll lock flag (more or less just for the music)
+;		inc ScrollLock									; set scroll lock flag (more or less just for the music)
 
 		lda GameEngineSubroutine
 		cmp #$04										; check for flagpole slide routine running
@@ -14916,10 +14915,8 @@ EnemyLanding:
 		rts
 
 SubtEnemyYPos:
-		lda Enemy_Y_Position,x							; add 62 pixels to enemy object's
-		clc												; vertical coordinate
-		adc #$3e
-		cmp #$44										; compare against a certain range
+		lda Enemy_Y_Position,x							; get enemy's vertical coordinate
+		cmp #$07										; is it >= 7? (some kind of overflow check?)
 		rts												; and leave with flags set for conditional branch
 
 EnemyJump:

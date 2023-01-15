@@ -37,6 +37,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
 - [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.
 + [x] The offscreen bounds check will now check if the enemy is active first, to prevent enemies from being erased twice.
++ [x] The SubtEnemyYPos routine responsible for exiting enemy collision checks early has been fixed. (e.g. enemies will no longer hover when stomped in pits)
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
