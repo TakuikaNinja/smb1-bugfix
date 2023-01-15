@@ -5227,7 +5227,6 @@ ScrollHandler:
 		cmp #$50										; >= 80 pixels to the right? set carry
 		php												; save carry flag
 		
-
 		lda SideCollisionTimer							; get timer related to player's side collision
 		beq NoCollision_PLP								; if expired, branch
 
