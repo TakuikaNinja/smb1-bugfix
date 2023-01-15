@@ -5219,15 +5219,10 @@ ScrollHandler:
 		clc
 		adc Platform_X_Scroll							; add value used by left/right platforms
 		sta Player_X_Scroll								; save as new value here to impose force on scroll
-		
-;		lda GameEngineSubroutine
-;		cmp #$04										; if running flagpole slide routine, branch ahead
-;		beq SkipScrollLock
 
 		lda ScrollLock									; check scroll lock flag
 		bne InitScrlAmt									; skip a bunch of code here if set
 		
-;SkipScrollLock:
 		lda Player_Pos_ForScroll						; check player's horizontal screen position
 		cmp #$50										; >= 80 pixels to the right? set carry
 		php												; save carry flag
