@@ -30,7 +30,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [ ] The lives screen now properly reflects Mario's power-up state.
 - [x] Player status is now correctly set to falling while collecting a power-up. (no more item jump)
 - [x] Getting the flagpole stops the star invincibility, to prevent audio glitches.
-- [x] The way the flagpole routines handle the scroll lock has been tweaked.
++ [x] The way the flagpole routines handle the scroll lock has been tweaked.
 - [x] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
 - [x] Holding the jump button no longer makes Mario jump while entering an area.
 + [x] PlayerStatus & PlayerSize is now kept in sync when getting hit on the same frame as touching the axe. (no more Small Fire Mario, sorry)
