@@ -113,7 +113,7 @@ L_GroundArea1:
 	.db $9f, $14, $a3, $40, $17, $92, $83, $13, $92, $41
 	.db $b9, $14, $c5, $12, $c8, $40, $d4, $40, $4b, $92
 	.db $78, $1b, $9c, $94, $9f, $11, $df, $14, $fe, $11
-	.db $7d, $c1, $9e, $42, $cf, $20
+	.db $7d, $c1, $9e, $42, $cf, $20, $9d, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 8-3
@@ -129,7 +129,7 @@ L_GroundArea2:
 	.db $0d, $0a, $5e, $40, $88, $72, $be, $42, $e7, $87
 	.db $fe, $40, $39, $e1, $4e, $00, $69, $60, $87, $60
 	.db $a5, $60, $c3, $31, $fe, $31, $6d, $c1, $be, $42
-	.db $ef, $20
+	.db $ef, $20, $bd, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 4-1
@@ -143,6 +143,7 @@ L_GroundArea3:
 	.db $47, $00, $57, $21, $5c, $01, $7c, $72, $39, $f1
 	.db $ec, $02, $4c, $81, $d8, $62, $ec, $01, $0d, $0d
 	.db $0f, $38, $c7, $07, $ed, $4a, $1d, $c1, $5f, $26
+	.db $4d, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 6-2
@@ -162,6 +163,7 @@ L_GroundArea4:
 	.db $77, $31, $e7, $73, $39, $f1, $58, $72, $77, $73
 	.db $d8, $72, $7f, $b1, $97, $73, $b6, $64, $c5, $65
 	.db $d4, $66, $e3, $67, $f3, $67, $8d, $c1, $cf, $26
+	.db $ad, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 3-1
@@ -178,7 +180,7 @@ L_GroundArea5:
 	.db $83, $20, $87, $20, $b3, $20, $b7, $20, $c3, $01
 	.db $c7, $00, $d3, $20, $d7, $20, $67, $a0, $77, $07
 	.db $87, $22, $e8, $62, $f5, $65, $1c, $82, $7f, $38
-	.db $8d, $c1, $cf, $26
+	.db $8d, $c1, $cf, $26, $ad, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 1-1
@@ -193,7 +195,7 @@ L_GroundArea6:
 	.db $c7, $63, $d8, $62, $e9, $61, $fa, $60, $4f, $b3
 	.db $87, $63, $9c, $01, $b7, $63, $c8, $62, $d9, $61
 	.db $ea, $60, $39, $f1, $87, $21, $a7, $01, $b7, $20
-	.db $39, $f1, $5f, $38, $6d, $c1, $af, $26
+	.db $39, $f1, $5f, $38, $6d, $c1, $af, $26, $8d, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 1-3/5-3
@@ -207,7 +209,7 @@ L_GroundArea7:
 	.db $1b, $92, $1a, $42, $47, $13, $83, $41, $a7, $13
 	.db $0e, $91, $a7, $63, $b7, $63, $c5, $65, $d5, $65
 	.db $dd, $4a, $e3, $67, $f3, $67, $8d, $c1, $ae, $42
-	.db $df, $20
+	.db $df, $20, $ad, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 2-3/7-3
@@ -226,6 +228,7 @@ L_GroundArea8:
 	.db $fc, $31, $3c, $b1, $78, $64, $8c, $38, $0b, $9c
 	.db $1a, $33, $18, $61, $28, $61, $39, $60, $5d, $4a
 	.db $ee, $11, $0f, $b8, $1d, $c1, $3e, $42, $6f, $20
+	.db $3d, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 2-1
@@ -240,7 +243,7 @@ L_GroundArea9:
 	.db $d3, $04, $e8, $72, $e3, $22, $26, $f4, $bc, $02
 	.db $8c, $81, $a8, $62, $17, $87, $43, $24, $a7, $01
 	.db $c3, $04, $08, $f2, $97, $21, $a3, $02, $c9, $0b
-	.db $e1, $69, $f1, $69, $8d, $c1, $cf, $26
+	.db $e1, $69, $f1, $69, $8d, $c1, $cf, $26, $ad, $c7 ; extra scroll lock
 	.db $fd
 
 ; pipe intro area
@@ -258,6 +261,7 @@ L_GroundArea11:
 	.db $0d, $09, $37, $63, $47, $03, $57, $21, $8c, $02
 	.db $c5, $79, $c7, $31, $f9, $11, $39, $f1, $a9, $11
 	.db $6f, $b4, $d3, $65, $e3, $65, $7d, $c1, $bf, $26
+	.db $ad, $c7 ; extra scroll lock
 	.db $fd
 
 ; cloud level used in levels 2-1 and 5-2
@@ -281,6 +285,7 @@ L_GroundArea13:
 	.db $39, $12, $7c, $16, $7f, $11, $82, $40, $98, $12
 	.db $df, $15, $16, $c4, $17, $14, $54, $12, $9b, $16
 	.db $28, $94, $ce, $01, $3d, $c1, $5e, $42, $8f, $20
+	.db $6d, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 6-3
@@ -295,7 +300,7 @@ L_GroundArea14:
 	.db $b7, $14, $1b, $94, $49, $0b, $bb, $12, $fc, $13
 	.db $ff, $12, $03, $c1, $2f, $15, $43, $12, $4b, $13
 	.db $77, $13, $9d, $4a, $15, $c1, $a1, $41, $c3, $12
-	.db $fe, $01, $7d, $c1, $9e, $42, $cf, $20
+	.db $fe, $01, $7d, $c1, $9e, $42, $cf, $20, $9d, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 6-1
@@ -312,7 +317,7 @@ L_GroundArea15:
 	.db $8c, $00, $ff, $35, $4e, $a0, $55, $21, $77, $20
 	.db $87, $07, $89, $22, $ae, $21, $4c, $82, $9f, $34
 	.db $ec, $01, $03, $e7, $13, $67, $8d, $4a, $ad, $41
-	.db $0f, $a6
+	.db $0f, $a6, $ed, $47 ; extra scroll lock
 	.db $fd
 
 ; warp zone area used in level 4-2
@@ -342,7 +347,7 @@ L_GroundArea17:
 	.db $ac, $04, $c6, $41, $0c, $83, $16, $41, $88, $f2
 	.db $39, $f1, $7c, $00, $89, $61, $9c, $00, $a7, $63
 	.db $bc, $00, $c5, $65, $dc, $00, $e3, $67, $f3, $67
-	.db $8d, $c1, $cf, $26
+	.db $8d, $c1, $cf, $26, $ad, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 5-2
@@ -359,7 +364,7 @@ L_GroundArea18:
 	.db $87, $84, $ac, $02, $c2, $41, $c3, $23, $d9, $71
 	.db $fc, $01, $7f, $b1, $9c, $00, $a7, $63, $b6, $64
 	.db $cc, $00, $d4, $66, $e3, $67, $f3, $67, $8d, $c1
-	.db $cf, $26
+	.db $cf, $26, $ad, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 8-2
@@ -376,7 +381,7 @@ L_GroundArea19:
 	.db $0c, $80, $2c, $00, $4c, $05, $c7, $7b, $39, $f1
 	.db $ec, $00, $f9, $11, $0c, $82, $6f, $34, $f8, $11
 	.db $fa, $10, $7f, $b2, $ac, $00, $b6, $64, $cc, $01
-	.db $e3, $67, $f3, $67, $8d, $c1, $cf, $26
+	.db $e3, $67, $f3, $67, $8d, $c1, $cf, $26, $ad, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 7-1
@@ -390,7 +395,7 @@ L_GroundArea20:
 	.db $d8, $72, $39, $f1, $a9, $11, $09, $f1, $63, $24
 	.db $67, $24, $d8, $62, $28, $91, $2a, $10, $56, $21
 	.db $70, $04, $79, $0b, $8c, $00, $94, $21, $9f, $35
-	.db $2f, $b8, $3d, $c1, $7f, $26
+	.db $2f, $b8, $3d, $c1, $7f, $26, $7d, $c7 ; extra scroll lock
 	.db $fd
 
 ; cloud level used in levels 3-1 and 6-2
@@ -410,7 +415,7 @@ L_GroundArea22:
 	.db $c8, $62, $b9, $e1, $d3, $06, $d7, $07, $f9, $61
 	.db $0c, $81, $4e, $b1, $8e, $b1, $bc, $01, $e4, $50
 	.db $e9, $61, $0c, $81, $0d, $0a, $84, $43, $98, $72
-	.db $0d, $0c, $0f, $38, $1d, $c1, $5f, $26
+	.db $0d, $0c, $0f, $38, $1d, $c1, $5f, $26, $3d, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 1-2

@@ -100,18 +100,12 @@ VRAM_AddrTable_Low:
 	.db <UndergroundPaletteData, <CastlePaletteData, <VRAM_Buffer1_Offset
 	.db <VRAM_Buffer2, <VRAM_Buffer2, <BowserPaletteData
 	.db <DaySnowPaletteData, <NightSnowPaletteData, <MushroomPaletteData
-	.db <MarioThanksMessage, <LuigiThanksMessage, <MushroomRetainerSaved
-	.db <PrincessSaved1, <PrincessSaved2, <WorldSelectMessage1
-	.db <WorldSelectMessage2
 
 VRAM_AddrTable_High:
 	.db >VRAM_Buffer1, >WaterPaletteData, >GroundPaletteData
 	.db >UndergroundPaletteData, >CastlePaletteData, >VRAM_Buffer1_Offset
 	.db >VRAM_Buffer2, >VRAM_Buffer2, >BowserPaletteData
 	.db >DaySnowPaletteData, >NightSnowPaletteData, >MushroomPaletteData
-	.db >MarioThanksMessage, >LuigiThanksMessage, >MushroomRetainerSaved
-	.db >PrincessSaved1, >PrincessSaved2, >WorldSelectMessage1
-	.db >WorldSelectMessage2
 
 VRAM_Buffer_Offset:
 	.db <VRAM_Buffer1_Offset, <VRAM_Buffer2_Offset
@@ -790,59 +784,42 @@ PrintVictoryMessages:
 		lda PrimaryMsgCounter							; otherwise load primary message counter
 		beq ThankPlayer									; if set to zero, branch to print first message
 
-;		cmp #$09										; if at 9 or above, branch elsewhere (this comparison
-;		bcs IncMsgCounter								; is residual code, counter never reaches 9)
+		ldy EventMusicBuffer							; don't do anything until the music buffer is cleared
+		beq FinishedMusic
+		cpy #EndOfCastleMusic
+		beq ExitMsgs
 
-		ldy WorldNumber									; check world number
-		cpy #World8
-		bne MRetainerMsg								; if not at world 8, skip to next part
+FinishedMusic:
+		ldy WorldNumber
+		cpy #World8										; check world number
+		php
+		adc #$00										; if >= world 8, carry will be added to counter
+		
+		cmp #$03										; < 3?
+		bcc RetainerCheck								; if so, branch to check for world 8 again
 
-		cmp #$03										; check primary message counter again
-		bcc IncMsgCounter								; if not at 3 yet (world 8 only), branch to increment
+		plp												; get carry back
+		bcc SetEndTimer									; branch to set end timer if not set (world 1-7 only)
 
-		sbc #$01										; otherwise subtract one
-		jmp ThankPlayer									; and skip to next part
+		cmp #$06										; < 6?
+		bcc ThankPlayer									; if so branch to print message
+		bcs IncMsgCounter								; otherwise branch ahead [uncondiional branch]
 
-MRetainerMsg:
-		cmp #$02										; check primary message counter
-		bcc IncMsgCounter								; if not at 2 yet (world 1-7 only), branch
+RetainerCheck:
+		plp												; get carry back
+		bcc ThankPlayer									; branch to print message if not set
+		
+		ldy #VictoryMusic
+		sty EventMusicQueue								; otherwise load victory music first (world 8 only)
 
 ThankPlayer:
 		tay												; put primary message counter into Y
-		bne SecondPartMsg								; if counter nonzero, skip this part, do not print first message
-
-		lda CurrentPlayer								; otherwise get player currently on the screen
-		beq EvalForMusic								; if mario, branch
-
-		iny												; otherwise increment Y once for luigi and
-		bne EvalForMusic								; do an unconditional branch to the same place
-
-SecondPartMsg:
-		iny												; increment Y to do world 8's message
-
-		lda WorldNumber
-		cmp #World8										; check world number
-		beq EvalForMusic								; if at world 8, branch to next part
-
-		dey												; otherwise decrement Y for world 1-7's message
-		cpy #$04										; if counter at 4 (world 1-7 only)
-		bcs SetEndTimer									; branch to set victory end timer
-
-		cpy #$03										; if counter at 3 (world 1-7 only)
-		bcs IncMsgCounter								; branch to keep counting
-
-EvalForMusic:
-		cpy #$03										; if counter not yet at 3 (world 8 only), branch
-		bne PrintMsg									; to print message only (note world 1-7 will only
-
-		lda #VictoryMusic								; reach this code if counter = 0, and will always branch)
-		sta EventMusicQueue								; otherwise load victory music first (world 8 only)
 
 PrintMsg:
 		tya												; put primary message counter in A
-		clc												; add $0c or 12 to counter thus giving an appropriate value,
-		adc #$0c										; ($0c-$0d = first), ($0e = world 1-7's), ($0f-$12 = world 8's)
-		sta VRAM_Buffer_AddrCtrl						; write message counter to vram address controller
+		clc
+		adc #$07										; add 7 to get to victory messages
+		jsr WriteGameText								; and write game text
 
 IncMsgCounter:
 		lda SecondaryMsgCounter
@@ -854,11 +831,11 @@ IncMsgCounter:
 		adc #$00										; add carry to primary message counter
 		sta PrimaryMsgCounter
 
-		cmp #$07										; check primary counter one more time
-
-SetEndTimer:
+ChkMsgCounter:
+		cmp #$06										; check primary counter one more time
 		bcc ExitMsgs									; if not reached value yet, branch to leave
 
+SetEndTimer:
 		lda #$06
 		sta WorldEndTimer								; otherwise set world end timer
 
@@ -1260,17 +1237,17 @@ WriteBottomStatusLine:
 ; -------------------------------------------------------------------------------------
 
 DisplayTimeUp:
-		lda GameTimerExpiredFlag						; if game timer not expired, increment task
-		beq NoTimeUp									; control 2 tasks forward, otherwise, stay here
-		
+		lda GameTimerExpiredFlag						; game timer expired?
+		beq NoTimeUp									; if so, branch to skip
+
 		lda #$00
 		sta GameTimerExpiredFlag						; reset timer expiration flag
-		
+
 		lda #$02										; output time-up screen to buffer
-		bne OutputInter																	; [unconditional branch]
+		bne OutputInter									; [unconditional branch]
 
 NoTimeUp:
-		inc ScreenRoutineTask							; increment control task 2 tasks forward
+		inc ScreenRoutineTask							; increment control task
 		jmp IncSubtask
 
 ; -------------------------------------------------------------------------------------
@@ -1309,7 +1286,7 @@ GameOverInter:
 		lda #$12										; set screen timer
 		sta ScreenTimer
 
-		lda #$03										; output game over screen to buffer
+		lda #$04										; output game over screen to buffer
 		jsr WriteGameText
 		jmp IncModeTask_B
 
@@ -1340,7 +1317,6 @@ OutputCol:
 		rts
 
 ; -------------------------------------------------------------------------------------
-
 ; $00 - vram buffer address table low
 ; $01 - vram buffer address table high
 
@@ -1414,10 +1390,19 @@ IncModeTask_B:
 		rts
 
 ; -------------------------------------------------------------------------------------
+; $fe is reserved to denote the player's name in the text data.
+; It is expanded to the required 5 bytes before writing to the VRAM buffer.
+; The GameText label has been kept to make it easy to locate.
 
 GameText:
+MarioName:
+	.db $16, $0a, $1b, $12, $18							; "MARIO", no address or length
+
+LuigiName:
+	.db $15, $1e, $12, $10, $12							; "LUIGI", no address or length
+	
 TopStatusBarLine:
-	.db $20, $43, $05, $16, $0a, $1b, $12, $18			; "MARIO"
+	.db $20, $43, $05, $fe
 	.db $20, $52, $0b, $20, $18, $1b, $15, $0d			; "WORLD TIME"
 	.db $24, $24, $1d, $12, $16, $0e
 	.db $20, $68, $05, $00, $24, $24, $2e, $29			; score trailing digit and coin display
@@ -1435,13 +1420,13 @@ WorldLivesDisplay:
 	.db $ff
 
 TwoPlayerTimeUp:
-	.db $21, $cd, $05, $16, $0a, $1b, $12, $18			; "MARIO"
+	.db $21, $cd, $05, $fe
 OnePlayerTimeUp:
 	.db $22, $0c, $07, $1d, $12, $16, $0e, $24, $1e, $19; "TIME UP"
 	.db $ff
 
 TwoPlayerGameOver:
-	.db $21, $cd, $05, $16, $0a, $1b, $12, $18			; "MARIO"
+	.db $21, $cd, $05, $fe
 OnePlayerGameOver:
 	.db $22, $0b, $09, $10, $0a, $16, $0e, $24			; "GAME OVER"
 	.db $18, $1f, $0e, $1b
@@ -1458,65 +1443,174 @@ WarpZoneWelcome:
 	.db $27, $e1, $45, $aa
 	.db $ff
 
-LuigiName:
-	.db $15, $1e, $12, $10, $12							; "LUIGI", no address or length
-
 WarpZoneNumbers:
 	.db $04, $03, $02, $00								; warp zone numbers, note spaces on middle
 	.db $24, $05, $24, $00								; zone, partly responsible for
 	.db $08, $07, $06, $00								; the minus world
 
-GameTextOffsets:
-	.db TopStatusBarLine-GameText, TopStatusBarLine-GameText
-	.db WorldLivesDisplay-GameText, WorldLivesDisplay-GameText
-	.db TwoPlayerTimeUp-GameText, OnePlayerTimeUp-GameText
-	.db TwoPlayerGameOver-GameText, OnePlayerGameOver-GameText
-	.db WarpZoneWelcome-GameText, WarpZoneWelcome-GameText
+ThanksMessage:
+; "THANK YOU <Player>!"
+	.db $25, $48, $10
+	.db $1d, $11, $0a, $17, $14, $24
+	.db $22, $18, $1e, $24
+	.db $fe, $2b
+	.db $ff
+
+MushroomRetainerSaved:
+; "BUT OUR PRINCESS IS IN"
+	.db $25, $c5, $16
+	.db $0b, $1e, $1d, $24, $18, $1e, $1b, $24
+	.db $19, $1b, $12, $17, $0c, $0e, $1c, $1c, $24
+	.db $12, $1c, $24, $12, $17
+
+; "ANOTHER CASTLE!"
+	.db $26, $05, $0f
+	.db $0a, $17, $18, $1d, $11, $0e, $1b, $24
+	.db $0c, $0a, $1c, $1d, $15, $0e, $2b, $ff
+
+PrincessSaved1:
+; "YOUR QUEST IS OVER."
+	.db $25, $a7, $13
+	.db $22, $18, $1e, $1b, $24
+	.db $1a, $1e, $0e, $1c, $1d, $24
+	.db $12, $1c, $24, $18, $1f, $0e, $1b, $af
+	.db $ff
+
+PrincessSaved2:
+; "WE PRESENT YOU A NEW QUEST."
+	.db $25, $e3, $1b
+	.db $20, $0e, $24
+	.db $19, $1b, $0e, $1c, $0e, $17, $1d, $24
+	.db $22, $18, $1e, $24, $0a, $24, $17, $0e, $20, $24
+	.db $1a, $1e, $0e, $1c, $1d, $af
+	.db $ff
+
+WorldSelectMessage1:
+; "PUSH BUTTON B"
+	.db $26, $4a, $0d
+	.db $19, $1e, $1c, $11, $24
+	.db $0b, $1e, $1d, $1d, $18, $17, $24, $0b
+	.db $ff
+
+WorldSelectMessage2:
+; "TO SELECT A WORLD"
+	.db $26, $88, $11
+	.db $1d, $18, $24, $1c, $0e, $15, $0e, $0c, $1d, $24
+	.db $0a, $24, $20, $18, $1b, $15, $0d
+	.db $ff
+
+NameOffsets_Low:
+	.db <MarioName, <LuigiName
+
+NameOffsets_High:
+	.db >MarioName, >LuigiName
+
+GameTextOffsets_Low:
+	.db <TopStatusBarLine, <WorldLivesDisplay
+	.db <OnePlayerTimeUp, <TwoPlayerTimeUp
+	.db <OnePlayerGameOver, <TwoPlayerGameOver
+	.db <WarpZoneWelcome, <ThanksMessage
+	.db <MushroomRetainerSaved, <PrincessSaved1, <PrincessSaved2
+	.db <WorldSelectMessage1, <WorldSelectMessage2
+
+GameTextOffsets_High:
+	.db >TopStatusBarLine, >WorldLivesDisplay
+	.db >OnePlayerTimeUp, >TwoPlayerTimeUp 
+	.db >OnePlayerGameOver, >TwoPlayerGameOver
+	.db >WarpZoneWelcome, >ThanksMessage
+	.db >MushroomRetainerSaved, >PrincessSaved1, >PrincessSaved2
+	.db >WorldSelectMessage1, >WorldSelectMessage2
+
+; -------------------------------------------------------------------------------------
+; $00 - game text pointer low byte
+; $01 - game text pointer high byte
+; $02 - name pointer low byte
+; $03 - name pointer high byte
+; $08 - temp current player variable
 
 WriteGameText:
-		pha												; save text number to stack
+		ldx CurrentPlayer								; save current player to temp zero page variable
+		stx $08
+		cmp #$02										; top status bar or world/lives display?
+		bcc LdGameText									; if so, branch to use current offset as-is
 		
-		asl
-		tay												; multiply by 2 and use as offset
-		cpy #$04										; if set to do top status bar or world/lives display,
-		bcc LdGameText									; branch to use current offset as-is
-		
-		cpy #$08										; if set to do time-up or game over,
-		bcc Chk2Players									; branch to check players
-		
-		ldy #$08										; otherwise warp zone, therefore set offset
+		cmp #$06										; time-up or game over?
+		bcs LdGameText									; if not, branch to use current offset as-is
 
-Chk2Players:
-		lda NumberOfPlayers								; check for number of players
-		bne LdGameText									; if there are two, use current offset to also print name
-		
-		iny												; otherwise increment offset by one to not print name
+		cmp #$04										; game over?
+		bcs NoPlayerSwap								; branch ahead if so
+
+		tay
+		lda $08											; otherwise swap player name
+		eor #$01
+		sta $08
+		tya
+
+NoPlayerSwap:
+		clc
+		adc NumberOfPlayers								; add number of players (0 or 1) to offset
 
 LdGameText:
-		ldx GameTextOffsets,y							; get offset to message we want to print
-		ldy #$00
+		pha												; backup A
+		tax												; use as index
+		lda GameTextOffsets_Low,x						; load from offset table...
+		sta $00
+		lda GameTextOffsets_High,x						; to use as a pointer to game text
+		sta $01
+		lda #$00										; init pointer indexes
+		tay
+		tax
 
 GameTextLoop:
-		lda GameText,x									; load message data
-		cmp #$ff										; check for terminator
-		beq EndGameText									; branch to end text if found
-		
-		sta VRAM_Buffer1,y								; otherwise write data to buffer
-		inx												; and increment increment
-		iny
-		bne GameTextLoop								; do this for 256 bytes if no terminator found
+		lda ($00),y										; get text data from indexed pointer
+		cmp #$ff										; terminator byte?
+		beq EndGameText									; beanch to end text if found
+
+		cmp #$fe										; player name specifier?
+		bne NotPlayerName								; branch ahead if not
+
+WritePlayerName:
+		tya												; transfer Y...
+		tax												; to X
+		pha												; and back it up
+		ldy $08											; use player as index
+		lda NameOffsets_Low,y							; into name offset table
+		sta $02
+		lda NameOffsets_High,y							; to use as a pointer to player name
+		sta $03
+		ldy #$00										; init pointer index
+
+PlayerNameLoop:
+		lda ($02),y										; get name data from indexed pointer
+		sta VRAM_Buffer1,x								; write data to buffer
+		inx												; increment buffer index
+		iny												; increment name pointer index
+		cpy #$05										; finished writing name?
+		bne PlayerNameLoop								; if not, branch to loop
+
+		pla												; get original game text pointer index
+		tay												; and put it back in Y
+		iny												; increment it
+		jmp GameTextLoop								; and jump back to the loop
+
+NotPlayerName:
+		sta VRAM_Buffer1,x								; write data to buffer
+
+EndPlayerName:
+		iny												; increment indexes
+		inx
+		jmp GameTextLoop								; loop until termintor byte forces an exit
 
 EndGameText:
 		lda #$00										; put null terminator at end
-		sta VRAM_Buffer1,y
-		
-		pla												; pull original text number from stack
-		tax
-		cmp #$04										; are we printing warp zone?
-		bcs PrintWarpZoneNumbers
-		
-		dex												; are we printing the world/lives display?
-		bne CheckPlayerName								; if not, branch to check player's name
+		sta VRAM_Buffer1,x
+
+		pla												; get game text index
+		cmp #$06										; warp zone message?
+		beq PrintWarpZoneNumbers						; if so, branch to print the numbers
+
+		cmp #$01										; world/lives display?
+		bne ExPChk										; if not, branch to leave
 
 		lda NumberofLives								; otherwise, check number of lives
 		ldy #$00
@@ -1563,39 +1657,11 @@ KeepDigits:
 		ldy LevelNumber
 		iny
 		sty VRAM_Buffer1+21								; we're done here
-		rts
-
-CheckPlayerName:
-		lda NumberOfPlayers								; check number of players
-		beq ExitChkName									; if only 1 player, leave
-		
-		lda CurrentPlayer								; load current player
-		dex												; check to see if current message number is for time up
-		bne ChkLuigi
-		
-		ldy OperMode									; check for game over mode
-		cpy #GameOverModeValue
-		beq ChkLuigi
-		
-		eor #%00000001									; if not, must be time up, invert d0 to do other player
-
-ChkLuigi:
-		lsr
-		bcc ExitChkName									; if mario is current player, do not change the name
-
-		ldy #$04
-
-NameLoop:
-		lda LuigiName,y									; otherwise, replace "MARIO" with "LUIGI"
-		sta VRAM_Buffer1+3,y
-
-		dey
-		bpl NameLoop									; do this until each letter is replaced
-
-ExitChkName:
+ExPChk:
 		rts
 
 PrintWarpZoneNumbers:
+		lda WarpZoneControl
 		sbc #$04										; subtract 4 and then shift to the left
 		asl												; twice to get proper warp zone number
 		asl												; offset
@@ -2156,7 +2222,7 @@ Palette1_MTiles:
 	.db $24, $47, $24, $47								; half brick (???)
 	.db $86, $8a, $87, $8b								; water pipe top
 	.db $8e, $91, $8f, $92								; water pipe bottom
-	.db $24, $2f, $24, $3d								; flag ball (residual object)
+;	.db $24, $2f, $24, $3d								; flag ball (residual object)
 
 ; --WIP--
 ;	.db $24, $24, $24, $ce								; short cave mushroom
@@ -2253,64 +2319,6 @@ MushroomPaletteData:
 BowserPaletteData:
 	.db $3f, $14, $04
 	.db $0f, $1a, $30, $27
-	.db $00
-
-MarioThanksMessage:
-; "THANK YOU MARIO!"
-	.db $25, $48, $10
-	.db $1d, $11, $0a, $17, $14, $24
-	.db $22, $18, $1e, $24
-	.db $16, $0a, $1b, $12, $18, $2b
-	.db $00
-
-LuigiThanksMessage:
-; "THANK YOU LUIGI!"
-	.db $25, $48, $10
-	.db $1d, $11, $0a, $17, $14, $24
-	.db $22, $18, $1e, $24
-	.db $15, $1e, $12, $10, $12, $2b
-	.db $00
-
-MushroomRetainerSaved:
-; "BUT OUR PRINCESS IS IN"
-	.db $25, $c5, $16
-	.db $0b, $1e, $1d, $24, $18, $1e, $1b, $24
-	.db $19, $1b, $12, $17, $0c, $0e, $1c, $1c, $24
-	.db $12, $1c, $24, $12, $17
-; "ANOTHER CASTLE!"
-	.db $26, $05, $0f
-	.db $0a, $17, $18, $1d, $11, $0e, $1b, $24
-	.db $0c, $0a, $1c, $1d, $15, $0e, $2b, $00
-
-PrincessSaved1:
-; "YOUR QUEST IS OVER."
-	.db $25, $a7, $13
-	.db $22, $18, $1e, $1b, $24
-	.db $1a, $1e, $0e, $1c, $1d, $24
-	.db $12, $1c, $24, $18, $1f, $0e, $1b, $af
-	.db $00
-
-PrincessSaved2:
-; "WE PRESENT YOU A NEW QUEST."
-	.db $25, $e3, $1b
-	.db $20, $0e, $24
-	.db $19, $1b, $0e, $1c, $0e, $17, $1d, $24
-	.db $22, $18, $1e, $24, $0a, $24, $17, $0e, $20, $24
-	.db $1a, $1e, $0e, $1c, $1d, $af
-	.db $00
-
-WorldSelectMessage1:
-; "PUSH BUTTON B"
-	.db $26, $4a, $0d
-	.db $19, $1e, $1c, $11, $24
-	.db $0b, $1e, $1d, $1d, $18, $17, $24, $0b
-	.db $00
-
-WorldSelectMessage2:
-; "TO SELECT A WORLD"
-	.db $26, $88, $11
-	.db $1d, $18, $24, $1c, $0e, $15, $0e, $0c, $1d, $24
-	.db $0a, $24, $20, $18, $1b, $15, $0d
 	.db $00
 
 ; -------------------------------------------------------------------------------------
@@ -2814,7 +2822,7 @@ PrimaryGameSetup:
 		sta PlayerSize									; set player's size to small
 
 		lda #$05
-		sta NumberofLives								; give each player three lives
+		sta NumberofLives								; give each player five lives
 		sta OffScr_NumberofLives
 
 SecondaryGameSetup:
@@ -3961,26 +3969,25 @@ ScrollLockObject_Warp:
 		ldx #$04										; load value of 4 for game text routine as default
 		lda WorldNumber									; warp zone (4-3-2), then check world number
 		beq WarpNum
-		
+
+		txa
 		inx												; if world number > 1, increment for next warp zone (5)
 		ldy AreaType									; check area type
 		dey
 		bne WarpNum										; if ground area type, increment for last warp zone
-		
+
 		inx												; (8-7-6) and move on
 
 WarpNum:
-		txa
-		sta WarpZoneControl								; store number here to be used by warp zone routine
-		
+		stx WarpZoneControl								; store number here to be used by warp zone routine
+		lda #$06
 		jsr WriteGameText								; print text and warp zone numbers
 		
 		lda #PiranhaPlant
 		jmp KillEnemies									; load identifier for piranha plants and do sub
 
 ScrollLockObject:
-		lda ScrollLock									; invert scroll lock to turn it on
-		eor #%00000001
+		lda #$01										; explicitly set scroll lock instead of toggling it
 		sta ScrollLock
 		rts
 
@@ -5215,58 +5222,37 @@ ExitEng:
 ; -------------------------------------------------------------------------------------
 
 ScrollHandler:
-		lda Player_X_Scroll								; load value saved here
+		lda Player_X_Scroll								; load scroll speed
 		clc
 		adc Platform_X_Scroll							; add value used by left/right platforms
 		sta Player_X_Scroll								; save as new value here to impose force on scroll
-
+		
 		lda ScrollLock									; check scroll lock flag
 		bne InitScrlAmt									; skip a bunch of code here if set
 		
-		lda Player_Pos_ForScroll						; check player's horizontal screen position
-		cmp #$50										; >= 80 pixels to the right? set carry
-		php												; save carry flag
-		
-		lda SideCollisionTimer							; get timer related to player's side collision
-		beq NoCollision_PLP								; if expired, branch
+		lda SideCollisionTimer							; if timer related to player's side collision
+		beq NoCollision									; if expired, branch
 
-		plp												; get carry flag from earlier
-		bcc InitScrlAmt									; branch to init scroll if not set
-
-		lda Player_Pos_ForScroll						; check player's horizontal screen position
-		cmp #$70										; >= 112 pixels to the right?
-		bcc InitScrlAmt									; no, so branch to init scroll
-
-		sec
-		lda Player_Pos_ForScroll
-		sbc #$6f										; subtract $6f to get scroll amount
+		lda CollisionAdder								; otherwise use the collision adder as the scroll
 		sta Player_X_Scroll
-
-		sec												; set carry to skip branch
-
-	.db $24												; (zero page BIT instruction) [skip 1 byte]
-
-NoCollision_PLP:
-		plp												; get carry flag from earlier
-		bcc InitScrlAmt									; branch to init scroll if not set
-
+		
 NoCollision:
-		ldy Player_X_Scroll								; get value and decrement by one
-		dey												; if value originally set to zero or otherwise
-		bmi InitScrlAmt									; negative for left movement, branch
-		
-		iny
-		cpy #$02										; if value $01, branch and do not decrement
-		bcc ChkNearMid
-		
-		dey												; otherwise decrement by one
-
-ChkNearMid:
 		lda Player_Pos_ForScroll
 		cmp #$70										; check player's horizontal screen position
-		bcc ScrollScreen								; if less than 112 pixels to the right, branch
+		bcc InitScrlAmt									; if less than 112 pixels to the right, branch
+
+		cmp #$74										; has the player exceeded it by at least 4 pixels?
+		bcc NoSpeedUp									; no, so branch to use current scroll speed
+
+		lda #$04										; otherwise force scroll to recenter camera
+		sta Player_X_Scroll
 		
-		ldy Player_X_Scroll								; otherwise get original value undecremented
+NoSpeedUp:
+		ldy Player_X_Scroll								; load scroll speed
+		dey
+		bmi InitScrlAmt									; if the value was originally 0 or negative, branch
+		
+		iny												; increment to restore Y
 
 ScrollScreen:
 		tya
@@ -5872,7 +5858,7 @@ PlayerEndLevel:
 		lda #EndOfLevelMusic
 		sta EventMusicQueue								; load win level music in event music queue
 		sta FlagpoleSoundQueue							; and set flagpole sound queue to skip this part later
-		inc ScrollLock									; set scroll lock
+;		inc ScrollLock									; set scroll lock
 
 ChkStop:
 		lda Player_CollisionBits						; get player collision bits
@@ -13305,8 +13291,8 @@ EnemyStomped:
 		cmp #BulletBill_CannonVar
 		beq EnemyStompedPts
 		
-		cmp #Podoboo									; branch for podoboo (this branch is logically impossible
-		beq EnemyStompedPts								; for cpu to take due to earlier checking of podoboo)
+;		cmp #Podoboo									; branch for podoboo (this branch is logically impossible
+;		beq EnemyStompedPts								; for cpu to take due to earlier checking of podoboo)
 		
 		iny												; increment points data offset
 		cmp #HammerBro									; branch for hammer bro
@@ -13874,6 +13860,8 @@ PlayerBGUpperExtent:
 	.db $20, $10
 
 PlayerBGCollision:
+		lda #$00
+		sta CollisionAdder
 		lda DisableCollisionDet							; if collision detection disabled flag set,
 		bne ExPBGCol									; branch to leave
 
@@ -14494,29 +14482,33 @@ NXSpd:
 		sty SideCollisionTimer							; set timer of some sort
 
 		ldy #$00
-		sty Player_X_Speed								; nullify player's horizontal speed
 
 		cmp #$00										; if value set in A not set to $ff,
 		bpl PlatF										; branch ahead, do not decrement Y
 
-		dey												; otherwise decrement Y now
+		tay												; otherwise set Y now
 
 PlatF:
 		sty $00											; store Y as high bits of horizontal adder
+		sta CollisionAdder
 
 		clc
 		adc Player_X_Position							; add contents of A to player's horizontal
 		sta Player_X_Position							; position to move player left or right
-
+		
 		lda Player_PageLoc
 		adc $00											; add high bits and carry to
 		sta Player_PageLoc								; page location if necessary
-
+		
 ExIPM:
 		txa												; invert contents of X
 		eor #$ff
 		and Player_CollisionBits						; mask out bit that was set here
 		sta Player_CollisionBits						; store to clear bit
+
+		ldy #$00
+		sty Player_X_Speed								; nullify player's horizontal speed
+		sty Player_X_MoveForce							; and horizontal movement force
 		rts
 
 ; --------------------------------
@@ -14580,8 +14572,8 @@ EnemyToBGCollisionDet:
 		and #%00100000
 		bne ExEBG										; if set, branch to leave
 
-		jsr SubtEnemyYPos								; otherwise, do a subroutine here
-		bcc ExEBG										; if enemy vertical coord + 62 < 68, branch to leave
+		lda Enemy_Y_HighPos,x							; get enemy's high y coordinate
+		beq ExEBG										; branch to leave if not set
 
 		ldy Enemy_ID,x
 		cpy #Spiny										; if enemy object is not spiny, branch elsewhere
@@ -14908,14 +14900,9 @@ EnemyLanding:
 		sta Enemy_Y_Position,x							; neatly on whatever it's landing on
 		rts
 
-SubtEnemyYPos:
-		lda Enemy_Y_Position,x							; get enemy's vertical coordinate
-		cmp #$07										; is it >= 7? (some kind of overflow check?)
-		rts												; and leave with flags set for conditional branch
-
 EnemyJump:
-		jsr SubtEnemyYPos								; do a sub here
-		bcc DoSide										; if enemy vertical coord + 62 < 68, branch to leave
+		lda Enemy_Y_HighPos,x							; get enemy's high y coordinate
+		beq DoSide										; branch if not set
 
 		lda Enemy_Y_Speed,x
 		clc												; add two to vertical speed
@@ -15390,7 +15377,13 @@ BlockBufferCollision:
 		ldy $04											; get old contents of Y
 
 		lda SprObject_Y_Position,x						; get vertical coordinate of object
+		cmp #$d0										; check if beyond bottom tile row
+		bcc NoTileOverflow								; branch if not
+		
+		lda #$00										; properly overflow to topmost row
 		clc
+
+NoTileOverflow:
 		adc BlockBuffer_Y_Adder,y						; add it to value obtained using Y as offset
 		and #%11110000									; mask out low nybble
 		sec

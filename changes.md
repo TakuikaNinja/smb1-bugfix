@@ -16,7 +16,9 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 ## Bug Fixes & Small Tweaks
 + [x] Scroll unlock object in underground warp zone now works as intended. (no more minus world)
 + [x] An erroneous increment of the warp zone value has been removed. (1-2 warpzone pipe destination stays at 1-2 exit until warp zone loads)
-+ [x] Warp zone triggers have been adjusted so that they are now loaded before the player can enter the pipes early. (1-2, 4-2)
++ [x] The positions of warp zone triggers have been adjusted so that they are now loaded before the player can enter the pipes early. (1-2, 4-2)
++ [x] Warp zone triggers and flagpoles will no longer set the scroll lock. Extra scroll lock objects have been added to compensate for this. (also prevents running past the flagpole)
++ [x] Scroll lock objects now explicitly set the scroll lock instead of toggling it.
 - [x] Lakitus now throw their spinies as originally intended.
 + [x] The initial number of lives is now set to 5 like in later entries, to compensate for the difficulty change.
 + [x] Warm start detection & continue functions now check ContinueWorld for a valid value. (no more glitch worlds)
@@ -30,7 +32,6 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [ ] The lives screen now properly reflects Mario's power-up state.
 - [x] Player status is now correctly set to falling while collecting a power-up. (no more item jump)
 - [x] Getting the flagpole stops the star invincibility, to prevent audio glitches.
-+ [x] The way the flagpole routines handle the scroll lock has been tweaked.
 - [x] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
 - [x] Holding the jump button no longer makes Mario jump while entering an area.
 + [x] PlayerStatus & PlayerSize is now kept in sync when getting hit on the same frame as touching the axe. (no more Small Fire Mario, sorry)
@@ -38,7 +39,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
 - [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.
 + [x] The offscreen bounds check will now check if the enemy is active first, to prevent enemies from being erased twice.
-+ [x] The SubtEnemyYPos routine responsible for exiting enemy collision checks early has been fixed. (e.g. enemies will no longer hover when stomped in pits)
++ [x] The enemy's high Y coordinate is now checked instead of relying on addition overflow in SubtEnemyYPos. (e.g. enemies will no longer hover when stomped in pits)
++ [x] BlockBufferCollision will now correctly overflow the Y tile coordinate to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
@@ -51,12 +53,14 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
 + [x] The locations of some warp destination change and loop command triggers have been tweaked. (no more wrong warps; notably 4-2, 8-4)
 + [x] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
-+ [x] The scroll handler is more robust. (e.g. getting stuck in a wall updates the scroll properly)
++ [x] The scroll handler has been overhauled and is now more robust. (e.g. getting stuck in a wall updates the scroll properly)
 + [x] Firebar blocks will no longer cause head injuries as big Mario.
 + [x] Firebar collision detection now checks the relative player position instead of querying the OAM buffer. (yes, really)
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
++ [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
++ [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
 + [x] Tweaked controller reading code to mask out left+right/up+down inputs. Additionally, the polling loop now uses the ring counter technique.
 + [x] Moved the main game loop out of NMI and added proper interrupt and lag frame handling to the NMI routine. (no more glitched scanlines, HUD flickering, or music slowdown)
