@@ -15382,7 +15382,7 @@ BlockBufferCollision:
 		ldy $04											; get old contents of Y
 
 		lda SprObject_Y_Position,x						; get vertical coordinate of object
-		cmp #$c0										; check if beyond bottom 2 tile rows
+		cmp #$c0										; check if at or beyond bottom tile row
 		bcc NoTileOverflow								; branch if not
 		
 		lda #$c0										; otherwise use $c0 so the tile isn't moved past the bottom row
