@@ -5232,7 +5232,7 @@ ScrollHandler:
 		bne InitScrlAmt									; skip a bunch of code here if set
 		
 		lda SideCollisionTimer							; if timer related to player's side collision
-		beq NoCollision									; if expired, branch
+		beq NoCollision									; is expired, branch
 
 		lda CollisionAdder								; otherwise use the collision adder as the scroll
 		sta Player_X_Scroll
@@ -5242,17 +5242,17 @@ NoCollision:
 		cmp #$70										; check player's horizontal screen position
 		bcc InitScrlAmt									; if less than 112 pixels to the right, branch
 
-		cmp #$74										; has the player exceeded it by at least 4 pixels?
+		cmp #$7f										; has the player exceeded it by at least 15 pixels?
 		bcc NoSpeedUp									; no, so branch to use current scroll speed
 
-		lda #$04										; otherwise force scroll to recenter camera
-		sta Player_X_Scroll
+		ldy #$03										; otherwise force scroll to recenter camera
+		sty Player_X_Scroll
 		
 NoSpeedUp:
 		ldy Player_X_Scroll								; load scroll speed
 		dey
-		bmi InitScrlAmt									; if the value was originally 0 or negative, branch
-		
+		bmi InitScrlAmt									; if the value was originally zero or negative, branch
+
 		iny												; increment to restore Y
 
 ScrollScreen:
@@ -13799,6 +13799,9 @@ PositionPlayerOnS_Plat:
 	.db $2c												; [skip 2 bytes]
 
 PositionPlayerOnVPlat:
+		lda #$00										; clear stom chain counter
+		sta StompChainCounter
+
 		lda Enemy_Y_Position,x							; get vertical coordinate
 		ldy GameEngineSubroutine
 		cpy #$0b										; if certain routine being executed on this frame,

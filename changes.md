@@ -90,6 +90,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Swimming Cheep Cheeps now move up and down farther after 5-3.
 + [x] Lakitus respawn more quickly after 5-3. Additionally, they will now always spawn at the correct height with the correct hitbox.
 + [x] Platforms moving downwards will now properly drop the player into pits.
++ [x] Moving platforms will now clear the stomp chain counter.
 + [x] Enemies will now clear more of their variables when unloading, in order to minimize oddities. (e.g. Collecting a star when it has negative Y speed no longer causes mushrooms to jump)
 
 ## PAL Version Changes
