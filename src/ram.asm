@@ -365,7 +365,7 @@ FrictionAdderLow      = $0702
 RunningSpeed          = $0703
 SwimmingFlag          = $0704
 Player_X_MoveForce    = $0705
-CollisionAdder        = $0706                   ; free
+CollisionAdder        = $0706                   ; used to force scroll when colliding with tiles
 JumpOrigin_Y_HighPos  = $0707
 JumpOrigin_Y_Position = $0708
 VerticalForce         = $0709
@@ -428,7 +428,7 @@ FireballCounter       = $06ce
 FireballThrowingTimer = $0711
 
 HammerEnemyOffset     = $06ae
-;JumpCoinMiscOffset    = $06b7                   ; free
+temp                  = $06b7                   ; general-use temp variable
 
 Block_Buffer_1        = $0500
 Block_Buffer_2        = $05d0

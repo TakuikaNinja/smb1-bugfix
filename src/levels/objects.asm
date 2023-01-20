@@ -143,7 +143,7 @@ L_GroundArea3:
 	.db $47, $00, $57, $21, $5c, $01, $7c, $72, $39, $f1
 	.db $ec, $02, $4c, $81, $d8, $62, $ec, $01, $0d, $0d
 	.db $0f, $38, $c7, $07, $ed, $4a, $1d, $c1, $5f, $26
-	.db $4d, $c7 ; extra scroll lock
+	.db $3d, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 6-2

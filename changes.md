@@ -40,11 +40,12 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.
 + [x] The offscreen bounds check will now check if the enemy is active first, to prevent enemies from being erased twice.
 + [x] The enemy's high Y coordinate is now checked instead of relying on addition overflow in SubtEnemyYPos. (e.g. enemies will no longer hover when stomped in pits)
-+ [x] BlockBufferCollision will now correctly overflow the Y tile coordinate to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
++ [x] BlockBufferCollision will now correctly clamp the Y tile coordinate to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
 + [x] Coin Heavens (cloud levels accessed via vines) now have the cloud backdrop.
++ [x] Vine autoclimbing is now enabled when the player is touching it in the upper half of the screen, instead of the HUD area. (prevents wraparound glitch)
 + [x] The underwater section of 8-4 now uses the grey colour scheme for better continuity within the level.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)

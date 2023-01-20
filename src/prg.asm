@@ -795,22 +795,25 @@ FinishedMusic:
 		php
 		adc #$00										; if >= world 8, carry will be added to counter
 		
-		cmp #$03										; < 3?
-		bcc RetainerCheck								; if so, branch to check for world 8 again
+		cmp #$02										; < 2?
+		bcc Retainer									; if so, branch ahead
 
 		plp												; get carry back
 		bcc SetEndTimer									; branch to set end timer if not set (world 1-7 only)
 
+		ldy EventMusicBuffer							; has the victory music already been set?
+		bne VictoryMusicSet								; branch to skip queueing it if so
+
+		ldy #VictoryMusic								; otherwise load victory music (world 8 only)
+		sty EventMusicQueue
+
+VictoryMusicSet:
 		cmp #$06										; < 6?
 		bcc ThankPlayer									; if so branch to print message
 		bcs IncMsgCounter								; otherwise branch ahead [uncondiional branch]
 
-RetainerCheck:
-		plp												; get carry back
-		bcc ThankPlayer									; branch to print message if not set
-		
-		ldy #VictoryMusic
-		sty EventMusicQueue								; otherwise load victory music first (world 8 only)
+Retainer:
+		plp												; get rid of flags on stack
 
 ThankPlayer:
 		tay												; put primary message counter into Y
@@ -831,7 +834,6 @@ IncMsgCounter:
 		adc #$00										; add carry to primary message counter
 		sta PrimaryMsgCounter
 
-ChkMsgCounter:
 		cmp #$06										; check primary counter one more time
 		bcc ExitMsgs									; if not reached value yet, branch to leave
 
@@ -1526,11 +1528,11 @@ GameTextOffsets_High:
 ; $01 - game text pointer high byte
 ; $02 - name pointer low byte
 ; $03 - name pointer high byte
-; $08 - temp current player variable
+; temp - temp current player variable
 
 WriteGameText:
 		ldx CurrentPlayer								; save current player to temp zero page variable
-		stx $08
+		stx temp
 		cmp #$02										; top status bar or world/lives display?
 		bcc LdGameText									; if so, branch to use current offset as-is
 		
@@ -1541,9 +1543,9 @@ WriteGameText:
 		bcs NoPlayerSwap								; branch ahead if so
 
 		tay
-		lda $08											; otherwise swap player name
+		lda temp										; otherwise swap player name
 		eor #$01
-		sta $08
+		sta temp
 		tya
 
 NoPlayerSwap:
@@ -1573,7 +1575,7 @@ WritePlayerName:
 		tya												; transfer Y...
 		tax												; to X
 		pha												; and back it up
-		ldy $08											; use player as index
+		ldy temp										; use player as index
 		lda NameOffsets_Low,y							; into name offset table
 		sta $02
 		lda NameOffsets_High,y							; to use as a pointer to player name
@@ -3970,7 +3972,6 @@ ScrollLockObject_Warp:
 		lda WorldNumber									; warp zone (4-3-2), then check world number
 		beq WarpNum
 
-		txa
 		inx												; if world number > 1, increment for next warp zone (5)
 		ldy AreaType									; check area type
 		dey
@@ -12689,6 +12690,7 @@ ExLiftP:
 OffscreenBoundsCheck:
 		lda Enemy_Flag,x								; get enemy flag first
 		beq ExScrnBd									; branch to leave if not set
+
 		lda Enemy_ID,x									; check for cheep-cheep object
 		cmp #FlyingCheepCheep							; branch to leave if found
 		beq ExScrnBd
@@ -14297,7 +14299,7 @@ VineCollision:
 		bne PutPlayerOnVine
 
 		lda Player_Y_Position							; check player's vertical coordinate
-		cmp #$20										; for being in status bar area
+		cmp #$80										; for being in upper half of screen (prevents wraparound glitch)
 		bcs PutPlayerOnVine								; branch if not that far up
 
 		lda #$01
@@ -14311,9 +14313,10 @@ PutPlayerOnVine:
 		sta Player_X_Speed								; and fractional horizontal movement force
 		sta Player_X_MoveForce
 
-		lda Player_X_Position							; get player's horizontal coordinate
-		sec
-		sbc ScreenLeft_X_Pos							; subtract from left side horizontal coordinate
+		lda Player_Rel_XPos
+;		lda Player_X_Position							; get player's horizontal coordinate
+;		sec
+;		sbc ScreenLeft_X_Pos							; subtract from left side horizontal coordinate
 		cmp #$10
 		bcs SetVXPl										; if 16 or more pixels difference, do not alter facing direction
 
@@ -14495,11 +14498,11 @@ PlatF:
 		clc
 		adc Player_X_Position							; add contents of A to player's horizontal
 		sta Player_X_Position							; position to move player left or right
-		
+
 		lda Player_PageLoc
 		adc $00											; add high bits and carry to
 		sta Player_PageLoc								; page location if necessary
-		
+
 ExIPM:
 		txa												; invert contents of X
 		eor #$ff
@@ -15078,11 +15081,13 @@ SmallPlatformBoundBox:
 		ldy #$04										; store another bitmask here for now
 
 GetMaskedOffScrBits:
-		lda Enemy_X_Position,x							; get enemy object position relative
-		sec												; to the left side of the screen
-		sbc ScreenLeft_X_Pos
+		lda Enemy_Rel_XPos,x
+;		lda Enemy_X_Position,x							; get enemy object position relative
+;		sec												; to the left side of the screen
+;		sbc ScreenLeft_X_Pos
 		sta $01											; store here
 
+		sec
 		lda Enemy_PageLoc,x								; subtract borrow from current page location
 		sbc ScreenLeft_PageLoc							; of left side
 		bmi CMBits										; if enemy object is beyond left edge, branch
@@ -15377,21 +15382,24 @@ BlockBufferCollision:
 		ldy $04											; get old contents of Y
 
 		lda SprObject_Y_Position,x						; get vertical coordinate of object
-		cmp #$d0										; check if beyond bottom tile row
+		cmp #$c0										; check if beyond bottom 2 tile rows
 		bcc NoTileOverflow								; branch if not
 		
-		lda #$00										; properly overflow to topmost row
-		clc
+		lda #$c0										; otherwise use $c0 so the tile isn't moved past the bottom row
+		bne SkipAdd										; [unconditional branch]
 
 NoTileOverflow:
 		adc BlockBuffer_Y_Adder,y						; add it to value obtained using Y as offset
 		and #%11110000									; mask out low nybble
 		sec
 		sbc #$20										; subtract 32 pixels for the status bar
+
+SkipAdd:
 		sta $02											; store result here
 
 		tay												; use as offset for block buffer
 		lda ($06),y										; check current content of block buffer
+
 		sta $03											; and store here
 
 		ldy $04											; get old contents of Y again
@@ -15708,6 +15716,7 @@ ExitDumpSpr:
 		rts
 
 ; -------------------------------------------------------------------------------------
+; temp - temp OAM data offset
 
 DrawLargePlatform:
 		ldy Enemy_SprDataOffset,x						; get OAM data offset
@@ -15741,7 +15750,7 @@ SetLast2Platform:
 
 		lda #$5b										; load default tile for platform (girder)
 		ldx CloudTypeOverride
-		beq SetPlatformTilenum							; if cloud level override flag not set, use
+		beq SetPlatformTilenum							; branch if cloud level override flag not set
 
 		lda #$75										; otherwise load other tile for platform (puff)
 
@@ -15756,69 +15765,34 @@ SetPlatformTilenum:
 
 		inx												; increment X for enemy objects
 		jsr GetXOffscreenBits							; get offscreen bits again
+		sta temp										; and save to a temp variable
 
 		dex
 		ldy Enemy_SprDataOffset,x						; get OAM data offset
+		tya												; and save to stack
+		pha
+		ldx #$06										; prepare X for loops
 
-		asl												; rotate d7 into carry, save remaining
-		pha												; bits to the stack
-		bcc SChk2
+SChkLoop:
+		asl	temp										; rotate d7 into carry
+		bcc NotOffscreen
 
-		lda #$f8										; if d7 was set, move first sprite offscreen
+		lda #$f8										; if d7 was set, move sprite offscreen
 		sta Sprite_Y_Position,y
 
-SChk2:
-		pla												; get bits from stack
-		asl												; rotate d6 into carry
+NotOffscreen:
+		iny												; increment Y 4 times
+		iny
+		iny
+		iny
+		dex												; decrement X
+		bne SChkLoop									; branch to loop if > 0
 
-		pha												; save to stack
-		bcc SChk3
-
-		lda #$f8										; if d6 was set, move second sprite offscreen
-		sta Sprite_Y_Position+4,y
-
-SChk3:
-		pla												; get bits from stack
-		asl												; rotate d5 into carry
-
-		pha												; save to stack
-		bcc SChk4
-
-		lda #$f8										; if d5 was set, move third sprite offscreen
-		sta Sprite_Y_Position+8,y
-
-SChk4:
-		pla												; get bits from stack
-		asl												; rotate d4 into carry
-
-		pha												; save to stack
-		bcc SChk5
-
-		lda #$f8										; if d4 was set, move fourth sprite offscreen
-		sta Sprite_Y_Position+12,y
-
-SChk5:
-		pla												; get bits from stack
-		asl												; rotate d3 into carry
-
-		pha												; save to stack
-		bcc SChk6
-
-		lda #$f8										; if d3 was set, move fifth sprite offscreen
-		sta Sprite_Y_Position+16,y
-
-SChk6:
-		pla												; get bits from stack
-		asl												; rotate d2 into carry
-		bcc SLChk										; save to stack
-
-		lda #$f8
-		sta Sprite_Y_Position+20,y						; if d2 was set, move sixth sprite offscreen
-
-SLChk:
-		lda Enemy_OffscreenBits							; check d7 of offscreen bits
-		asl												; and if d7 is not set, skip sub
-		bcc ExDLPl
+		pla												; otherwise retrieve Y from stack
+		tay
+		ldx ObjectOffset								; get enemy object offset
+		lda Enemy_OffscreenBits							; get offscreen bits
+		bpl ExDLPl										; if d7 is not set, skip sub
 
 		jmp MoveSixSpritesOffscreen						; otherwise branch to move all sprites offscreen
 
@@ -16976,6 +16950,7 @@ KillFireBall:
 		rts
 
 ; -------------------------------------------------------------------------------------
+; temp - temp enemy offscreen bits
 
 DrawSmallPlatform:
 		ldy Enemy_SprDataOffset,x						; get OAM data offset
@@ -17031,36 +17006,32 @@ BotSP:
 		sta Sprite_Y_Position+20,y
 
 		lda Enemy_OffscreenBits							; get offscreen bits
-		pha												; save to stack
+		sta temp										; save to temp variable
 
-		and #%00001000									; check d3
-		beq SOfs
+		tya												; save OAM data offset to stack
+		pha
+		ldx #$03										; prepare X for loops
 
-		lda #$f8										; if d3 was set, move first and
-		sta Sprite_Y_Position,y							; fourth sprites offscreen
+SOfsLoop:
+		lda temp										; get current bits
+		and #%00001000									; check for d3
+		beq SkipSOfs									; branch if not set
+
+		lda #$f8										; if d3 was set, move this pair of
+		sta Sprite_Y_Position,y							; sprites offscreen
 		sta Sprite_Y_Position+12,y
 
-SOfs:
-		pla												; move out and back into stack
-		pha
-
-		and #%00000100									; check d2
-		beq SOfs2
-
-		lda #$f8										; if d2 was set, move second and
-		sta Sprite_Y_Position+4,y						; fifth sprites offscreen
-		sta Sprite_Y_Position+16,y
-
-SOfs2:
-		pla												; get from stack
-		and #%00000010									; check d1
-		beq ExSPl
-
-		lda #$f8										; if d1 was set, move third and
-		sta Sprite_Y_Position+8,y						; sixth sprites offscreen
-		sta Sprite_Y_Position+20,y
-
-ExSPl:
+SkipSOfs:
+		asl temp										; shift current bits to the left
+		iny												; increment Y 4 times
+		iny
+		iny
+		iny
+		dex												; decrement X
+		bne SOfsLoop									; branch to loop if > 0
+		
+		pla												; otherwise retrieve Y from stack
+		tay
 		ldx ObjectOffset								; get enemy object offset and leave
 		rts
 
