@@ -13799,7 +13799,7 @@ PositionPlayerOnS_Plat:
 	.db $2c												; [skip 2 bytes]
 
 PositionPlayerOnVPlat:
-		lda #$00										; clear stom chain counter
+		lda #$00										; clear stomp chain counter
 		sta StompChainCounter
 
 		lda Enemy_Y_Position,x							; get vertical coordinate
