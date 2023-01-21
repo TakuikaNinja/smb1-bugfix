@@ -13799,9 +13799,6 @@ PositionPlayerOnS_Plat:
 	.db $2c												; [skip 2 bytes]
 
 PositionPlayerOnVPlat:
-		lda #$00										; clear stomp chain counter
-		sta StompChainCounter
-
 		lda Enemy_Y_Position,x							; get vertical coordinate
 		ldy GameEngineSubroutine
 		cpy #$0b										; if certain routine being executed on this frame,
@@ -13820,8 +13817,9 @@ PositionPlayerOnVPlat:
 		sta Player_Y_HighPos							; new vertical high byte
 
 		lda #$00
-		sta Player_Y_Speed								; initialize vertical speed and low byte of force
-		sta Player_Y_MoveForce							; and then leave
+		sta Player_Y_Speed								; initialize vertical speed and high byte of force
+		sta Player_Y_MoveForce
+		sta StompChainCounter							; don't forget to clear the stomp chain counter
 
 ExPlPos:
 		rts
