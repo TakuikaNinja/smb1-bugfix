@@ -6502,13 +6502,20 @@ ProcFireball_Bubble:
 		dey
 		bne ProcFireballs
 		
-		lda CrouchingFlag								; if player crouching, branch
-		bne ProcFireballs
-		
-		lda Player_State								; if player's state = climbing, branch
-		cmp #$03
+		ldy Player_State								; if player's state = climbing, branch
+		cpy #$03
+		beq ProcFireballs
+        
+		lda CrouchingFlag								; if player not crouching, branch
+		beq PlayFireball
+        
+		lda SwimmingFlag								; if player not swimming, branch
 		beq ProcFireballs
 		
+		dey												; if player's state = not jumping, branch
+		bne ProcFireballs
+		
+PlayFireball:
 		lda #Sfx_Fireball								; play fireball sound effect
 		sta Square1SoundQueue
 		
