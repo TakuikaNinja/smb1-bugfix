@@ -226,16 +226,9 @@ PauseSkip:
 		ldx #$00
 		ldy #$07
 		lda PseudoRandomBitReg							; get first memory location of LSFR bytes
-		and #%00000010									; mask out all but d1
-		sta $00											; save here
-		
-		lda PseudoRandomBitReg+1						; get second memory location
-		and #%00000010									; mask out all but d1
-		eor $00											; perform exclusive-OR on d1 from first and second bytes
-		clc												; if neither or both are set, carry will be clear
-		beq RotPRandomBit
-		
-		sec												; if one or the other is set, carry will be set
+		eor PseudoRandomBitReg+1						; perform exclusive-OR on second memory location
+		lsr												; if neither or both d1 are set, carry will be clear
+		lsr												; if one or the other d1 are set, carry will be set
 
 RotPRandomBit:
 		ror PseudoRandomBitReg,x						; rotate carry into d7, and rotate last bit into carry
@@ -369,23 +362,23 @@ SetPause:
 
 SpriteShuffler:
 ;		ldy AreaType									; load level type, likely residual code
-		lda #$28										; load preset value which will put it at
-		sta $00											; sprite #10
+;		lda #$28										; load preset value which will put it at
+;		sta $00											; sprite #10
 		
 		ldx #$0e										; start at the end of OAM data offsets
+		ldy SprShuffleAmtOffset							; get current offset to preset value we want to add
 
 ShuffleLoop:
-		lda SprDataOffset,x								; check for offset value against
-		cmp $00											; the preset value
+		lda SprDataOffset,x								; check the the offset value against
+		cmp #$28										; the preset value
 		bcc NextSprOffset								; if less, skip this part
 		
-		ldy SprShuffleAmtOffset							; get current offset to preset value we want to add
 		clc
 		adc SprShuffleAmt,y								; get shuffle amount, add to current sprite offset
 		bcc StrSprOffset								; if not exceeded $ff, skip second add
 		
-		clc
-		adc $00											; otherwise add preset value $28 to offset
+;		clc
+		adc #$28-1										; otherwise add preset value $28 to offset
 
 StrSprOffset:
 		sta SprDataOffset,x								; store new offset here or old one if branched to here
@@ -394,15 +387,14 @@ NextSprOffset:
 		dex												; move backwards to next one
 		bpl ShuffleLoop
 		
-		ldx SprShuffleAmtOffset							; load offset
-		inx
-		cpx #$03										; check if offset + 1 goes to 3
+		iny
+		cpy #$03										; check if offset + 1 goes to 3
 		bne SetAmtOffset								; if offset + 1 not 3, store
 		
-		ldx #$00										; otherwise, init to 0
+		ldy #$00										; otherwise, init to 0
 
 SetAmtOffset:
-		stx SprShuffleAmtOffset
+		sty SprShuffleAmtOffset
 
 		ldx #$08										; load offsets for values and storage
 		ldy #$02
@@ -8440,8 +8432,8 @@ AlterYP:
 		bmi ChkUpM										; if less than preset value, skip this part
 
 		lda SprObject_Y_MoveForce,x
-		cmp #$80										; if less positively than preset maximum, skip this part
-		bcc ChkUpM
+;		cmp #$80										; if less positively than preset maximum, skip this part
+		bpl ChkUpM
 
 		lda $02
 		sta SprObject_Y_Speed,x							; keep vertical speed within maximum value
@@ -8472,8 +8464,8 @@ ChkUpM:
 		bpl ExVMove										; if less negatively than preset maximum, skip this part
 
 		lda SprObject_Y_MoveForce,x
-		cmp #$80										; check if fractional part is above certain amount,
-		bcs ExVMove										; and if so, branch to leave
+;		cmp #$80										; check if fractional part is above certain amount,
+		bmi ExVMove										; and if so, branch to leave
 
 		lda $07
 		sta SprObject_Y_Speed,x							; keep vertical speed within maximum value
@@ -11663,8 +11655,8 @@ HammerChk:
 
 SetHmrTmr:
 		lda Enemy_Y_Position,x							; get current vertical position
-		cmp #$80										; if still above a certain point
-		bcc ChkFireB									; then skip to world number check for flames
+;		cmp #$80										; if still above a certain point
+		bpl ChkFireB									; then skip to world number check for flames
 
 		lda PseudoRandomBitReg,x
 		and #%00000011									; get pseudorandom offset
@@ -14300,8 +14292,8 @@ VineCollision:
 		bne PutPlayerOnVine
 
 		lda Player_Y_Position							; check player's vertical coordinate
-		cmp #$80										; for being in upper half of screen (prevents wraparound glitch)
-		bcs PutPlayerOnVine								; branch if not that far up
+;		cmp #$80										; for being in upper half of screen (prevents wraparound glitch)
+		bmi PutPlayerOnVine								; branch if not that far up
 
 		lda #$01
 		sta GameEngineSubroutine						; otherwise set to run autoclimb routine next frame
