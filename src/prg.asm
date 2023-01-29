@@ -3086,6 +3086,7 @@ PlayerLoseLife:
 
 		lda #$00
 		sta Sprite0HitDetectFlag
+		sta JoypadOverride								; nullify controller override bits
 		
 		dec NumberofLives								; take one life from player
 		bne StillInGame									; if player still has lives, branch
