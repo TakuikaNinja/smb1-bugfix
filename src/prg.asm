@@ -12518,8 +12518,18 @@ InitPlatformFall:
 
 StopPlatforms:
 		jsr InitVStf									; initialize vertical speed and low byte
-		sta Enemy_Y_Speed,y								; for both platforms and leave
-		sta Enemy_Y_MoveForce,y
+
+		ldx Enemy_State,y								; check other platform state
+;		cpx #$ff										; branch if not valid
+		inx
+		bne StopPlatformsEx
+
+		tya
+		tax
+		jsr InitVStf									; initialize vertical speed and low byte for other platform
+
+StopPlatformsEx:
+		ldx ObjectOffset
 		rts
 
 PlatformFall:
@@ -13622,15 +13632,19 @@ LargePlatformCollision:
 		lda TimerControl								; check master timer control
 		bne ExLPC										; if set, branch to leave
 
-		lda Enemy_State,x								; if d7 set in object state,
+		ldy Enemy_State,x								; if d7 set in object state,
 		bmi ExLPC										; branch to leave
 
 		lda Enemy_ID,x
 		cmp #$24										; check enemy object identifier for
 		bne ChkForPlayerC_LargeP						; balance platform, branch if not found
 
-		lda Enemy_State,x
-		tax												; set state as enemy offset here
+		lda Enemy_State,y								; check other platform state
+		cmp #$ff										; branch if not valid
+		bne ChkForPlayerC_LargeP
+
+		tya
+		tax												; set state as other platform offset here
 		jsr ChkForPlayerC_LargeP						; perform code with state offset, then original offset, in X
 
 ChkForPlayerC_LargeP:
