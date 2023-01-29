@@ -13634,6 +13634,10 @@ LargePlatformCollision:
 		jsr ChkForPlayerC_LargeP						; perform code with state offset, then original offset, in X
 
 ChkForPlayerC_LargeP:
+		ldy Enemy_Y_HighPos,x							; figure out if platform is below or above a certain point
+		dey												; branch to leave if true
+		bne ExLPC
+
 		jsr CheckPlayerVertical							; figure out if player is below a certain point
 		bcs ExLPC										; or offscreen, branch to leave if true
 
