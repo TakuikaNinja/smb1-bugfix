@@ -12523,16 +12523,18 @@ StopPlatforms:
 		rts
 
 PlatformFall:
-		tya												; save offset for other platform to stack
-		pha
+		lda Enemy_State,y								; if other platform is not valid, skip
+		cmp #$ff
+		bne PlatformFallCurrent
 
-		jsr MoveFallingPlatform							; make current platform fall
-
-		pla
-		tax												; pull offset from stack and save to X
+		tya												; use offset for other platform
+		tax
 		jsr MoveFallingPlatform							; make other platform fall
 
-		ldx ObjectOffset
+PlatformFallCurrent:
+		jsr MoveFallingPlatform							; make current platform fall
+
+;		ldx ObjectOffset
 		lda PlatformCollisionFlag,x						; if player not standing on either platform,
 		bmi ExPF										; skip this part
 
