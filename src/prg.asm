@@ -1130,7 +1130,7 @@ GetPlayerColors:
 		lda PlayerStatus								; check player status
 		and #$02				 						; we only care if the player is firey, which is in bit 1.
 		ora CurrentPlayer								; add the current player in bit 0.
-		asl					 							; shift to the left twice, to multiply by 4, the amount of colours in the palette...
+		asl					 							; shift to the left twice, to multiply by 4, the amount of colors in the palette...
 		asl
 		tay					 							; ...and we get our table offset to put in the Y register!
 		
@@ -5752,14 +5752,8 @@ InitChangeSize:
 		
 		inc PlayerChangeSizeFlag						; set growing/shrinking flag
 		
-		lda PlayerStatus								; check status instead of blindly trusting size (small fiery fix)
-		cmp #$02										; fire flower?
-		bne NotFire										; if not, jump ahead
-		
-		lsr												; shift right (2 -> 1) to turn fire into super before the inversion
-
-NotFire:
-		eor #$01										; invert A to get actual size
+		lda PlayerSize									; get PlayerSize
+		eor #$01										; invert A to toggle size
 		sta PlayerSize									; save as PlayerSize
 
 ExitBoth:
@@ -6753,7 +6747,8 @@ ResGTCtrl:
 
 TimeUpOn:
 		sta PlayerStatus								; init player status (note A will always be zero here)
-		
+		jsr GetPlayerColors								; update the colors (fiery palette fix)
+		lda #$00										; load 0 and...
 		jsr ForceInjury									; do sub to kill the player (note player is small here)
 		inc GameTimerExpiredFlag						; set game timer expiration flag
 
@@ -8407,7 +8402,7 @@ ImposeGravity:
 		pha												; push value to stack
 
 		lda SprObject_YMF_Low,x
-		clc												; add value in movement force to contents of dummy variable
+		clc												; add value in movement force to contents of low byte
 		adc SprObject_Y_MoveForce,x
 		sta SprObject_YMF_Low,x
 
@@ -9726,7 +9721,7 @@ AddFBit:
 
 		lda Enemy17YPosData,y							; load vertical position using offset
 		jsr PutAtRightExtent							; set vertical position and other values
-		sta SprObject_YMF_Low,x							; initialize dummy variable
+		sta SprObject_YMF_Low,x							; initialize low byte
 
 		lda #$20										; set timer
 		sta FrenzyEnemyTimer
@@ -11425,22 +11420,6 @@ BridgeCollapseData:
 	.db $8a, $88, $86, $84, $82, $80
 
 BridgeCollapse:
-		lda TimerControl								; if master timer control is still running... (i.e. player was hit on the same frame as touching the axe)
-		cmp #$f0										; check for a specific moment in time
-		bne Skip										; and branch ahead if not
-
-		lda InjuryTimer									; is InjuryTimer set? (i.e. not dead, blinking)
-		bne Injury										; yes, so beanch ahead
-
-		rts												; otherwise exit this routine (prevents lives from decrementing somehow?)
-
-Injury:
-		lda PlayerStatus								; is the player super/fiery now?
-		bne Skip										; yes, so branch ahead
-
-		jsr InitChangeSize								; otherwise force the size change (prevents PlayerStatus/PlayerSize desync)
-
-Skip:
 		ldx BowserFront_Offset							; get enemy offset for bowser
 
 		lda Enemy_ID,x									; check enemy object identifier for bowser
@@ -13021,7 +13000,7 @@ Shroom_Flower_PUp:
 		lda PowerUpType									; is the power-up a mushroom?
 		beq UpToSuper									; if so, do the grow animation
 
-		asl A											; otherwise, shift the flower bit left (1 -> 2)
+		asl												; otherwise, shift the flower bit left (1 -> 2)
 		sta PlayerStatus								; and force fire flower
 
 		lda PlayerSize									; is PlayerSize big?
@@ -14208,6 +14187,9 @@ HandleAxeMetatile:
 
 		lda #$02
 		sta OperMode									; set primary mode to autoctrl mode
+		
+		lsr												; shift right to get #$01
+		sta InjuryTimer									; and set as InjuryTimer (ShaneM's fix)
 
 		lda #$18
 		sta Player_X_Speed								; set horizontal speed and continue to erase axe metatile
@@ -14260,8 +14242,8 @@ FlagpoleCollision:
 
 		lsr
 		sta StarInvincibleTimer							; FIX: starman doesn't mess up the level complete music anymore
-
-;		inc ScrollLock									; set scroll lock flag (more or less just for the music)
+		sta Player_X_Scroll								; clear residual scroll
+		sta ScrollAmount
 
 		lda GameEngineSubroutine
 		cmp #$04										; check for flagpole slide routine running
@@ -14648,14 +14630,14 @@ ChkToStunEnemies:
 		cmp #$09										; perform many comparisons on enemy object identifier
 		bcc SetStun
 
-		cmp #$11										; if the enemy object identifier is equal to the values
-		bcs SetStun										; $09, $0e, $0f or $10, it will be modified, and not
+		cmp #Lakitu										; if the enemy object identifier is equal to the values
+		bcs SetStun										; $09, $0e, $0f or $10, it will be modified
 
-		cmp #$0a										; modified if not any of those values, note that piranha plant will
+		cmp #GreyCheepCheep								; don't modify it otherwise, note that piranha plant will
 		bcc Demote										; always fail this test because A will still have vertical
 
 		cmp #PiranhaPlant								; coordinate from previous addition, also these comparisons
-		bcc SetStun										; are only necessary if branching from $d7a1
+		bcc SetStun										; are only necessary if branching here
 
 Demote:
 		and #%00000001									; erase all but LSB, essentially turning enemy object
@@ -15383,11 +15365,11 @@ BlockBufferCollision:
 		ldy $04											; get old contents of Y
 
 		lda SprObject_Y_Position,x						; get vertical coordinate of object
-		cmp #$c0										; check if at or beyond bottom tile row
+		cmp #$d0										; check if at or beyond bottom tile row
 		bcc NoTileOverflow								; branch if not
 		
 		lda #$c0										; otherwise use $c0 so the tile isn't moved past the bottom row
-		bne SkipAdd										; [unconditional branch]
+		clc
 
 NoTileOverflow:
 		adc BlockBuffer_Y_Adder,y						; add it to value obtained using Y as offset
