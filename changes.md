@@ -64,7 +64,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
 + [x] Tweaked controller reading code to mask out left+right/up+down inputs. Additionally, the polling loop now uses the ring counter technique.
-+ [x] Moved the main game loop out of NMI and added proper interrupt and lag frame handling to the NMI routine. (no more glitched scanlines, HUD flickering, or music slowdown)
++ [x] Moved the main game loop out of NMI and made the NMI handler more robust. (no more glitched scanlines, HUD flickering, or music slowdown)
++ [x] EnableNMI & WritePPUReg1 will no longer incur an extra NMI if they are called while the VBlank flag is set.
 + [x] The reset handler has been tweaked to better resemble the sample implementation on NESdev Wiki.
 + [x] Optimized, tweaked, and trimmed code wherever possible. (ongoing effort)
 

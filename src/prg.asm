@@ -112,6 +112,14 @@ VRAM_Buffer_Offset:
 
 NonMaskableInterrupt:
 		pha												; backup A
+		lda NMIInProgressFlag							; is the NMI handler already running?
+		beq ProceedWithNMI								; if not, branch to proceed with NMI handler
+		
+		pla												; otherwise just restore A
+		rti												; and leave
+
+ProceedWithNMI:
+		inc NMIInProgressFlag							; set flag for NMI in progress
 		
 		txa
 		pha												; backup X
@@ -312,6 +320,8 @@ HUDSkip:
 		
 		pla										 
 		tax												; restore X
+		
+		dec NMIInProgressFlag							; clear flag for NMI in progress
 		
 		pla												; restore A
 		rti												; we are done until the next frame!
@@ -1531,7 +1541,7 @@ GameTextOffsets_High:
 ; temp - temp current player variable
 
 WriteGameText:
-		ldx CurrentPlayer								; save current player to temp zero page variable
+		ldx CurrentPlayer								; save current player to temp variable
 		stx temp
 		cmp #$02										; top status bar or world/lives display?
 		bcc LdGameText									; if so, branch to use current offset as-is
@@ -2540,6 +2550,7 @@ EnableNMI:
 		ora #%10000000									; enable NMIs
 
 WritePPUReg1:
+		bit PPU_STATUS									; clear vblank flag to prevent extra NMI
 		sta PPU_CTRL_REG1								; write contents of A to PPU register 1
 		sta Mirror_PPU_CTRL_REG1						; and its mirror
 		rts
@@ -17885,5 +17896,5 @@ SkipRightTile:
 .org $FFFA
 	.dw NonMaskableInterrupt
 	.dw Start
-	.dw $fff0										; unused
+	.dw Start										; IRQ vector is never used, but point here just in case
 

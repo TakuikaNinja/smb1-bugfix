@@ -206,18 +206,18 @@ PlayerSize            = $0754
 PlayerStatus          = $0756
 
 OnscreenPlayerInfo    = $075a
-NumberofLives         = $075a ;used by current player
+NumberofLives         = $075a	;used by current player
 HalfwayPage           = $075b
-LevelNumber           = $075c ;the actual dash number
+LevelNumber           = $075c	;the actual dash number
 Hidden1UpFlag         = $075d
 CoinTally             = $075e
 WorldNumber           = $075f
-AreaNumber            = $0760 ;internal number used to find areas
+AreaNumber            = $0760	;internal number used to find areas
 
 CoinTallyFor1Ups      = $0748
 
 OffscreenPlayerInfo   = $0761
-OffScr_NumberofLives  = $0761 ;used by offscreen player
+OffScr_NumberofLives  = $0761	;used by offscreen player
 OffScr_HalfwayPage    = $0762
 OffScr_LevelNumber    = $0763
 OffScr_Hidden1UpFlag  = $0764
@@ -236,6 +236,7 @@ StarFlagTaskControl   = $0746
 
 PseudoRandomBitReg    = $07a7
 
+NMIInProgressFlag     = $06b7	; enabled during the NMI handler for mutex protection
 NMISyncFlag           = $07fe
 WarmBootValidation    = $07ff
 
@@ -365,7 +366,7 @@ FrictionAdderLow      = $0702
 RunningSpeed          = $0703
 SwimmingFlag          = $0704
 Player_X_MoveForce    = $0705
-CollisionAdder        = $0706                   ; used to force scroll when colliding with tiles
+CollisionAdder        = $0706	; used to force scroll when colliding with tiles
 JumpOrigin_Y_HighPos  = $0707
 JumpOrigin_Y_Position = $0708
 VerticalForce         = $0709
@@ -410,7 +411,6 @@ Block_BBuf_Low        = $03e6
 Block_Metatile        = $03e8
 Block_PageLoc2        = $03ea
 Block_RepFlag         = $03ec
-Block_ResidualCounter = $03f0
 Block_Orig_XPos       = $03f1
 
 BoundingBox_UL_XPos   = $04ac
@@ -428,7 +428,7 @@ FireballCounter       = $06ce
 FireballThrowingTimer = $0711
 
 HammerEnemyOffset     = $06ae
-temp                  = $06b7                   ; general-use temp variable
+temp                  = $03f0	; general-use temp variable
 
 Block_Buffer_1        = $0500
 Block_Buffer_2        = $05d0
