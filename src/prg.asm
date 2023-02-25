@@ -5253,8 +5253,9 @@ NoCollision:
 		cmp #$70										; check player's horizontal screen position
 		bcc InitScrlAmt									; if less than 112 pixels to the right, branch
 
-		cmp #$7f										; has the player exceeded it by at least 15 pixels?
-		bcc NoSpeedUp									; no, so branch to use current scroll speed
+		cmp #$ff										; check if player is at 255 pixels (can occur when riding on platforms)
+		beq InitScrlAmt									; branch to init scroll if so
+		bpl NoSpeedUp									; if player is on left half, branch to use current scroll speed
 
 		ldy #$03										; otherwise force scroll to recenter camera
 		sty Player_X_Scroll
