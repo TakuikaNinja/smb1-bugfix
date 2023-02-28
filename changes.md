@@ -41,7 +41,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The offscreen bounds check will now check if the enemy is active first, to prevent enemies from being erased twice.
 + [x] The enemy's high Y coordinate is now checked instead of relying on addition overflow in SubtEnemyYPos. (e.g. enemies will no longer hover when stomped in pits)
 + [x] BlockBufferCollision will now correctly clamp the Y tile coordinate to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
-+ [x] After falling into a pit, the gameplay will now halt in the same manner as being killed by an enemy. (prevents dying twice to hammers)
++ [x] If Mario enters a warp pipe or falls into a pit, the gameplay will now halt in the same manner as being killed by an enemy. (prevents getting hit)
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
@@ -50,6 +50,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The underwater section of 8-4 now uses the grey colour scheme for better continuity within the level.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)
++ [x] Stomped Goombas can no longer be defeated again using a star.
 - [x] When entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
 + [x] When entering a vertical warp-pipe, Mario will now always stand still like in later entries.
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.

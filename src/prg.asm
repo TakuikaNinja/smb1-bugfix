@@ -5647,10 +5647,13 @@ SetEntr:
 ; -------------------------------------------------------------------------------------
 
 VerticalPipeEntry:
-		lda #$00										; reset horizontal speed
-		sta Player_X_Speed
-		sta SavedJoypadBits								; nullify input (prevents running while entering pipes)
-		sta CrouchingFlag								; nullify the crouching flag as well
+		ldy #$00
+		sty Player_X_Speed								; reset horizontal speed
+		sty SavedJoypadBits								; nullify input (prevents running while entering pipes)
+		sty CrouchingFlag								; nullify the crouching flag as well
+		
+		dey
+		sty TimerControl								; set master timer control flag to halt timers
 		
 		lda #$01										; set 1 as movement amount
 		jsr MovePlayerYAxis								; do sub to move player downwards
@@ -5677,6 +5680,9 @@ MovePlayerYAxis:
 ; -------------------------------------------------------------------------------------
 
 SideExitPipeEntry:
+		ldy #$ff
+		sty TimerControl								; set master timer control flag to halt timers
+		
 		jsr EnterSidePipe								; execute sub to move player to the right
 		ldy #$02
 
@@ -8591,8 +8597,8 @@ FindLoop:
 		cmp LoopCmdYPosition,y							; if not, branch to check for world 7
 		bne WrongChk
 
-		lda Player_State								; check to see if the player is
-		bne WrongChk									; if not, player fails to pass loop, and loopback
+		lda Player_State								; check to see if the player is grounded
+		bne WrongChk									; if not, player fails to pass loop, and loopback (jank)
 
 		lda WorldNumber									; are we in world 7? (check performed on correct
 		cmp #World7										; vertical position and on solid ground)
@@ -12907,10 +12913,20 @@ ChkOtherEnemies:
 		bcs ExHCF										; branch to leave if identifier => $15
 
 ShellOrBlockDefeat:
-		lda Enemy_ID,x									; check for piranha plant
-		cmp #PiranhaPlant
-		bne StnE										; branch if not found
+		lda Enemy_ID,x
+		cmp #PiranhaPlant								; check for piranha plant
+		beq IsPiranhaPlant								; branch ahead if so
 
+		cmp #Goomba										; check for goomba
+		bne StnE										; branch away if not
+		
+		lda Enemy_State,x
+		cmp #$02										; check for defeated state
+		bcc StnE										; branch away if not defeated
+		
+		rts												; otherwise leave (prevents double goomba kill)
+
+IsPiranhaPlant:
 		lda Enemy_Y_Position,x
 		adc #$18										; add 24 pixels to enemy object's vertical position
 		sta Enemy_Y_Position,x
@@ -13138,8 +13154,7 @@ HandlePECollisions:
 		beq InjurePlayer
 
 		lda Enemy_State,x								; branch if d7 of enemy state was set
-		asl
-		bcs ChkForPlayerInjury
+		bmi ChkForPlayerInjury
 
 		lda Enemy_State,x								; mask out all but 3 LSB of enemy state
 		and #%00000111
