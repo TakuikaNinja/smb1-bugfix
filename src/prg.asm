@@ -234,16 +234,9 @@ PauseSkip:
 		ldx #$00
 		ldy #$07
 		lda PseudoRandomBitReg							; get first memory location of LSFR bytes
-		and #%00000010									; mask out all but d1
-		sta $00											; save here
-		
-		lda PseudoRandomBitReg+1						; get second memory location
-		and #%00000010									; mask out all but d1
-		eor $00											; perform exclusive-OR on d1 from first and second bytes
-		clc												; if neither or both are set, carry will be clear
-		beq RotPRandomBit
-		
-		sec												; if one or the other is set, carry will be set
+		eor PseudoRandomBitReg+1						; xor with second memory location
+		lsr												; shift d1 into carry
+		lsr
 
 RotPRandomBit:
 		ror PseudoRandomBitReg,x						; rotate carry into d7, and rotate last bit into carry
@@ -378,15 +371,11 @@ SetPause:
 ; $00 - used for preset value
 
 SpriteShuffler:
-;		ldy AreaType									; load level type, likely residual code
-		lda #$28										; load preset value which will put it at
-		sta $00											; sprite #10
-		
 		ldx #$0e										; start at the end of OAM data offsets
 
 ShuffleLoop:
 		lda SprDataOffset,x								; check for offset value against
-		cmp $00											; the preset value
+		cmp #SpriteShufflerPreset						; the preset value
 		bcc NextSprOffset								; if less, skip this part
 		
 		ldy SprShuffleAmtOffset							; get current offset to preset value we want to add
@@ -394,8 +383,7 @@ ShuffleLoop:
 		adc SprShuffleAmt,y								; get shuffle amount, add to current sprite offset
 		bcc StrSprOffset								; if not exceeded $ff, skip second add
 		
-		clc
-		adc $00											; otherwise add preset value $28 to offset
+		adc #SpriteShufflerPreset-1						; otherwise add (preset value - 1) + unconditional carry to offset
 
 StrSprOffset:
 		sta SprDataOffset,x								; store new offset here or old one if branched to here
@@ -5597,9 +5585,13 @@ HoleDie:
 		ldy DeathMusicLoaded							; check value here
 		bne HoleBottom									; if already set, branch to next part
 
-		iny
-		sty EventMusicQueue								; otherwise play death music
+		dey												; otherwise...
+		sty TimerControl								; set master timer control flag to halt timers (double death fix)
+
+		ldy #DeathMusic
+		sty EventMusicQueue								; play death music
 		sty DeathMusicLoaded							; and set value here
+		
 
 HoleBottom:
 		ldy #$06
@@ -5825,7 +5817,7 @@ ExitDeath:
 FlagpoleSlide:
 		lda Enemy_ID+5									; check special use enemy slot
 		cmp #FlagpoleFlagObject							; for flagpole flag object
-		bne ExitDeath									; if not found, branch to exit
+		bne NoFPObj										; if not found, branch to exit
 		
 		lda FlagpoleSoundQueue							; load flagpole sound
 		sta Square1SoundQueue							; into square 1's sfx queue
@@ -5840,11 +5832,11 @@ FlagpoleSlide:
 		lda #$04										; otherwise force player to climb down (to slide)
 
 SlidePlayer:
-		jmp AutoControlPlayer							; jump to player control routine
+		jmp AutoControlPlayer							; jump to player control routine and exit
 
-;NoFPObj:
-;		inc GameEngineSubroutine						; increment to next routine (this may
-;		rts												; be residual code)
+NoFPObj:
+		inc GameEngineSubroutine						; increment to next routine if flagpole flag is missing
+		rts												; (NOT residual code)
 
 ; -------------------------------------------------------------------------------------
 
@@ -12227,19 +12219,32 @@ SpinCounterClockwise:
 ; $02 - used to hold page location of rope
 
 BalancePlatform:
-		lda Enemy_Y_HighPos,x							; check high byte of vertical position
-		cmp #$03
-		bne DoBPl
+		ldy Enemy_State,x								; get object's state into Y for later (set to $ff or other platform offset)
+		php												; save negative flag to stack
 		
-		jmp EraseEnemyObject							; if far below screen, kill the object
+		lda Enemy_Y_HighPos,x							; check high byte of vertical position
+		cmp #$03										; is it 3?
+		beq ErasePlatforms								; if so, branch away from here
+		
+		plp												; otherwise get negative flag back from stack
+		bpl CheckBalPlatform							; if not set (positive), branch ahead
 
-DoBPl:
-		lda Enemy_State,x								; get object's state (set to $ff or other platform offset)
-		bpl CheckBalPlatform							; if doing other balance platform, branch to leave
-		rts
+ExBalP:
+		rts												; otherwise leave
+		
+ErasePlatforms:
+		plp												; get negative flag back from stack
+		bmi ExBalP										; if set, branch to leave
+		
+		jsr EraseEnemyObject							; SM if far below screen, kill the first object
+		tya												; SM transfer other platform to accumulator
+		tax												; SM and move it to X to erase it
+		jmp EraseEnemyObject							; SM kill the second platform object and leave
 
 CheckBalPlatform:
-		tay												; save offset from state as Y
+		lda Enemy_ID,y									; check ID of other object
+		cmp #$24										; is it a balance platform?
+		bne ExBalP										; branch to leave if not (SMB2J Fix for Bullet Lift bug?)
 
 		lda PlatformCollisionFlag,x						; get collision flag of platform
 		sta $00											; store here
@@ -12506,6 +12511,7 @@ InitPlatformFall:
 
 		lda #$01										; set moving direction as flag for
 		sta Enemy_MovingDir,x							; falling platforms
+		ldy Enemy_State,x								; reload offset for other platform into Y
 
 StopPlatforms:
 		jsr InitVStf									; initialize vertical speed and low byte
@@ -12516,13 +12522,15 @@ StopPlatforms:
 PlatformFall:
 		tya												; save offset for other platform to stack
 		pha
-
 		jsr MoveFallingPlatform							; make current platform fall
-
+		
 		pla
 		tax												; pull offset from stack and save to X
-		jsr MoveFallingPlatform							; make other platform fall
-
+		lda Enemy_State,x								; SMAS bugfix: retrieve enemy state for balance platform
+		bpl SkipLeftPlatform							; SMAS bugfix: skip left platform if invalid (not $ff)
+		jsr MoveFallingPlatform							; otherwise make other platform fall
+		
+SkipLeftPlatform:
 		ldx ObjectOffset
 		lda PlatformCollisionFlag,x						; if player not standing on either platform,
 		bmi ExPF										; skip this part
@@ -13625,6 +13633,10 @@ LargePlatformCollision:
 		jsr ChkForPlayerC_LargeP						; perform code with state offset, then original offset, in X
 
 ChkForPlayerC_LargeP:
+		ldy Enemy_Y_HighPos,x							; check high Y position
+		dey												; is it >= 2?
+		bne ExLPC										; branch to leave if so (collision bugfix)
+		
 		jsr CheckPlayerVertical							; figure out if player is below a certain point
 		bcs ExLPC										; or offscreen, branch to leave if true
 

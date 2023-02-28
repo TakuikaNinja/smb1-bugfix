@@ -41,6 +41,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The offscreen bounds check will now check if the enemy is active first, to prevent enemies from being erased twice.
 + [x] The enemy's high Y coordinate is now checked instead of relying on addition overflow in SubtEnemyYPos. (e.g. enemies will no longer hover when stomped in pits)
 + [x] BlockBufferCollision will now correctly clamp the Y tile coordinate to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
++ [x] After falling into a pit, the gameplay will now halt in the same manner as being killed by an enemy. (prevents dying twice to hammers)
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
@@ -57,6 +58,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The scroll handler has been overhauled and is now more robust. (e.g. getting stuck in a wall updates the scroll properly)
 + [x] Firebar blocks will no longer cause head injuries as big Mario.
 + [x] Firebar collision detection now checks the relative player position instead of querying the OAM buffer. (yes, really)
++ [x] Instances of recalculating the player's relative position have been replaced with variable reads instead. (fixes vine wraparound glitch)
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
@@ -91,7 +93,9 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Swimming Cheep Cheeps now move up and down farther after 5-3.
 + [x] Lakitus respawn more quickly after 5-3. Additionally, they will now always spawn at the correct height with the correct hitbox.
 + [x] Platforms moving downwards will now properly drop the player into pits.
-+ [x] Moving platforms will now clear the stomp chain counter.
++ [x] Balance Platforms now have more checks in place to prevent collision oddities (notably 4-3).
++ [x] Balance Platforms will no longer move if the left platform has been unloaded, or has been replaced by another enemy. (prevents the 6-3 "Bullet on a string" glitch)
++ [x] Landing on Moving Platforms will now clear the stomp chain counter.
 + [x] Enemies will now clear more of their variables when unloading, in order to minimize oddities. (e.g. Collecting a star when it has negative Y speed no longer causes mushrooms to jump)
 
 ## PAL Version Changes

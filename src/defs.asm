@@ -115,3 +115,5 @@ TitleScreenModeValue  = 0
 GameModeValue         = 1
 VictoryModeValue      = 2
 GameOverModeValue     = 3
+
+SpriteShufflerPreset = $28
