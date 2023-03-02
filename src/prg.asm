@@ -10442,11 +10442,9 @@ MoveNormalEnemy:
 		and #%01000000									; check enemy state for d6 set, if set skip
 		bne FallE										; to move enemy vertically, then horizontally if necessary
 
-		lda Enemy_State,x
-		asl												; check enemy state for d7 set
-		bcs SteadM										; if set, branch to move enemy horizontally
+		lda Enemy_State,x								; check enemy state for d7 set
+		bmi SteadM										; if set, branch to move enemy horizontally
 
-		lda Enemy_State,x
 		and #%00100000									; check enemy state for d5 set
 		bne FallE										; if set, branch to move defeated enemy object
 
@@ -13487,8 +13485,7 @@ SkipChecks2:
 
 		lda Enemy_State,x
 		ora Enemy_State,y								; check both enemy states for d7 set
-		and #%10000000
-		bne YesEC										; branch if at least one of them is set
+		bmi YesEC										; branch if at least one of them is set
 
 		lda Enemy_CollisionBits,y						; load first enemy's collision-related bits
 		and SetBitsMask,x								; check to see if bit connected to second enemy is
@@ -14593,12 +14590,12 @@ EnemyBGCXSpdData:
 	.db $10, $f0
 
 EnemyToBGCollisionDet:
-		lda Enemy_State,x								; check enemy state for d6 set
+		lda Enemy_State,x								; check enemy state for d5 set
 		and #%00100000
 		bne ExEBG										; if set, branch to leave
 
 		lda Enemy_Y_HighPos,x							; get enemy's high y coordinate
-		beq ExEBG										; branch to leave if not set
+		beq ExEBG										; branch to leave if not set (i.e. in HUD area)
 
 		ldy Enemy_ID,x
 		cpy #Spiny										; if enemy object is not spiny, branch elsewhere
@@ -14797,9 +14794,8 @@ ProcEnemyDirection:
 LandEnemyInitState:
 		jsr EnemyLanding								; land enemy properly
 	
-		lda Enemy_State,x
-		and #%10000000									; if d7 of enemy state is set, branch
-		bne NMovShellFallBit
+		lda Enemy_State,x	
+		bmi NMovShellFallBit							; if d7 of enemy state is set, branch
 	
 		lda #$00										; otherwise initialize enemy state and leave
 		sta Enemy_State,x								; note this will also turn spiny's egg into spiny
@@ -14927,7 +14923,7 @@ EnemyLanding:
 
 EnemyJump:
 		lda Enemy_Y_HighPos,x							; get enemy's high y coordinate
-		beq DoSide										; branch if not set
+		beq DoSide										; branch if not set (i.e. in HUD area)
 
 		lda Enemy_Y_Speed,x
 		clc												; add two to vertical speed
