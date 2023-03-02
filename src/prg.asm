@@ -15416,7 +15416,6 @@ NoTileOverflow:
 		sec
 		sbc #$20										; subtract 32 pixels for the status bar
 
-SkipAdd:
 		sta $02											; store result here
 
 		tay												; use as offset for block buffer
