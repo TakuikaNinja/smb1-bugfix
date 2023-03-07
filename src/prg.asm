@@ -13405,10 +13405,7 @@ SetupFloateyNumber:
 		
 		lda Enemy_Y_Position,x
 		sta FloateyNum_Y_Pos,x							; set vertical coordinate
-		
-		lda $00											; PlayerEnemyDiff clobbers $00, so back it up
-		pha
-		
+
 		lda Enemy_Rel_XPos
 		cmp #$f0										; SM if less than offscreen bounds
 		bcc StoreRelativePosition						; SM then branch
@@ -13423,8 +13420,7 @@ SetupFloateyNumber:
 
 StoreRelativePosition:
 		sta FloateyNum_X_Pos,x							; set horizontal coordinate and leave
-		pla
-		sta $00											; restore $00
+
 ExSFN:
 		rts
 
