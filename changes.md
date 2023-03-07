@@ -62,6 +62,9 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Instances of recalculating the player's relative position have been replaced with variable reads instead. (fixes vine wraparound glitch)
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
++ [x] The shattered brick sprites will now appear even when the brick block is partially offscreen.
++ [x] Hitting partially offscreen enemies from under blocks will no longer cause Koopas to appear.
++ [x] Made floatey numbers (the score sprites) stay within the screen better. (less position under/overflows)
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
 + [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
 + [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.

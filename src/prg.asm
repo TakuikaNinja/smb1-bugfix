@@ -449,10 +449,7 @@ MoveSpritesOffscreen:
 SprInitLoop:
 		sta Sprite_Y_Position,y							; write 248 into OAM data's Y coordinate
 		
-		iny												; which will move it off the screen
-		iny
-		iny
-		iny
+		jsr MathINY4									; which will move it off the screen
 		bne SprInitLoop
 		
 		rts
@@ -1674,10 +1671,7 @@ WarpNumLoop:
 		sta VRAM_Buffer1+27,y							; placeholders from earlier
 
 		inx
-		iny												; put a number in every fourth space
-		iny
-		iny
-		iny
+		jsr MathINY4									; put a number in every fourth space
 		cpy #$0c
 		bcc WarpNumLoop
 
@@ -1888,10 +1882,7 @@ AttribLoop:
 		lsr
 		sta AttributeBuffer,x							; clear current byte in attribute buffer
 
-		iny												; increment buffer offset by 4 bytes
-		iny
-		iny
-		iny
+		jsr MathINY4									; increment buffer offset by 4 bytes
 		inx												; increment attribute offset and check to see
 		cpx #$07										; if we're at the end yet
 		bcc AttribLoop
@@ -4183,12 +4174,8 @@ CRendLoop:
 		lda $06
 		beq ChkCFloor									; have we reached upper limit yet?
 		
-		iny												; if not, increment column-wise
-		iny												; to byte in next row
+		jsr MathINY4									; if not, increment column-wise to byte in next row
 		iny
-		iny
-		iny
-		
 		dec $06											; move closer to upper limit
 
 ChkCFloor:
@@ -4340,11 +4327,8 @@ VerticalPipe:
 		jsr GetPipeHeight
 		lda $00											; check to see if value was nullified earlier
 		beq WarpPipe									; (if d3, the usage control bit of second byte, was set)
-		
-		iny
-		iny
-		iny
-		iny												; add four if usage control bit was not set
+
+		jsr MathINY4									; add four if usage control bit was not set
 
 WarpPipe:
 		tya												; save value in stack
@@ -4784,7 +4768,24 @@ QuestionBlock:
 ; --------------------------------
 
 HoleMetatiles:
-	.db $87, $00, $00, $00
+	.db $87, $00										; next 2 bytes are shared
+
+ClimbAdderHigh:
+	.db $00												; next 2 bytes are shared
+
+HighPosUnitData:
+	.db $00, $ff
+
+	.db $ff												; remaining byte of ClimbAdderHigh
+
+PlayerPosSPlatData:
+	.db $80
+
+Climb_Y_SpeedData:										; SM PlayerPosSPlatData shares this byte
+	.db $00
+
+FlameYMFAdderData:
+	.db $ff, $01										; SM part of Climb_Y_SpeedData
 
 Hole_Empty:
 		jsr ChkLrgObjLength								; get lower nybble and save as length
@@ -4910,6 +4911,13 @@ MathLSR4:
 		lsr
 		lsr
 		lsr
+		rts
+
+MathINY4:												; INYx4 is so common that this actually saves bytes...
+		iny
+		iny
+		iny
+		iny
 		rts
 
 ; --------------------------------
@@ -6048,8 +6056,6 @@ ExitMov1:
 
 ClimbAdderLow:
 	.db $0e, $04, $fc, $f2
-ClimbAdderHigh:
-	.db $00, $00, $ff, $ff
 
 ClimbingSub:
 		lda Player_YMF_Low
@@ -6139,9 +6145,6 @@ MaxRightXSpdData:
 
 FrictionData:
 	.db $e4, $98, $d0
-
-Climb_Y_SpeedData:
-	.db $00, $ff, $01
 
 Climb_Y_MForceData:
 	.db $00, $20, $ff
@@ -7437,32 +7440,50 @@ RunHSubs:
 ; $02 - used to store vertical high nybble offset from block buffer routine
 ; $06 - used to store low byte of block buffer address
 
+CoinWrapChk:
+		sta temp										; save A in temp
+		lda Player_Pos_ForScroll						; SM get Player_Pos_ForScroll
+		cmp #$02										; SM check if at a certain point
+		php												; save flag for later
+		lda #$05										; load default value to add
+		plp												; get flag back
+		bcs NoWrap										; branch if carry set
+
+		lda #$07										; SM otherwise change value to 7
+
+NoWrap:
+		ora temp										; add to value in temp
+		sta Misc_X_Position,y							; store as horizontal coordinate of misc object
+		rts												; and leave
+
 CoinBlock:
 		jsr FindEmptyMiscSlot							; set offset for empty or last misc object buffer slot
 		
 		lda Block_PageLoc,x								; get page location of block object
 		sta Misc_PageLoc,y								; store as page location of misc object
-		
+
 		lda Block_X_Position,x							; get horizontal coordinate of block object
-		ora #$05										; add 5 pixels
-		sta Misc_X_Position,y							; store as horizontal coordinate of misc object
-		
+		jsr CoinWrapChk									; SM check for wraparounds and set horizontal coordinate
+
 		lda Block_Y_Position,x							; get vertical coordinate of block object
+		cmp #$22										; SM check if coin block is above a certain point
+		bcc DontSubtract								; SM if so, branch to not subtract
+
 		sbc #$10										; subtract 16 pixels
+
+DontSubtract:
 		sta Misc_Y_Position,y							; store as vertical coordinate of misc object
-		
-		bcs JCoinC										; jump to rest of code as applies to this misc object [technically unconditional]
+		jmp JCoinC										; jump to rest of code as applies to this misc object
 
 SetupJumpCoin:
 		jsr FindEmptyMiscSlot							; set offset for empty or last misc object buffer slot
 	
 		lda Block_PageLoc2,x							; get page location saved earlier
 		sta Misc_PageLoc,y								; and save as page location for misc object
-	
+
 		lda $06											; get low byte of block buffer offset
 		jsr MathASL4									; multiply by 16 to use lower nybble
-		ora #$05										; add five pixels
-		sta Misc_X_Position,y							; save as horizontal coordinate for misc object
+		jsr CoinWrapChk									; SM check for wraparounds and set horizontal coordinate
 	
 		lda $02											; get vertical high nybble offset from earlier
 		adc #$20										; add 32 pixels for the status bar
@@ -8011,14 +8032,43 @@ BrickShatter:
 		lda #Sfx_BrickShatter
 		sta Block_RepFlag,x								; set flag for block object to immediately replace metatile
 		sta NoiseSoundQueue								; load brick shatter sound
-	
-		jsr SpawnBrickChunks							; create brick chunk objects
-	
-		lda #Sfx_Bump
+		asl												; shift left to get %00000010 = Sfx_Bump
 		sta Square1SoundQueue							; play bump sound
-	
+
+SpawnBrickChunks:										; SM this is inline now
+		lda Player_OffscreenBits						; SM load player offscreen bits
+		and #$08										; SM logical AND against leftmost screen bit
+		clc												; SM
+		adc Block_X_Position,x							; SM add horizontal coordinate of block object
+		sta Block_Orig_XPos,x							; and set as original horizontal coordinate here
+		
+		lda #$f0
+		sta Block_X_Speed,x								; set horizontal speed for brick chunk objects
+		sta Block_X_Speed+2,x
+
+		lda #$fa
+		sta Block_Y_Speed,x								; set vertical speed for one
+
+		lda #$fc
+		sta Block_Y_Speed+2,x							; set lower vertical speed for the other
+
 		lda #$00
-		sta Player_Y_Speed								; init player's vertical speed
+		sta Block_Y_MoveForce,x							; init fractional movement force for both
+		sta Block_Y_MoveForce+2,x
+
+		lda Block_PageLoc,x
+		sta Block_PageLoc+2,x							; copy page location
+
+		lda Block_X_Position,x
+		sta Block_X_Position+2,x						; copy horizontal coordinate
+
+		lda Block_Y_Position,x
+		clc												; add 8 pixels to vertical coordinate
+		adc #$08										; and save as vertical coordinate for one of them
+		sta Block_Y_Position+2,x
+	
+		lda #$00										; inline sub complete
+		sta Player_Y_Speed								; now init player's vertical speed
 	
 		lda #$05
 		sta DigitModifier+5								; set digit modifier to give player 50 points
@@ -8056,38 +8106,6 @@ CheckTopOfBlock:
 
 TopEx:
 		rts												; leave!
-
-; --------------------------------
-
-SpawnBrickChunks:
-		lda Block_X_Position,x							; set horizontal coordinate of block object
-		sta Block_Orig_XPos,x							; as original horizontal coordinate here
-		
-		lda #$f0
-		sta Block_X_Speed,x								; set horizontal speed for brick chunk objects
-		sta Block_X_Speed+2,x
-
-		lda #$fa
-		sta Block_Y_Speed,x								; set vertical speed for one
-
-		lda #$fc
-		sta Block_Y_Speed+2,x							; set lower vertical speed for the other
-
-		lda #$00
-		sta Block_Y_MoveForce,x							; init fractional movement force for both
-		sta Block_Y_MoveForce+2,x
-
-		lda Block_PageLoc,x
-		sta Block_PageLoc+2,x							; copy page location
-
-		lda Block_X_Position,x
-		sta Block_X_Position+2,x						; copy horizontal coordinate
-
-		lda Block_Y_Position,x
-		clc												; add 8 pixels to vertical coordinate
-		adc #$08										; and save as vertical coordinate for one of them
-		sta Block_Y_Position+2,x
-		rts
 
 ; -------------------------------------------------------------------------------------
 
@@ -9198,10 +9216,7 @@ DifLoop:
 		lda PRDiffAdjustData,y							; get three values and save them
 		sta $01,x										; to $01-$03
 
-		iny
-		iny												; increment Y four bytes for each value
-		iny
-		iny
+		jsr MathINY4									; increment Y four bytes for each value
 		dex												; decrement X for each one
 		bpl DifLoop										; loop until all three are written
 
@@ -9496,9 +9511,6 @@ FlmEx:
 
 FlameYPosData:
 	.db $90, $80, $70, $90
-
-FlameYMFAdderData:
-	.db $ff, $01
 
 InitBowserFlame:
 		lda FrenzyEnemyTimer							; if timer not expired yet, branch to leave
@@ -11870,10 +11882,7 @@ DrawFlameLoop:
 		adc #$08
 		sta Enemy_Rel_XPos								; then add eight to it and store
 
-		iny
-		iny
-		iny
-		iny												; increment Y four times to move onto the next OAM
+		jsr MathINY4									; increment Y four times to move onto the next OAM
 		inx												; move onto the next OAM, and branch if three
 		cpx #$03										; have not yet been done
 		bcc DrawFlameLoop
@@ -12082,10 +12091,7 @@ DSFLoop:
 		adc StarFlagXPosAdder,x							; add X coordinate adder data
 		sta Sprite_X_Position,y							; store as X coordinate
 
-		iny
-		iny												; increment OAM data offset four bytes
-		iny												; for next sprite
-		iny
+		jsr MathINY4									; increment OAM data offset four bytes for next sprite
 		dex												; move onto next sprite
 		bpl DSFLoop										; do this until all sprites are done
 
@@ -13400,9 +13406,25 @@ SetupFloateyNumber:
 		lda Enemy_Y_Position,x
 		sta FloateyNum_Y_Pos,x							; set vertical coordinate
 		
+		lda $00											; PlayerEnemyDiff clobbers $00, so back it up
+		pha
+		
 		lda Enemy_Rel_XPos
-		sta FloateyNum_X_Pos,x							; set horizontal coordinate and leave
+		cmp #$f0										; SM if less than offscreen bounds
+		bcc StoreRelativePosition						; SM then branch
 
+		jsr PlayerEnemyDiff								; get horizontal difference between player and enemy object
+		php												; save negative flag
+		lda #$ef										; load default value (right edge)
+		plp												; restore negative flag
+		bpl StoreRelativePosition						; branch if not set (i.e. enemy to the right of player)
+		
+		lda #$00										; otherwise use 0 (left edge)
+
+StoreRelativePosition:
+		sta FloateyNum_X_Pos,x							; set horizontal coordinate and leave
+		pla
+		sta $00											; restore $00
 ExSFN:
 		rts
 
@@ -13802,9 +13824,6 @@ NoSideC:
 		rts
 
 ; -------------------------------------------------------------------------------------
-
-PlayerPosSPlatData:
-	.db $80, $00
 
 PositionPlayerOnS_Plat:
 		tay												; use bounding box counter saved in collision flag
@@ -14431,8 +14450,8 @@ HandlePipeEntry:
 		lda #Sfx_PipeDown_Injury
 		sta Square1SoundQueue							; load pipedown/injury sound
 
-		lda #%00100000
-		sta Player_SprAttrib							; set background priority bit in player's attributes
+		asl												; shift left to set background priority bit
+		sta Player_SprAttrib							; save player's attributes
 
 		lda WarpZoneControl								; check warp zone control
 		beq ExPipeE										; branch to leave if none found
@@ -14464,7 +14483,7 @@ GetWNum:
 		lda #Silence
 		sta EventMusicQueue								; silence music
 
-		lda #$00
+		asl												; shift left to get 0
 		sta EntrancePage								; initialize starting page number
 		sta AreaNumber									; initialize area number used for area address offset
 		sta LevelNumber									; initialize level number used for world display
@@ -14661,6 +14680,7 @@ KEAB:
 GiveOEPoints:
 		lda #$01										; award 100 points for hitting block beneath enemy
 		jsr SetupFloateyNumber
+		lda Enemy_ID,x									; load enemy ID before proceeding (demotion fix)
 
 ChkToStunEnemies:
 		cmp #$09										; perform many comparisons on enemy object identifier
@@ -15485,10 +15505,7 @@ VineTL:
 		lda #$e1										; set tile number for sprite
 		sta Sprite_Tilenumber,y
 
-		iny												; move offset to next sprite data
-		iny
-		iny
-		iny
+		jsr MathINY4									; move offset to next sprite
 		dex												; move onto next sprite
 		bpl VineTL										; loop until all sprites are done
 
@@ -15513,10 +15530,7 @@ ChkFTop:
 		sta Sprite_Y_Position,y							; otherwise move sprite offscreen
 
 NextVSp:
-		iny												; move offset to next OAM data
-		iny
-		iny
-		iny
+		jsr MathINY4									; move offset to next sprite
 		inx												; move onto next sprite
 		cpx #$06										; do this until all sprites are checked
 		bne ChkFTop
@@ -15533,10 +15547,7 @@ StkLp:
 		clc
 		adc #$08										; add eight pixels
 
-		iny
-		iny												; move offset four bytes forward
-		iny
-		iny
+		jsr MathINY4									; move offset four bytes forward
 		dex												; do another sprite
 		bne StkLp										; do this until all sprites are done
 
@@ -15545,20 +15556,21 @@ StkLp:
 
 ; -------------------------------------------------------------------------------------
 
+DefaultYOnscreenOfs:									; this uses the next 3 bytes
 FirstSprXPos:
-	.db $04, $00, $04, $00
+	.db $04												; next 3 bytes are shared
 
 FirstSprYPos:
 	.db $00, $04, $00, $04
 
 SecondSprXPos:
-	.db $00, $08, $00, $08
+	.db $00												; next 3 bytes are shared
 
 SecondSprYPos:
 	.db $08, $00, $08, $00
 
 FirstSprTilenum:
-	.db $80, $82, $81, $83
+	.db $80, $82										; next 2 bytes are shared
 
 SecondSprTilenum:
 	.db $81, $83, $80, $82
@@ -15798,10 +15810,7 @@ SChkLoop:
 		sta Sprite_Y_Position,y
 
 NotOffscreen:
-		iny												; increment Y 4 times
-		iny
-		iny
-		iny
+		jsr MathINY4									; increment Y 4 times
 		dex												; decrement X
 		bne SChkLoop									; branch to loop if > 0
 
@@ -16656,6 +16665,9 @@ AllRowC:
 		bne ExEGHandler
 
 		jmp EraseEnemyObject							; what it says
+		
+ExEGHandler:
+		rts
 
 DrawEnemyObjRow:
 		lda EnemyGraphicsTable,x						; load two tiles of enemy graphics
@@ -16665,7 +16677,80 @@ DrawEnemyObjRow:
 
 DrawOneSpriteRow:
 		sta $01
-		jmp DrawSpriteObject							; draw them
+
+; -------------------------------------------------------------------------------------
+; $00-$01 - tile numbers
+; $02 - Y coordinate
+; $03 - flip control
+; $04 - sprite attributes
+; $05 - X coordinate
+
+DrawSpriteObject:										; this is inline now
+		lda $03											; get saved flip control bits
+		lsr
+		lsr												; move d1 into carry
+	
+		lda $00
+		bcc NoHFlip										; if d1 not set, branch
+	
+		sta Sprite_Tilenumber+4,y						; store first tile into second sprite
+	
+		lda $01											; and second into first sprite
+		sta Sprite_Tilenumber,y
+	
+		lda #$40										; activate horizontal flip OAM attribute
+		bne SetHFAt										; and unconditionally branch
+
+NoHFlip:
+		sta Sprite_Tilenumber,y							; store first tile into first sprite
+	
+		lda $01											; and second into second sprite
+		sta Sprite_Tilenumber+4,y
+
+		lda #$00										; clear bit for horizontal flip
+
+SetHFAt:
+		ora $04											; add other OAM attributes if necessary
+		sta Sprite_Attributes,y							; store sprite attributes
+		sta Sprite_Attributes+4,y
+		
+		lda Sprite_Tilenumber,y							; load left sprite tile
+		cmp #$fc										; blank tile?
+		beq SkipLeftTile								; if so, skip setting coordinates for this sprite
+
+		lda $02
+		sta Sprite_Y_Position,y							; first sprite, y coordinate
+
+		lda $05
+		sta Sprite_X_Position,y							; first sprite, x coordinate
+
+SkipLeftTile:
+		lda Sprite_Tilenumber+4,y						; load right sprite tile
+		cmp #$fc										; blank tile?
+		beq SkipRightTile								; if so, skip setting coordinates for this sprite
+
+		lda $02
+		sta Sprite_Y_Position+4,y						; second sprite, y coordinate
+
+		lda $05
+		clc												; add 8 pixels and store another to
+		adc #$08										; put them side by side
+		sta Sprite_X_Position+4,y						; second sprite, x coordinate
+
+SkipRightTile:
+		lda $02											; add eight pixels to the next y
+		clc												; coordinate
+		adc #$08
+		sta $02
+
+		tya												; add eight to the offset in Y to
+		clc												; move to the next two sprites
+		adc #$08
+		tay
+
+		inx												; increment offset to return it to the
+		inx												; routine that called this subroutine
+		rts
 
 MoveESprRowOffscreen:
 		clc												; add A to enemy object OAM data offset
@@ -16680,8 +16765,6 @@ MoveESprColOffscreen:
 		tay												; use as offset
 		jsr MoveColOffscreen							; move first and second row sprites in column offscreen
 		sta Sprite_Data+16,y							; move third row sprite in column offscreen
-
-ExEGHandler:
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -17040,10 +17123,7 @@ SOfsLoop:
 
 SkipSOfs:
 		asl temp										; shift current bits to the left
-		iny												; increment Y 4 times
-		iny
-		iny
-		iny
+		jsr MathINY4									; increment Y 4 times
 		dex												; decrement X
 		bne SOfsLoop									; branch to loop if > 0
 		
@@ -17162,10 +17242,7 @@ CntPl:
 		lsr
 		bcs SwimKT										; if player facing to the right, use current offset
 
-		iny
-		iny												; otherwise move to next OAM data
-		iny
-		iny
+		jsr MathINY4									; otherwise move to next OAM data
 
 SwimKT:
 		lda PlayerSize									; check player's size
@@ -17711,9 +17788,6 @@ XOffscreenBitsData:
 	.db $7f, $3f, $1f, $0f, $07, $03, $01, $00
 	.db $80, $c0, $e0, $f0, $f8, $fc, $fe, $ff
 
-DefaultXOnscreenOfs:
-	.db $07, $0f, $07
-
 GetXOffscreenBits:
 		stx $04											; save position in buffer to here
 
@@ -17755,17 +17829,13 @@ ExXOfsBS:
 		rts
 
 ; --------------------------------
+DefaultXOnscreenOfs:
+	.db $07												; next 2 bytes are shared
 
 YOffscreenBitsData:
 	.db $0f, $07, $03, $01
 	.db $00, $08, $0c, $0e
 	.db $00
-
-DefaultYOnscreenOfs:
-	.db $04, $00, $04
-
-HighPosUnitData:
-	.db $00, $ff
 
 GetYOffscreenBits:
 		stx $04											; save position in buffer to here
@@ -17831,80 +17901,6 @@ SetOscrO:
 
 ExDivPD:
 		rts												; leave
-
-; -------------------------------------------------------------------------------------
-; $00-$01 - tile numbers
-; $02 - Y coordinate
-; $03 - flip control
-; $04 - sprite attributes
-; $05 - X coordinate
-
-DrawSpriteObject:
-		lda $03											; get saved flip control bits
-		lsr
-		lsr												; move d1 into carry
-	
-		lda $00
-		bcc NoHFlip										; if d1 not set, branch
-	
-		sta Sprite_Tilenumber+4,y						; store first tile into second sprite
-	
-		lda $01											; and second into first sprite
-		sta Sprite_Tilenumber,y
-	
-		lda #$40										; activate horizontal flip OAM attribute
-		bne SetHFAt										; and unconditionally branch
-
-NoHFlip:
-		sta Sprite_Tilenumber,y							; store first tile into first sprite
-	
-		lda $01											; and second into second sprite
-		sta Sprite_Tilenumber+4,y
-
-		lda #$00										; clear bit for horizontal flip
-
-SetHFAt:
-		ora $04											; add other OAM attributes if necessary
-		sta Sprite_Attributes,y							; store sprite attributes
-		sta Sprite_Attributes+4,y
-		
-		lda Sprite_Tilenumber,y							; load left sprite tile
-		cmp #$fc										; blank tile?
-		beq SkipLeftTile								; if so, skip setting coordinates for this sprite
-
-		lda $02
-		sta Sprite_Y_Position,y							; first sprite, y coordinate
-
-		lda $05
-		sta Sprite_X_Position,y							; first sprite, x coordinate
-
-SkipLeftTile:
-		lda Sprite_Tilenumber+4,y						; load right sprite tile
-		cmp #$fc										; blank tile?
-		beq SkipRightTile								; if so, skip setting coordinates for this sprite
-
-		lda $02
-		sta Sprite_Y_Position+4,y						; second sprite, y coordinate
-
-		lda $05
-		clc												; add 8 pixels and store another to
-		adc #$08										; put them side by side
-		sta Sprite_X_Position+4,y						; second sprite, x coordinate
-
-SkipRightTile:
-		lda $02											; add eight pixels to the next y
-		clc												; coordinate
-		adc #$08
-		sta $02
-
-		tya												; add eight to the offset in Y to
-		clc												; move to the next two sprites
-		adc #$08
-		tay
-
-		inx												; increment offset to return it to the
-		inx												; routine that called this subroutine
-		rts
 
 ; -------------------------------------------------------------------------------------
 
