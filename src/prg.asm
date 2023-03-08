@@ -5409,8 +5409,9 @@ EntrMode2:
 		lda JoypadOverride								; if controller override bits set here,
 		bne VineEntr									; branch to enter with vine
 		
-		lda #$ff										; otherwise, set value here then execute sub
-		jsr MovePlayerYAxis								; to move player upwards (note $ff = -1)
+		lda #$ff										; otherwise...
+		sta TimerControl								; temporarily set timer control to halt gameplay
+		jsr MovePlayerYAxis								; then execute sub to move player upwards (note $ff = -1)
 		
 		lda Player_Y_Position							; check to see if player is at a specific coordinate
 		cmp #$91										; if player risen to a certain point (this requires pipes
@@ -5456,6 +5457,7 @@ PlayerRdy:
 		sta AltEntranceControl							; init mode of entry
 		sta DisableCollisionDet							; init collision detection disable flag
 		sta JoypadOverride								; nullify controller override bits
+		sta TimerControl								; clear timer control to resume gameplay
 		
 		lda #A_Button | #B_Button						; store A and B button presses in current A_B		 
 		sta A_B_Buttons									; and pretend they're pressed right now.
