@@ -47,6 +47,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
 + [x] Coin Heavens (cloud levels accessed via vines) now have the cloud backdrop.
 + [x] Dying while autoclimbing vines will no longer cause a vine to grow when respawing the player.
++ [x] Grabbing a partially offscreen vine will no longer cause Mario to teleport. The vertical threshold for autoclimbing has also been adjusted.
 + [x] The underwater section of 8-4 now uses the grey colour scheme for better continuity within the level.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)
@@ -59,7 +60,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The scroll handler has been overhauled and is now more robust. (e.g. getting stuck in a wall updates the scroll properly)
 + [x] Firebar blocks will no longer cause head injuries as big Mario.
 + [x] Firebar collision detection now checks the relative player position instead of querying the OAM buffer. (yes, really)
-+ [x] Instances of recalculating the player's relative position have been replaced with variable reads when appropriate. (fixes vine wraparound glitch)
++ [x] Instances of recalculating the player's relative position have been replaced with variable reads when appropriate.
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] The shattered brick sprites will now appear even when the brick block is partially offscreen.

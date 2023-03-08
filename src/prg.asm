@@ -6115,7 +6115,7 @@ CSetFDir:
 		adc ClimbAdderHigh,x							; from the player's page location
 		sta Player_PageLoc
 		
-		lda Left_Right_Buttons							; get left/right controller bits again
+		lda PlayerFacingDir								; get left/right controller bits again
 		eor #%00000011									; invert them and store them while player
 		sta PlayerFacingDir								; is on vine to face player in opposite direction
 
@@ -13132,10 +13132,10 @@ KickedShellPtsData:
 	.db $0a, $06, $04
 
 HandlePECollisions:
-		lda Enemy_CollisionBits,x						; check enemy collision bits for d0 set
-		and #%00000001									; or for being offscreen at all
-		ora EnemyOffscrBitsMasked,x
-		bne ExPEC										; branch to leave if either is true
+;		lda Enemy_CollisionBits,x						; check enemy collision bits for d0 set (why?)
+;		and #%00000001									
+		lda EnemyOffscrBitsMasked,x						; is the enemy offscreen at all?
+		bne ExPEC										; branch to leave if so
 
 		lda #$01
 		ora Enemy_CollisionBits,x						; otherwise set d0 now
@@ -14336,7 +14336,7 @@ VineCollision:
 		bne PutPlayerOnVine
 
 		lda Player_Y_Position							; check player's vertical coordinate
-		cmp #$20										; for being in upper half of screen
+		cmp #$80										; for being in upper half of screen
 		bcs PutPlayerOnVine								; branch if not that far up
 
 		lda #$01
@@ -14350,12 +14350,9 @@ PutPlayerOnVine:
 		sta Player_X_Speed								; and fractional horizontal movement force
 		sta Player_X_MoveForce
 
-		lda Player_Rel_XPos
+		lda Player_Rel_XPos								; get player's relative horizontal coordinate
 		cmp #$10
-		bcs SetVXPl										; if 16 or more pixels difference, do not alter facing direction
-
-		lda #$02
-		sta PlayerFacingDir								; otherwise force player to face left
+		bcc ExPVne										; if less than 16 pixels, branch to leave
 
 SetVXPl:
 		ldy PlayerFacingDir								; get current facing direction, use as offset
