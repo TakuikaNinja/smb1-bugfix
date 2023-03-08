@@ -52,6 +52,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)
 + [x] Stomped Goombas can no longer be defeated again using a star.
++ [x] Mario can no longer stay inside enemies after the injury timer has expired.
 - [x] When entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
 + [x] When entering a vertical warp-pipe, Mario will now always stand still like in later entries.
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
