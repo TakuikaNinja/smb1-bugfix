@@ -59,7 +59,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The scroll handler has been overhauled and is now more robust. (e.g. getting stuck in a wall updates the scroll properly)
 + [x] Firebar blocks will no longer cause head injuries as big Mario.
 + [x] Firebar collision detection now checks the relative player position instead of querying the OAM buffer. (yes, really)
-+ [x] Instances of recalculating the player's relative position have been replaced with variable reads instead. (fixes vine wraparound glitch)
++ [x] Instances of recalculating the player's relative position have been replaced with variable reads when appropriate. (fixes vine wraparound glitch)
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] The shattered brick sprites will now appear even when the brick block is partially offscreen.

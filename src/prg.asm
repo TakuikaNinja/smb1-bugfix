@@ -14348,9 +14348,6 @@ PutPlayerOnVine:
 		sta Player_X_MoveForce
 
 		lda Player_Rel_XPos
-;		lda Player_X_Position							; get player's horizontal coordinate
-;		sec
-;		sbc ScreenLeft_X_Pos							; subtract from left side horizontal coordinate
 		cmp #$10
 		bcs SetVXPl										; if 16 or more pixels difference, do not alter facing direction
 
@@ -15115,13 +15112,11 @@ SmallPlatformBoundBox:
 		ldy #$04										; store another bitmask here for now
 
 GetMaskedOffScrBits:
-		lda Enemy_Rel_XPos,x
-;		lda Enemy_X_Position,x							; get enemy object position relative
-;		sec												; to the left side of the screen
-;		sbc ScreenLeft_X_Pos
+		lda Enemy_X_Position,x							; get enemy object position relative
+		sec												; to the left side of the screen
+		sbc ScreenLeft_X_Pos
 		sta $01											; store here
 
-		sec
 		lda Enemy_PageLoc,x								; subtract borrow from current page location
 		sbc ScreenLeft_PageLoc							; of left side
 		bmi CMBits										; if enemy object is beyond left edge, branch
