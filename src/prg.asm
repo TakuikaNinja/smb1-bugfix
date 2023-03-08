@@ -5593,7 +5593,7 @@ HoleDie:
 		ldy DeathMusicLoaded							; check value here
 		bne HoleBottom									; if already set, branch to next part
 
-		dey												; otherwise...
+		dey												; otherwise decrement to get $ff
 		sty TimerControl								; set master timer control flag to halt timers (double death fix)
 
 		ldy #DeathMusic
@@ -13279,6 +13279,7 @@ ExInjColRoutines:
 
 KillPlayer:
 		stx Player_X_Speed								; halt player's horizontal movement by initializing speed
+		stx JoypadOverride								; and clear joypad override (prevents "vine of the dead" bug)
 
 		inx
 		stx EventMusicQueue								; set event music queue to death music
@@ -14333,7 +14334,7 @@ VineCollision:
 		bne PutPlayerOnVine
 
 		lda Player_Y_Position							; check player's vertical coordinate
-		cmp #$80										; for being in upper half of screen (prevents wraparound glitch)
+		cmp #$20										; for being in upper half of screen
 		bcs PutPlayerOnVine								; branch if not that far up
 
 		lda #$01
