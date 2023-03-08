@@ -111,12 +111,12 @@ VRAM_Buffer_Offset:
 	.db <VRAM_Buffer1_Offset, <VRAM_Buffer2_Offset
 
 NonMaskableInterrupt:
+		php												; backup flags
 		pha												; backup A
 		lda NMIInProgressFlag							; is the NMI handler already running?
 		beq ProceedWithNMI								; if not, branch to proceed with NMI handler
 		
-		pla												; otherwise just restore A
-		rti												; and leave
+		jmp NoNMI										; otherwise jump to end of NMI handler
 
 ProceedWithNMI:
 		inc NMIInProgressFlag							; set flag for NMI in progress
@@ -315,8 +315,10 @@ HUDSkip:
 		tax												; restore X
 		
 		dec NMIInProgressFlag							; clear flag for NMI in progress
-		
+
+NoNMI:
 		pla												; restore A
+		plp												; restore flags
 		rti												; we are done until the next frame!
 ; -------------------------------------------------------------------------------------
 
