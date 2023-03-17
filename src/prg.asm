@@ -13101,14 +13101,14 @@ PlayerEnemyCollision:
 		and #%00100000									; if enemy state has d5 set, branch to leave
 		bne NoPECol
 
-		lda Enemy_CollisionBits,x
-		and #%11111110									; otherwise, clear d0 of current enemy object's
-		sta Enemy_CollisionBits,x						; collision bit first (fix collision while inside enemy)
-
 		jsr GetEnemyBoundBoxOfs							; get bounding box offset for current enemy object
 		jsr PlayerCollisionCore							; do collision detection on player vs. enemy
 		ldx ObjectOffset								; get enemy object buffer offset
 		bcs CheckForPUpCollision						; if collision, branch past this part here
+
+		lda Enemy_CollisionBits,x
+		and #%11111110									; otherwise, clear d0 of current enemy object's
+		sta Enemy_CollisionBits,x						; collision bit
 
 NoPECol:
 		rts
@@ -13130,10 +13130,10 @@ KickedShellPtsData:
 	.db $0a, $06, $04
 
 HandlePECollisions:
-		lda Enemy_CollisionBits,x
+		lda Enemy_CollisionBits,x						; check enemy collision bits for d0 set
 		and #%00000001
-		ora EnemyOffscrBitsMasked,x						; is the enemy offscreen at all?
-		bne ExPEC										; branch to leave if so
+		ora EnemyOffscrBitsMasked,x						; or for being offscreen at all
+		bne ExPEC										; branch to leave if either is true
 
 		lda #$01
 		ora Enemy_CollisionBits,x						; otherwise set d0 now
@@ -13274,8 +13274,11 @@ SetPRout:
 		sty ScrollAmount								; initialize scroll speed
 
 ExInjColRoutines:
-		ldx ObjectOffset								; get enemy offset and leave
-		rts
+		ldx ObjectOffset								; get enemy offset
+		lda Enemy_CollisionBits,x						; clear d0 of collision bits
+		and #%11111110									; for current enemy
+		sta Enemy_CollisionBits,x						; to fix collision handling while inside it
+		rts												; leave
 
 KillPlayer:
 		stx Player_X_Speed								; halt player's horizontal movement by initializing speed
@@ -16703,30 +16706,19 @@ SetHFAt:
 		sta Sprite_Attributes,y							; store sprite attributes
 		sta Sprite_Attributes+4,y
 		
-		lda Sprite_Tilenumber,y							; load left sprite tile
-		cmp #$fc										; blank tile?
-		beq SkipLeftTile								; if so, skip setting coordinates for this sprite
 
 		lda $02
-		sta Sprite_Y_Position,y							; first sprite, y coordinate
+		sta Sprite_Y_Position,y							; y coordinates
+		sta Sprite_Y_Position+4,y
 
 		lda $05
 		sta Sprite_X_Position,y							; first sprite, x coordinate
-
-SkipLeftTile:
-		lda Sprite_Tilenumber+4,y						; load right sprite tile
-		cmp #$fc										; blank tile?
-		beq SkipRightTile								; if so, skip setting coordinates for this sprite
-
-		lda $02
-		sta Sprite_Y_Position+4,y						; second sprite, y coordinate
 
 		lda $05
 		clc												; add 8 pixels and store another to
 		adc #$08										; put them side by side
 		sta Sprite_X_Position+4,y						; second sprite, x coordinate
 
-SkipRightTile:
 		lda $02											; add eight pixels to the next y
 		clc												; coordinate
 		adc #$08
