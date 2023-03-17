@@ -13101,14 +13101,14 @@ PlayerEnemyCollision:
 		and #%00100000									; if enemy state has d5 set, branch to leave
 		bne NoPECol
 
+		lda Enemy_CollisionBits,x
+		and #%11111110									; otherwise, clear d0 of current enemy object's
+		sta Enemy_CollisionBits,x						; collision bit first (fix collision while inside enemy)
+
 		jsr GetEnemyBoundBoxOfs							; get bounding box offset for current enemy object
 		jsr PlayerCollisionCore							; do collision detection on player vs. enemy
 		ldx ObjectOffset								; get enemy object buffer offset
 		bcs CheckForPUpCollision						; if collision, branch past this part here
-
-		lda Enemy_CollisionBits,x
-		and #%11111110									; otherwise, clear d0 of current enemy object's
-		sta Enemy_CollisionBits,x						; collision bit
 
 NoPECol:
 		rts
@@ -13129,8 +13129,10 @@ EColl:
 KickedShellPtsData:
 	.db $0a, $06, $04
 
-HandlePECollisions:							
-		lda EnemyOffscrBitsMasked,x						; is the enemy offscreen at all?
+HandlePECollisions:
+		lda Enemy_CollisionBits,x
+		and #%00000001
+		ora EnemyOffscrBitsMasked,x						; is the enemy offscreen at all?
 		bne ExPEC										; branch to leave if so
 
 		lda #$01
@@ -13155,14 +13157,9 @@ HandlePECollisions:
 		lda AreaType									; branch if water type level
 		beq InjurePlayer
 
-		lda Enemy_State,x								; branch if d7 of enemy state was not set
-		bpl NotShellState
-
-		lda Enemy_CollisionBits,x						; check enemy collision bits for d0 set
-		and #%00000001
-		bne ExPEC										; and leave if so (prevents extra bounce)
-
-NotShellState:
+		lda Enemy_State,x								; branch if d7 of enemy state was set
+		bmi ChkForPlayerInjury
+		
 		lda Enemy_State,x								; mask out all but 3 LSB of enemy state
 		and #%00000111
 		cmp #$02										; branch if enemy is in normal or falling state
