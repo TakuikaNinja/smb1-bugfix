@@ -854,7 +854,6 @@ PlayerEndWorld:
 		cpy #World8										; if on world 8, player is done with game,
 		bcs EndChkBButton								; thus branch to read controller
 
-		lda #$00
 		sta AreaNumber									; otherwise initialize area number used as offset
 		sta LevelNumber									; and level number control to start at area 1
 		sta OperMode_Task								; initialize secondary mode of operation
@@ -879,13 +878,10 @@ EndChkBButton:
 		lda #$01										; otherwise set world selection flag
 		sta WorldSelectEnableFlag
 
-		lda #$00										; remove onscreen player's lives
-		sta NumberofLives
+		lsr												; shift right to clear A
+		sta NumberofLives								; remove onscreen player's lives
 
 		jmp TerminateGame								; do sub to continue other player or end game
-
-;EndExitTwo:
-;		rts												; leave
 
 ; -------------------------------------------------------------------------------------
 
@@ -3082,7 +3078,6 @@ PlayerLoseLife:
 		dec NumberofLives								; take one life from player
 		bne StillInGame									; if player still has lives, branch
 		
-;		lda #$00
 		sta OperMode_Task								; initialize mode task,
 
 		lda #GameOverModeValue							; switch to game over mode
@@ -10286,6 +10281,7 @@ EraseEnemyObject:
 
 		plp												; get zero flag from earlier
 		beq SkipFloatey									; and branch ahead if it was set
+		
 		sta FloateyNum_Control,x						; otherwise clear floatey number control
 
 SkipFloatey:
@@ -13898,8 +13894,8 @@ PlayerBGUpperExtent:
 	.db $20, $10
 
 PlayerBGCollision:
-		lda #$00
-		sta CollisionAdder
+		lda #$00										; clear collision adder
+		sta CollisionAdder								; used for scroll adjustment
 		lda DisableCollisionDet							; if collision detection disabled flag set,
 		bne ExPBGCol									; branch to leave
 
