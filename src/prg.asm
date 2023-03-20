@@ -252,7 +252,7 @@ LagFrameSpr0:
 		beq HUDSkip
 
 Sprite0Clr:
-		bit PPU_STATUS									; wait for sprite 0 flag to clear, which will
+		bit PPU_STATUS									; wait for sprite #0 flag to clear, which will
 		bvs Sprite0Clr									; not happen until vblank has ended
 		bcs Sprite0Hit									; if carry set due to lag frame, skip to sprite #0 hit
 
@@ -427,7 +427,7 @@ MoveAllSpritesOffscreen:
 	.db $2c												; [skip 2 bytes]
 
 MoveSpritesOffscreen:
-		ldy #$04										; this routine moves all but sprite 0
+		ldy #$04										; this routine moves all but sprite #0
 		lda #$f8										; off the screen
 
 SprInitLoop:
@@ -548,7 +548,7 @@ RunDemo:
 
 ResetTitle:
 		lda #$00										; reset game modes, disable
-		sta OperMode									; sprite 0 check and disable
+		sta OperMode									; sprite #0 check and disable
 		sta OperMode_Task								; screen output
 		sta Sprite0HitDetectFlag
 		
@@ -3049,7 +3049,7 @@ HalfwayPageNybbles:
 	.db $00, $00
 
 PlayerLoseLife:
-		inc DisableScreenFlag							; disable screen and sprite 0 check
+		inc DisableScreenFlag							; disable screen and sprite #0 check
 		
 		lda #Silence									; silence music
 		sta EventMusicQueue
@@ -3116,7 +3116,7 @@ GameOverMode:
 SetupGameOver:
 		lda #$00										; reset screen routine task control for title screen, game,
 		sta ScreenRoutineTask							; and game over modes
-		sta Sprite0HitDetectFlag						; disable sprite 0 check
+		sta Sprite0HitDetectFlag						; disable sprite #0 check
 		
 		lda #GameOverMusic
 		sta EventMusicQueue								; put game over music in secondary queue
@@ -5683,7 +5683,7 @@ ChgAreaMode:
 		
 		lda #$00
 		sta OperMode_Task								; set secondary mode of operation
-		sta Sprite0HitDetectFlag						; disable sprite 0 check
+		sta Sprite0HitDetectFlag						; disable sprite #0 check
 
 ExitCAPipe:
 		rts												; leave
@@ -5890,7 +5890,7 @@ NextArea:
 		jsr LoadAreaPointer								; get new level pointer
 		
 		inc FetchNewGameTimerFlag						; set flag to load new game timer
-		jsr ChgAreaMode									; do sub to set secondary mode, disable screen and sprite 0
+		jsr ChgAreaMode									; do sub to set secondary mode, disable screen and sprite #0
 		sta HalfwayPage									; reset halfway page to 0 (beginning)
 		
 		lda #Silence
