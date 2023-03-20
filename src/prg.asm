@@ -139,13 +139,15 @@ ProceedWithNMI:
 		and #%01111110									; alter name table address to be $2800
 		sta PPU_CTRL_REG1								; (essentially $2000) but save other bits
 		
-		lda NMISyncFlag
-		bne UpdatePPU
-		jmp LagFrame
+		lda NMISyncFlag									; is the NMI sync flag set?
+		bne UpdatePPU									; if so, branch to update PPU
+
+		jsr InitScroll									; otherwise just init the scroll
+		sec												; set carry
+		jmp LagFrameSpr0								; and jump to sprite #0 hit (lag frame)
 
 UpdatePPU:
-		lda #$00
-		sta NMISyncFlag									; clear NMI sync flag
+		dec NMISyncFlag									; clear NMI sync flag
 		
 		lda Mirror_PPU_CTRL_REG2						; disable OAM and background display by default
 		and #%11100110
@@ -243,17 +245,20 @@ RotPRandomBit:
 		inx												; increment to next byte
 		dey												; decrement for loop
 		bne RotPRandomBit
-		
+		clc												; clear carry before proceeding
+
+LagFrameSpr0:
 		lda Sprite0HitDetectFlag						; check for flag here
-		beq SkipSprite0
+		beq HUDSkip
 
 Sprite0Clr:
 		bit PPU_STATUS									; wait for sprite 0 flag to clear, which will
 		bvs Sprite0Clr									; not happen until vblank has ended
-		
-		lda GamePauseStatus								; if in pause mode, do not bother with sprites at all
-		lsr
-		bcs Sprite0Hit
+		bcs Sprite0Hit									; if carry set due to lag frame, skip to sprite #0 hit
+
+		lda GamePauseStatus								; if in pause mode,
+		lsr												; (put d0 in carry)
+		bcs Sprite0Hit									; do not bother with sprites at all
 		
 		jsr MoveSpritesOffscreen
 		jsr SpriteShuffler
@@ -262,37 +267,14 @@ Sprite0Hit:
 		bit PPU_STATUS									; do sprite #0 hit detection
 		bvc Sprite0Hit
 		
-		ldy #$14										; small delay, to wait until we hit horizontal blank time
+		ldy #$14										; small delay, to wait until we hit hblank time
 
 HBlankDelay:
 		dey
-		bne HBlankDelay
-
-SkipSprite0:
-		lda PPU_STATUS									; reset flip-flop
-		jmp HUDSkip
-
-; NTP - Note to self: take some time to document this
-LagFrame:
-		jsr InitScroll
-		
-		lda Sprite0HitDetectFlag						; check for flag here
-		beq HUDSkip
-		
-		ldx #$5
-
-HUDDelayHi:
-		ldy #$e7
-
-HUDDelayLo:
-		dey
-		bne HUDDelayLo
-
-		dey
-		dex
-		bne HUDDelayHi
+		bne HBlankDelay									; decrement until it hits 0
 
 HUDSkip:
+		lda PPU_STATUS									; reset flip-flop
 		lda HorizontalScroll							; set scroll registers from variables
 		sta PPU_SCROLL_REG
 		
