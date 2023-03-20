@@ -5242,23 +5242,20 @@ ScrollHandler:
 		sta Player_X_Scroll
 		
 NoCollision:
-		lda Player_Pos_ForScroll
-		cmp #$70										; check player's horizontal screen position
-		bcc InitScrlAmt									; if less than 112 pixels to the right, branch
-
-		cmp #$ff										; check if player is at 255 pixels (can occur when riding on platforms)
-		beq InitScrlAmt									; branch to init scroll if so
-		bpl NoSpeedUp									; if player is on left half, branch to use current scroll speed
-
-		ldy #$03										; otherwise force scroll to recenter camera
-		sty Player_X_Scroll
+		lda Player_Pos_ForScroll						; check player's horizontal screen position
+		bmi SpeedUp										; if on right side, branch ahead
 		
-NoSpeedUp:
-		ldy Player_X_Scroll								; load scroll speed
-		dey
-		bmi InitScrlAmt									; if the value was originally zero or negative, branch
+		cmp #$70
+		bcc InitScrlAmt									; if less than 112 pixels to the right, init scroll
 
-		iny												; increment to restore Y
+		sbc #$70										; otherwise subtract threshold (carry already set)
+		adc Player_X_Scroll								; add current scroll amount + carry (always set)
+		lsr												; and shift right once
+		tay												; to use as scroll amount
+	.db $2c												; [skip 2 bytes]
+
+SpeedUp:
+		ldy #$03										; force scroll to recenter camera
 
 ScrollScreen:
 		tya
@@ -13347,7 +13344,7 @@ EnemyStompedPts:
 		
 		jsr InitVStf									; nullify vertical speed, physics-related thing,
 		sta Enemy_X_Speed,x								; and horizontal speed
-		beq SetBounce									; handle bounce physics
+		beq SetBounce									; handle bounce physics [unconditional branch]
 
 ChkForDemoteKoopa:
 		cmp #$09										; branch elsewhere if enemy object < $09
@@ -13377,7 +13374,7 @@ Green:
 		tay												; transfer to Y to use as an index
 		lda DemotedKoopaXSpdData-2,y					; load speed data, adjusted by -2 (possible effective indicies: 0,1,2,3)
 		sta Enemy_X_Speed,x								; set appropriate moving speed based on direction
-		bne SetBounce									; handle bounce physics
+		bne SetBounce									; handle bounce physics [unconditional branch]
 
 RevivalRateData:
 	.db $10, $0b
@@ -17353,7 +17350,13 @@ PIntLoop:
 RenderPlayerSub:
 		sta $07											; store number of rows of sprites to draw
 
-		lda Player_Rel_XPos
+		lda Player_Rel_XPos								; load player's relative horizontal position
+		cmp #$fd										; SM and check if it is beyond a certain point
+		bcc NoSpriteWrap								; SM branch if less than value
+
+		lda #$00										; SM otherwise clamp to 0 to prevent wraparound glitch
+
+NoSpriteWrap:
 		sta Player_Pos_ForScroll						; store player's relative horizontal position
 		sta $05											; store it here also
 

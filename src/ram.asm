@@ -72,7 +72,7 @@ FrenzyEnemyTimer      = $078f
 BowserFireBreathTimer = $0790
 StompTimer            = $0791
 AirBubbleTimer        = $0792
-ScrollIntervalTimer   = $0795
+ScrollIntervalTimer   = $0795	; free timer
 EnemyIntervalTimer    = $0796
 BrickCoinTimer        = $079d
 InjuryTimer           = $079e
@@ -206,18 +206,18 @@ PlayerSize            = $0754
 PlayerStatus          = $0756
 
 OnscreenPlayerInfo    = $075a
-NumberofLives         = $075a	;used by current player
+NumberofLives         = $075a	; used by current player
 HalfwayPage           = $075b
-LevelNumber           = $075c	;the actual dash number
+LevelNumber           = $075c	; the actual dash number
 Hidden1UpFlag         = $075d
 CoinTally             = $075e
 WorldNumber           = $075f
-AreaNumber            = $0760	;internal number used to find areas
+AreaNumber            = $0760	; internal number used to find areas
 
 CoinTallyFor1Ups      = $0748
 
 OffscreenPlayerInfo   = $0761
-OffScr_NumberofLives  = $0761	;used by offscreen player
+OffScr_NumberofLives  = $0761	; used by offscreen player
 OffScr_HalfwayPage    = $0762
 OffScr_LevelNumber    = $0763
 OffScr_Hidden1UpFlag  = $0764
