@@ -13268,7 +13268,7 @@ KillPlayer:
 		sta Player_Y_Speed								; set new vertical speed
 
 		lda #$0b										; set subroutine to run on next frame
-		bne SetKRout									; branch to set player's state and other things
+		bne SetKRout									; branch to set player's state and other things [unconditional]
 
 StompedEnemyPtsData:
 	.db $02, $06, $05, $06
@@ -13414,6 +13414,10 @@ SetBitsMask:
 ClearBitsMask:
 	.db %01111111, %10111111, %11011111, %11101111, %11110111, %11111011, %11111101
 
+ExitECRoutine:
+		ldx ObjectOffset								; get enemy object buffer offset
+		rts												; leave
+
 EnemiesCollision:
 		lda FrameCounter								; check counter for d0 set
 		lsr
@@ -13434,6 +13438,13 @@ EnemiesCollision:
 		
 		cmp #PiranhaPlant								; if piranha plant, branch to leave
 		beq ExitECRoutine
+		
+		cmp #Goomba										; if not goomba, branch ahead
+		bne SkipChecks1
+		
+		lda Enemy_State,x								; if in defeated state,
+		cmp #$02
+		bcs ExitECRoutine								; branch to leave
 
 SkipChecks1:
 		lda EnemyOffscrBitsMasked,x						; if masked offscreen bits nonzero, branch to leave
@@ -13465,6 +13476,13 @@ ECLoop:
 		
 		cmp #PiranhaPlant
 		beq ReadyNextEnemy								; branch if enemy object is piranha plant
+		
+		cmp #Goomba										; if not goomba, branch ahead
+		bne SkipChecks2
+		
+		lda Enemy_State,x								; if in defeated state,
+		cmp #$02
+		bcs ReadyNextEnemy								; branch to leave
 
 SkipChecks2:
 		lda EnemyOffscrBitsMasked,x
@@ -13511,7 +13529,6 @@ ReadyNextEnemy:
 		dex
 		bpl ECLoop										; loop until all enemy slots have been checked
 
-ExitECRoutine:
 		ldx ObjectOffset								; get enemy object buffer offset
 		rts												; leave
 
@@ -13530,8 +13547,7 @@ ProcEnemyCollisions:
 		beq ExitProcessEColl
 
 		lda Enemy_State,y								; check first enemy state for d7 set
-		asl
-		bcc ShellCollisions								; branch if d7 is clear
+		bpl ShellCollisions								; branch if d7 is clear
 
 		lda #$06
 		jsr SetupFloateyNumber							; award 1000 points for killing enemy
