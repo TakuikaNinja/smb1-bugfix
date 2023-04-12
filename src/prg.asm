@@ -46,7 +46,7 @@ WBootCheck:
 		bne ColdBoot
 
 		lda ContinueWorld								; glitch world fix
-		cmp #$08										; check against max world value + 1 (world 9)
+		cmp #World8+1									; check against max world value + 1 (world 9)
 		bcs ColdBoot									; cold boot if greater than or equal
 
 		ldy #WarmBootOffset								; if passed, load warm boot pointer
@@ -563,7 +563,7 @@ ChkContinue:
 		bcc StartWorld1									; if not, don't load continue function's world number
 		
 		lda ContinueWorld								; load previously saved world number for secret
-		cmp #$08										; check against max world value + 1 (world 9)
+		cmp #World8+1									; check against max world value + 1 (world 9)
 		bcs StartWorld1									; invalid world, so start at world 1
 
 		jsr GoContinue									; continue function when pressing A + start
@@ -785,7 +785,7 @@ FinishedMusic:
 VictoryMusicSet:
 		cmp #$06										; < 6?
 		bcc ThankPlayer									; if so branch to print message
-		bcs IncMsgCounter								; otherwise branch ahead [uncondiional branch]
+		bcs IncMsgCounter								; otherwise branch ahead [unconditional branch]
 
 Retainer:
 		plp												; get rid of flags on stack
@@ -1101,7 +1101,7 @@ GetPlayerColors:
 		lda PlayerStatus								; check player status
 		and #$02				 						; we only care if the player is firey, which is in bit 1.
 		ora CurrentPlayer								; add the current player in bit 0.
-		asl					 							; shift to the left twice, to multiply by 4, the amount of colors in the palette...
+		asl					 							; multiply by 4, the amount of colors in the palette...
 		asl
 		tay					 							; ...and we get our table offset to put in the Y register!
 		
@@ -1375,7 +1375,7 @@ LuigiName:
 	.db $15, $1e, $12, $10, $12							; "LUIGI", no address or length
 	
 TopStatusBarLine:
-	.db $20, $43, $05, $fe
+	.db $20, $43, $05, $fe								; <Player>
 	.db $20, $52, $0b, $20, $18, $1b, $15, $0d			; "WORLD TIME"
 	.db $24, $24, $1d, $12, $16, $0e
 	.db $20, $68, $05, $00, $24, $24, $2e, $29			; score trailing digit and coin display
@@ -1393,13 +1393,13 @@ WorldLivesDisplay:
 	.db $ff
 
 TwoPlayerTimeUp:
-	.db $21, $cd, $05, $fe
+	.db $21, $cd, $05, $fe								; <Player>
 OnePlayerTimeUp:
 	.db $22, $0c, $07, $1d, $12, $16, $0e, $24, $1e, $19; "TIME UP"
 	.db $ff
 
 TwoPlayerGameOver:
-	.db $21, $cd, $05, $fe
+	.db $21, $cd, $05, $fe								; <Player>
 OnePlayerGameOver:
 	.db $22, $0b, $09, $10, $0a, $16, $0e, $24			; "GAME OVER"
 	.db $18, $1f, $0e, $1b
@@ -3377,8 +3377,8 @@ ClrMTBuf:
 ;		bcc NormalScene									; if not, render the one of the 3 original backgrounds
 ;
 ;AltScene:
-;		lda BAltSceneDataOffsets-1,y					; otherwise, get the offset for an alternate area background (1 = underground, 2 = castle)
-;		clc
+;		lda BAltSceneDataOffsets-1,y					; otherwise, get the offset for an alternate area background
+;		clc												; (1 = underground, 2 = castle)
 ;		bne AddCurrColumn								; [unconditional branch]
 ;
 ; --WIP--
@@ -4672,7 +4672,7 @@ NextStair:
 Jumpspring:
 		jsr GetLrgObjAttrib
 		jsr FindEmptyEnemySlot							; find empty space in enemy object buffer
-		bcs ExitJumpSpring								; PAL bugfix: Check whether there's a free enemy slot before placing spring. Avoids placing it in the special item slot.
+		bcs ExitJumpSpring								; PAL bugfix: Avoid placing the spring in the special item slot.
 		
 		jsr GetAreaObjXPosition							; get horizontal coordinate for jumpspring
 		sta Enemy_X_Position,x							; and store
@@ -4779,10 +4779,10 @@ Hole_Empty:
 		sbc #$00										; subtract borrow
 		sta Whirlpool_PageLoc,x							; save as page location of whirlpool
 		
-		iny
 		iny												; increment length by 2
-		tya
-		jsr MathASL4									; multiply by 16 to get size of whirlpool (note that whirlpool will always be two blocks bigger than actual size of hole and extend one block beyond each edge)
+		iny												; (whirlpool will always be two blocks bigger than actual size of hole...
+		tya												; and extend one block beyond each edge)
+		jsr MathASL4									; multiply by 16 to get size of whirlpool
 		sta Whirlpool_Length,x							; save size of whirlpool here
 		
 		inx
@@ -5019,8 +5019,7 @@ StoreFore:
 		
 		pla												; pull byte again but do not push it back
 		and #%11000000									; save 2 MSB for game timer setting
-		clc
-		rol												; rotate bits over to LSBs
+		asl												; rotate bits over to LSBs
 		rol
 		rol
 		sta GameTimerSetting							; save value here as game timer setting
@@ -5041,8 +5040,7 @@ StoreFore:
 		
 		pla
 		and #%11000000
-		clc
-		rol												; rotate bits over to LSBs
+		asl												; rotate bits over to LSBs
 		rol
 		rol
 		cmp #%00000011									; if set to 3, store here
@@ -6991,7 +6989,7 @@ BounceJS:
 		lda JumpspringForce
 		sta Player_Y_Speed								; store jumpspring force as player's new vertical speed
 		
-		lda #$40										; PAL bugfix: Define vertical acceleration on springs (was undefined on NTSC)
+		lda #$40										; PAL bugfix: Define vertical acceleration on springs (undefined on NTSC)
 		sta VerticalForce
 		
 		lda #$00
@@ -7570,7 +7568,7 @@ JCoinRun:
 RunJCSubs:
 		jsr RelativeMiscPosition						; get relative coordinates
 		jsr GetMiscOffscreenBits						; get offscreen information
-		jsr GetMiscBoundBox								; get bounding box coordinates (why?)
+;		jsr GetMiscBoundBox								; get bounding box coordinates (why?)
 		jsr JCoinGfxHandler								; draw the coin or floatey number
 
 MiscLoopBack:
@@ -8484,13 +8482,9 @@ ExVMove:
 ; -------------------------------------------------------------------------------------
 
 EnemiesAndLoopsCore:
-		lda Enemy_Flag,x								; check data here for MSB set
-		pha												; save in stack
-
-		asl
-		bcs ChkBowserF									; if MSB set in enemy flag, branch ahead of jumps
-
-		pla												; get from stack
+		lda Enemy_Flag,x								; get enemy flags
+		tay												; save in Y
+		bmi ChkBowserF									; if d7 set, branch ahead
 		beq ChkAreaTsk									; if data zero, branch
 
 		jmp RunEnemyObjectsCore							; otherwise, jump to run enemy subroutines
@@ -8501,10 +8495,10 @@ ChkAreaTsk:
 		cmp #$07										; if at a specific task, jump and leave
 		beq ExitELCore
 
-		bne ProcLoopCommand								; otherwise, jump to process loop command/load enemies [unconditional branch]
+		bne ProcLoopCommand								; otherwise jump to process loop command/load enemies [unconditional branch]
 
 ChkBowserF:
-		pla												; get data from stack
+		tya												; get data back from Y
 		and #%00001111									; mask out high nybble
 		tay
 
@@ -8685,9 +8679,8 @@ CheckRightBounds:
 	
 		ldy EnemyDataOffset
 		iny
-		lda (EnemyData),y								; if MSB of enemy object is clear, branch to check for row $0f
-		asl
-		bcc CheckPageCtrlRow
+		lda (EnemyData),y								; if d7 of enemy object is clear, branch to check for row $0f
+		bpl CheckPageCtrlRow
 	
 		lda EnemyObjectPageSel							; if page select already set, do not set again
 		bne CheckPageCtrlRow
@@ -13036,7 +13029,7 @@ DontGrow:
 
 SetFor1Up:
 		lda #Sfx_ExtraLife
-		sta Square2SoundQueue							; queue up the 1-up sound instead (avoids awkward power-up sound interruption)
+		sta Square2SoundQueue							; queue up the 1-up sound instead (avoids awkward interruptions)
 
 		lda #$0b										; change 1000 points into 1-up instead
 		sta FloateyNum_Control,x						; and then leave
@@ -13189,7 +13182,7 @@ ChkForPlayerInjury:
 		bpl EnemyStomped								; or not at all, and branch elsewhere if moving downwards
 
 ChkInj:
-		lda #$14										; PAL bugfix: Vertical difference deciding whether Mario stomped or got hit depends on the enemy
+		lda #$14										; PAL bugfix: Vertical difference depends on the enemy
 
 		ldy Enemy_ID,x									; branch if enemy object < $07
 		cpy #FlyingCheepCheep
@@ -13350,7 +13343,7 @@ Green:
 		
 		jsr InitVStf									; nullify physics-related thing and vertical speed
 		
-		lda Enemy_MovingDir,x							; load the current movement direction (possible values are 1:right or 2:left)
+		lda Enemy_MovingDir,x							; load the current movement direction (1:right or 2:left)
 		asl												; multiply by two (1 -> 2; 2 -> 4)
 		adc PrimaryHardMode								; add the quest 2 flag (possible results: 2,3,4,5)
 		tay												; transfer to Y to use as an index
@@ -14765,7 +14758,6 @@ ChkLandedEnemyState:
 		cmp #$03										; if already in state used by koopas and buzzy beetles
 		bcs ExSteChk									; or in higher numbered state, branch to leave
 
-		lda Enemy_State,x								; load enemy state again (why?)
 		cmp #$02										; if not in $02 state (used by koopas and buzzy beetles)
 		bne ProcEnemyDirection							; then branch elsewhere
 
@@ -15066,8 +15058,8 @@ BoundBoxCtrlData:
 	.db $00, $00, $30, $0d
 	.db $00, $00, $08, $08
 	.db $06, $04, $0a, $08
-	.db $03, $0c, $0d, $16 ; PAL diff: some enemies (Piranha, Bullet Bill, Goomba, Spiny, Blooper, Cheep Cheep) has larger hitbox (plus bottom edge value from SMB2J)
-	.db $00, $02, $10, $15
+	.db $03, $0c, $0d, $16 ; PAL diff: Piranha Plant, Bullet Bill, Goomba, Spiny, Blooper, Cheep Cheep have larger hitboxes
+	.db $00, $02, $10, $15 ; (plus bottom edge values from SMB2J)
 	.db $04, $04, $0c, $1c
 
 GetFireballBoundBox:
@@ -15282,7 +15274,7 @@ CollisionCoreLoop:
 		
 		cmp BoundingBox_UL_Corner,x						; otherwise compare bottom of first bounding box to the top
 		bcs CollisionFound								; of second box, and if equal or greater, collision, thus branch
-		bcc PlrColExit									; otherwise return with carry clear and Y = $0006. note horizontal wrapping never occurs.
+		bcc PlrColExit									; otherwise return with carry clear and Y = $06. no horizontal wrapping.
 
 SecondBoxVerticalChk:
 		lda BoundingBox_LR_Corner,x						; check to see if the vertical bottom of the box
@@ -15292,7 +15284,7 @@ SecondBoxVerticalChk:
 		lda BoundingBox_LR_Corner,y						; otherwise compare horizontal right or vertical bottom
 		cmp BoundingBox_UL_Corner,x						; of first box with horizontal left or vertical top of second box
 		bcs CollisionFound								; if equal or greater, collision, thus branch
-		bcc PlrColExit									; otherwise return with carry clear and Y = $0006
+		bcc PlrColExit									; otherwise return with carry clear and Y = $06
 
 FirstBoxGreater:
 		cmp BoundingBox_UL_Corner,x						; compare first and second box horizontal left/vertical top again
@@ -15311,8 +15303,8 @@ FirstBoxGreater:
 		bcs CollisionFound								; collision, and branch, otherwise, proceed onwards here
 
 NoCollisionFound:
-		clc												; clear carry, then load value set earlier, then leave like previous ones,
-		bcc PlrColExit									; if horizontal coordinates do not collide, we do not bother checking vertical ones, because what's the point?
+		clc												; no collision, so clear carry
+		bcc PlrColExit									; and branch to leave [unconditional branch]
 
 CollisionFound:
 		inx												; increment offsets on both objects to check
@@ -15392,9 +15384,8 @@ BlockBufferCollision:
 
 		lda SprObject_PageLoc,x
 		adc #$00										; add carry to page location
-		and #$01										; get LSB, mask out all other bits
-		lsr												; move to carry
-		ora $05											; get stored value
+		lsr												; move LSB to carry
+		lda $05											; get stored value
 		ror												; rotate carry to MSB of A
 		lsr												; and effectively move high nybble to
 		lsr												; lower, LSB which became MSB will be
