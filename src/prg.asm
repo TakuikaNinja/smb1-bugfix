@@ -13043,9 +13043,7 @@ NoPUp:
 		rts
 
 UpToSuper:
-		lda #$01										; set player status to super
-		sta PlayerStatus
-
+		inc PlayerStatus								; set player status to super
 		lda #$09										; set value to be used by subroutine tree (super)
 
 UpToFiery:
