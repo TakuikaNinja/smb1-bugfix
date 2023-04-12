@@ -95,6 +95,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] It is now possible to defeat Spinies by hitting blocks underneath them.
 + [x] Paratroopas will now be set to the falling state instead of the grounded state when stomped. 
 + [x] Red Paratroopas will now be properly demoted to Red Koopas when stomped.
++ [x] Stomped Goombas will now stay in midair, like later entries.
 + [x] Bullet Bills fired from cannons are now able to collide with enemies, including kicked shells. (notably 7-1, now you can farm lives there)
 + [x] Jumping Green Paratroopas now move faster in Quest 2 and demote to the appropriate speed in Quest 2.
 + [x] Swimming Cheep Cheeps now move up and down farther after 5-3.

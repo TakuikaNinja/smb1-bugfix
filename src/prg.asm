@@ -564,12 +564,8 @@ ChkContinue:
 		
 		lda ContinueWorld								; load previously saved world number for secret
 		cmp #$08										; check against max world value + 1 (world 9)
-		bcc DontFix										; valid world, so don't fix
-		
-		lda #$00										; glitch world fix: otherwise force world 1
-		sta ContinueWorld								; prevent cold start next time
+		bcs StartWorld1									; invalid world, so start at world 1
 
-DontFix:
 		jsr GoContinue									; continue function when pressing A + start
 
 StartWorld1:
@@ -3599,8 +3595,7 @@ ProcADLoop:
 		
 		iny
 		lda (AreaData),y								; get second byte of area object
-		asl												; check for page select bit (d7), branch if not set
-		bcc Chk1Row13
+		bpl Chk1Row13									; check for page select bit (d7), branch if not set
 		
 		lda AreaObjectPageSel							; check page select
 		bne Chk1Row13
@@ -5209,6 +5204,10 @@ ExitEng:
 ; -------------------------------------------------------------------------------------
 
 ScrollHandler:
+		lda GameEngineSubroutine						; is the death routine running?
+		cmp #$0b
+		beq InitScrlAmt									; branch to init scroll if so
+		
 		lda Player_X_Scroll								; load scroll speed
 		clc
 		adc Platform_X_Scroll							; add value used by left/right platforms
@@ -6540,8 +6539,7 @@ FireballObjCore:
 		stx ObjectOffset								; store offset as current object
 		
 		lda Fireball_State,x							; check for d7 = 1
-		asl
-		bcs FireballExplosion							; if so, branch to get relative coordinates and draw explosion
+		bmi FireballExplosion							; if so, branch to get relative coordinates and draw explosion
 		
 		ldy Fireball_State,x							; if fireball inactive, branch to leave
 		beq NoFBall
@@ -7508,10 +7506,9 @@ MiscLoop:
 		stx ObjectOffset								; store misc object offset here
 
 		lda Misc_State,x								; check misc object state
-		beq MiscLoopBack								; branch to check next slot
+		beq MiscLoopBack								; if in normal state, branch to check next slot
 
-		asl												; otherwise shift d7 into carry
-		bcc ProcJumpCoin								; if d7 not set, jumping coin, thus skip to rest of code here
+		bpl ProcJumpCoin								; if d7 not set, jumping coin, thus skip to rest of code here
 
 		jsr ProcHammerObj								; otherwise go to process hammer,
 		jmp MiscLoopBack								; then check next slot
@@ -7705,8 +7702,7 @@ PowerUpObjHandler:
 		lda Enemy_State+5								; check power-up object's state
 		beq ExitPUp										; if not set, branch to leave
 
-		asl												; shift to check if d7 was set in object state
-		bcc GrowThePowerUp								; if not set, branch ahead to skip this part
+		bpl GrowThePowerUp								; if d7 not set, branch ahead to skip this part
 
 		lda TimerControl								; if master timer control set,
 		bne RunPUSubs									; branch ahead to enemy object routines
@@ -10449,6 +10445,13 @@ MoveNormalEnemy:
 		cmp #$03
 		bcs ReviveStunned								; if enemy in states $03 or $04, skip ahead to yet another part
 
+		cmp #$02
+		bne FallE										; if enemy state != $02, branch ahead
+
+		lda Enemy_ID,x									; check for goomba object
+		cmp #Goomba										; if so, branch away
+		beq ReviveStunned								; (prevents stomped goombas from moving)
+
 FallE:
 		jsr MoveD_EnemyVertically						; do a sub here to move enemy downwards
 
@@ -12752,8 +12755,7 @@ FireballEnemyCollision:
 		lda Fireball_State,x							; check to see if fireball state is set at all
 		beq ExitFBallEnemy								; branch to leave if not
 
-		asl
-		bcs ExitFBallEnemy								; branch to leave also if d7 in state is set
+		bmi ExitFBallEnemy								; branch to leave also if d7 in state is set
 
 		lda FrameCounter
 		lsr												; get LSB of frame counter
@@ -14748,8 +14750,7 @@ LandEnemyProperly:
 		bne LandEnemyInitState
 
 		lda Enemy_State,x
-		asl												; branch if d7 in enemy state is not set
-		bcc ChkLandedEnemyState
+		bpl ChkLandedEnemyState							; branch if d7 in enemy state is not set
 
 SChkA:
 		jmp DoEnemySideCheck							; if lower nybble < $0d, d7 set but d6 not set, jump here
@@ -14829,8 +14830,7 @@ ChkForRedKoopa:
 Chk2MSBSt:
 		lda Enemy_State,x								; save enemy state into Y
 		tay
-		asl												; check for d7 set
-		bcc GetSteFromD									; branch if not set
+		bpl GetSteFromD									; branch if d7 not set
 
 		lda Enemy_State,x
 		ora #%01000000									; set d6
@@ -14884,8 +14884,7 @@ ChkForBump_HammerBroJ:
 		beq NoBump										; and if so, branch ahead and do not play sound
 
 		lda Enemy_State,x								; if enemy state d7 not set, branch
-		asl												; ahead and do not play sound
-		bcc NoBump
+		bpl NoBump										; ahead and do not play sound
 
 		lda #Sfx_Bump									; otherwise, play bump sound
 		sta Square1SoundQueue							; sound will never be played if branching from ChkForRedKoopa
@@ -16904,8 +16903,7 @@ DChunks:
 		jsr ChkLeftCo									; do sub to move left half of sprites offscreen if necessary
 
 		lda Block_OffscreenBits							; get offscreen bits again
-		asl												; shift d7 into carry
-		bcc ChnkOfs										; if d7 not set, branch to last part
+		bpl ChnkOfs										; if d7 not set, branch to last part
 
 		lda #$f8
 		jsr DumpTwoSpr									; otherwise move top sprites offscreen
