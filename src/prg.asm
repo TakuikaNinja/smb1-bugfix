@@ -11973,17 +11973,15 @@ RunStarFlagObj:
 	.dw DelayToAreaEnd-1
 
 GameTimerFireworks:
-		lda #$06										; start with $06
+		lda #$0c										; start with 12
 
 TimerChkLoop:
+		lsr												; shift right to check against (6 -> 3 -> 1) next
 		sta FireworksCounter							; set fireworks counter here
 		beq SkipSubtract								; branch away if A == 0
 		
 		cmp GameTimerDisplay+2							; otherwise check against game timer's last digit
-		beq SetFWS										; branch away if equal
-		
-		lsr												; shift right to check against (6 -> 3 -> 1) next
-		bpl TimerChkLoop								; loop [unconditional branch]
+		bne TimerChkLoop								; fall through loop if digits match
 
 SetFWS:
 		eor #$ff										; subtract A from $06
