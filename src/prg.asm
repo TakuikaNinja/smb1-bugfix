@@ -111,12 +111,12 @@ VRAM_Buffer_Offset:
 	.db <VRAM_Buffer1_Offset, <VRAM_Buffer2_Offset
 
 NonMaskableInterrupt:
-		php												; backup flags
 		pha												; backup A
 		lda NMIInProgressFlag							; is the NMI handler already running?
 		beq ProceedWithNMI								; if not, branch to proceed with NMI handler
 		
-		jmp NoNMI										; otherwise jump to end of NMI handler
+		pla												; otherwise restore A
+		rti												; and leave
 
 ProceedWithNMI:
 		inc NMIInProgressFlag							; set flag for NMI in progress
@@ -274,7 +274,7 @@ HBlankDelay:
 		bne HBlankDelay									; decrement until it hits 0
 
 HUDSkip:
-		lda PPU_STATUS									; reset flip-flop
+		bit PPU_STATUS									; reset flip-flop
 		lda HorizontalScroll							; set scroll registers from variables
 		sta PPU_SCROLL_REG
 		
@@ -297,10 +297,8 @@ HUDSkip:
 		tax												; restore X
 		
 		dec NMIInProgressFlag							; clear flag for NMI in progress
-
-NoNMI:
+		
 		pla												; restore A
-		plp												; restore flags
 		rti												; we are done until the next frame!
 ; -------------------------------------------------------------------------------------
 
@@ -924,8 +922,8 @@ LoadNumTiles:
 		pla												; load again and this time
 		and #%00001111									; mask out the high nybble
 		sta DigitModifier,x								; store as amount to add to the digit
-		
-		jsr AddToScore									; update the score accordingly
+		lda #$0a										; set lower nybble to only update score
+		jsr UpdateScore									; update the score accordingly
 
 ChkTallEnemy:
 		ldy Enemy_SprDataOffset,x						; get OAM data offset for enemy object
@@ -2488,7 +2486,7 @@ RepeatByte:
 		sta PPU_ADDRESS									; reinitialize the vram address to $0000 before leaving
 		
 UpdateScreen:
-		ldx PPU_STATUS									; reset flip-flop
+		bit PPU_STATUS									; reset flip-flop
 		ldy #$00										; load first byte from indirect as a pointer
 		lda ($00),y
 		bne WriteBufferToScreen							; if byte is zero we have no further updates to make here
@@ -2776,6 +2774,9 @@ CheckHalfway:
 DoneInitArea:
 		lda #Silence									; silence music
 		sta AreaMusicQueue
+		
+		asl												; shift left to get $00
+		sta EntrancePage								; clear entrance page
 
 DisableScrIncOpTask:
 		inc DisableScreenFlag							; disable screen output
@@ -3156,16 +3157,16 @@ ContinueGame:
 		sta PlayerSize									; reset player's size, status, and
 		sta OperMode									; if in game over mode, switch back to game mode, because game is still on
 
-		inc FetchNewGameTimerFlag						; next, set game timer flag to reload
+		inc FetchNewGameTimerFlag						; next, set flag to reload game timer
 		
-		lsr												; game timer from header
-		sta TimerControl								; also set flag for timers to count again
-		sta PlayerStatus
+		lsr												; shift right to get $00
+		sta TimerControl								; set flag for timers to count again
+		sta PlayerStatus								; set player status
 		sta GameEngineSubroutine						; reset task for game core
-		sta OperMode_Task								; set modes and leave
+		sta OperMode_Task								; set modes
 		
 GameIsOn:
-		rts
+		rts												; and leave
 
 TransposePlayers:
 		sec												; set carry flag by default to end game
@@ -4938,7 +4939,13 @@ AreaDataOfsLoopback:
 ; -------------------------------------------------------------------------------------
 
 LoadAreaPointer:
-		jsr FindAreaPointer								; find it and store it here
+		ldy WorldNumber									; load offset from world variable
+		lda WorldAddrOffsets,y
+		clc												; add area number used to find data
+		adc AreaNumber
+		tay
+		
+		lda AreaAddrOffsets,y							; from there we have our area pointer
 		sta AreaPointer
 
 GetAreaType:
@@ -4949,17 +4956,6 @@ GetAreaType:
 		rol												; make %0xx00000 into %000000xx
 		sta AreaType									; save 2 MSB as area type
 		rts
-
-FindAreaPointer:
-		ldy WorldNumber									; load offset from world variable
-		lda WorldAddrOffsets,y
-		clc												; add area number used to find data
-		adc AreaNumber
-		tay
-		
-		lda AreaAddrOffsets,y							; from there we have our area pointer
-		rts
-
 
 GetAreaDataAddrs:
 		lda AreaPointer									; use 2 MSB for Y
@@ -5830,7 +5826,7 @@ NoFPObj:
 ; -------------------------------------------------------------------------------------
 
 Hidden1UpCoinAmts:
-	.db $15, $23, $16, $1b, $17, $18, $23;, $63 ; world 8 value is pointless
+	.db $15, $23, $16, $1b, $17, $18, $23				; note: world 8 amount ($63) has been removed
 
 PlayerEndLevel:
 		lda #$01										; force player to walk to the right
@@ -5876,6 +5872,9 @@ RdyNextA:
 		bne NextArea									; and skip this last part here if not
 		
 		ldy WorldNumber									; get world number as offset
+		cpy #World8
+		bcs NextArea									; branch ahead if at world 8 and beyond
+		
 		lda CoinTallyFor1Ups							; check third area coin tally for bonus 1-ups
 		cmp Hidden1UpCoinAmts,y							; against minimum value, if player has not collected
 		bcc NextArea									; at least this number of coins, otherwise leave flag clear
@@ -6726,7 +6725,6 @@ ResGTCtrl:
 		ldy #$23										; set offset for last digit
 		lda #$ff										; set value to decrement game timer digit
 		sta DigitModifier+5
-		
 		jsr DigitsMathRoutine							; do sub to decrement game timer slowly
 		
 		lda #$a4										; set status nybbles to update game timer display
@@ -6906,8 +6904,8 @@ GiveFPScr:
 		lda FlagpoleScoreMods,y							; get amount to award player points
 		ldx FlagpoleScoreDigits,y						; get digit with which to award points
 		sta DigitModifier,x								; store in digit modifier
-		
-		jsr AddToScore									; do sub to award player points depending on height of collision
+		lda #$0a										; set lower nybble to only update score
+		jsr UpdateScore									; do sub to award player points depending on height of collision
 		inc GameEngineSubroutine						; set to run end-of-level subroutine on next frame
 		
 ; -------------------------------------------------------------------------------------
@@ -7619,11 +7617,7 @@ GiveOneCoin:
 CoinPoints:
 		lda #$02										; set digit modifier to award
 		sta DigitModifier+4								; 200 points to the player
-
-AddToScore:
-		ldx CurrentPlayer								; get current player
-		ldy ScoreOffsets,x								; get offset for player's score
-		jsr DigitsMathRoutine							; update the score internally with value in digit modifier
+		jsr AddToScore
 
 GetSBNybbles:
 		ldy CurrentPlayer								; get current player
@@ -7642,6 +7636,21 @@ UpdateNumber:
 NoZSup:
 		ldx ObjectOffset								; get enemy object buffer offset
 		rts
+
+AddToScore:
+		ldx CurrentPlayer								; get current player
+		ldy ScoreOffsets,x								; get offset for player's score
+		jmp DigitsMathRoutine							; update the score internally with value in digit modifier
+
+; -------------------------------------------------------------------------------------
+; temp - used to store incoming lower nybble, upper nybble assumed to be clear
+UpdateScore:
+		sta temp
+		jsr AddToScore									; add to player score
+		lda CurrentPlayer								; get player on the screen
+		jsr MathASL4									; move low nybble to high
+		ora temp										; set lower nybble from temp
+		jmp UpdateNumber								; update the number and leave
 
 ; -------------------------------------------------------------------------------------
 
@@ -8044,8 +8053,8 @@ SpawnBrickChunks:										; SM this is inline now
 	
 		lda #$05
 		sta DigitModifier+5								; set digit modifier to give player 50 points
-	
-		jsr AddToScore									; do sub to update the score
+		lda #$0a										; set lower nybble to only update score
+		jsr UpdateScore									; do sub to update the score
 	
 		ldx SprDataOffset_Ctrl							; load control bit and leave
 		rts
@@ -9609,7 +9618,7 @@ StarFChk:
 
 		lda FireworksCounter							; get fireworks counter
 		clc
-		adc Enemy_State,y								; add state of star flag object (possibly not necessary)
+		adc Enemy_State,y								; add state of star flag object (set in GameTimerFireworks)
 		tay												; use as offset
 
 		pla												; get saved horizontal coordinate of star flag - 48 pixels
@@ -11933,7 +11942,8 @@ FireworksSoundScore:
 
 		lda #$05										; set part of score modifier for 500 points
 		sta DigitModifier+4
-		jmp EndAreaPoints								; jump to award points accordingly then leave
+		lda #$0a										; set lower nybble to only update score
+		jmp UpdateScore									; jump to award points accordingly then leave
 
 ; --------------------------------
 
@@ -11963,24 +11973,25 @@ RunStarFlagObj:
 	.dw DelayToAreaEnd-1
 
 GameTimerFireworks:
-		ldy #$05										; set default state for star flag object
-		lda GameTimerDisplay+2							; get game timer's last digit
-		cmp #$01
-		beq SetFWC										; if last digit of game timer set to 1, skip ahead
-	
-		ldy #$03										; otherwise load new value for state
-		cmp #$03
-		beq SetFWC										; if last digit of game timer set to 3, skip ahead
-	
-		ldy #$00										; otherwise load one more potential value for state
-		cmp #$06
-		beq SetFWC										; if last digit of game timer set to 6, skip ahead
+		lda #$06										; start with $06
 
-		lda #$ff										; otherwise set value for no fireworks
-
-SetFWC:
+TimerChkLoop:
 		sta FireworksCounter							; set fireworks counter here
-		sty Enemy_State,x								; set whatever state we have in star flag object
+		beq SkipSubtract								; branch away if A == 0
+		
+		cmp GameTimerDisplay+2							; otherwise check against game timer's last digit
+		beq SetFWS										; branch away if equal
+		
+		lsr												; shift right to check against (6 -> 3 -> 1) next
+		bpl TimerChkLoop								; loop [unconditional branch]
+
+SetFWS:
+		eor #$ff										; subtract A from $06
+		sec
+		adc #$06
+		
+SkipSubtract:
+		sta Enemy_State,x								; set as star flag state
 
 IncrementSFTask1:
 		inc StarFlagTaskControl							; increment star flag object task number
@@ -11993,11 +12004,14 @@ AwardGameTimerPoints:
 		ora GameTimerDisplay+1
 		ora GameTimerDisplay+2
 		beq IncrementSFTask1							; if no time left on game timer at all, branch to next task
-	
+		
+		lda EventMusicBuffer							; if event music buffer not empty,
+		bne NoTTick										; branch ahead
+		
 		lda FrameCounter
 		and #%00000100									; check frame counter for d2 set (skip ahead
 		beq NoTTick										; for four frames every four frames) branch if not set
-	
+		
 		lda #Sfx_TimerTick
 		sta Square2SoundQueue							; load timer tick sound
 
@@ -12006,26 +12020,12 @@ NoTTick:
 
 		lda #$ff										; set adder here to $ff, or -1, to subtract one
 		sta DigitModifier+5								; from the last digit of the game timer
-
 		jsr DigitsMathRoutine							; subtract digit
+		
 		lda #$05										; set now to add 50 points
 		sta DigitModifier+5								; per game timer interval subtracted
-
-EndAreaPoints:
-		ldy #$0b										; load offset for mario's score by default
-
-		lda CurrentPlayer								; check player on the screen
-		beq ELPGive										; if mario, do not change
-
-		ldy #$11										; otherwise load offset for luigi's score
-
-ELPGive:
-		jsr DigitsMathRoutine							; award 50 points per game timer interval
-
-		lda CurrentPlayer								; get player on the screen (or 500 points per
-		jsr MathASL4									; fireworks explosion if branched here from there) shift to high nybble
-		ora #%00000100									; add four to set nybble for game timer
-		jmp UpdateNumber								; jump to print the new score and game timer
+		lda #$04										; set lower nybble for timer
+		jmp UpdateScore									; jump to update score + timer
 
 RaiseFlagSetoffFWorks:
 		lda Enemy_Y_Position,x							; check star flag's vertical position
@@ -12038,7 +12038,6 @@ RaiseFlagSetoffFWorks:
 SetoffF:
 		lda FireworksCounter							; check fireworks counter
 		beq DrawFlagSetTimer							; if no fireworks left to go off, skip this part
-		bmi DrawFlagSetTimer							; if no fireworks set to go off, skip this part
 
 		lda #Fireworks
 		sta EnemyFrenzyBuffer							; otherwise set fireworks object in frenzy queue

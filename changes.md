@@ -12,6 +12,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The unused notes at the beginning of the power-up sound have been restored, as originally intended.
 + [x] The 1-up sound now has top priority in its queue, fixing a bug where one sound can be initialized and play for a single frame, but continued as a corrupted 1-up sound.
 + [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays. (unrelated to the aforementioned bug).
++ [x] The timer countdown sound will no longer play while the level clear fanfare is still playing.
 
 ## Bug Fixes & Small Tweaks
 + [x] Scroll unlock object in underground warp zone now works as intended. (no more minus world)
@@ -71,6 +72,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
 + [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
 + [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.
++ [x] Status bar updates which only change the score will no longer include the coin display. (reduces risk of VRAM buffer overflow)
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
 + [x] Tweaked controller reading code to mask out left+right/up+down inputs. Additionally, the polling loop now uses the ring counter technique.
 + [x] Moved the main game loop out of NMI and made the NMI handler more robust. (no more glitched scanlines, HUD flickering, or music slowdown)
