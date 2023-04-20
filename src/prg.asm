@@ -4800,11 +4800,17 @@ NoWhirlP:
 		ldx #$08
 		ldy #$0f										; start at ninth row and go to bottom, run RenderUnderPart
 
-; --------------------------------
-
+; -------------------------------------------------------------------------------------
+; Render a column of identical tiles (tree/mushroom stem, bullet bill, pipes, stairs, holes, etc)
+; Y - height of column
+; X - row of the first tile to draw
+; A - tile number to draw
 RenderUnderPart:
 		sty AreaObjectHeight							; store vertical length to render
-
+		
+		cpx #$0d										; stop rendering if we're at the bottom of the screen
+		bcs ExitUPartR									; (early check to prevent OoB drawing)
+		
 		ldy MetatileBuffer,x							; check current spot to see if there's something
 		beq DrawThisRow									; we need to keep, if nothing, go ahead
 
@@ -4815,24 +4821,21 @@ RenderUnderPart:
 		beq WaitOneRow									; if middle part (mushroom ledge), wait until next row
 
 		cpy #$c0
-		beq DrawThisRow									; if question block w/ coin, overwrite
-		bcs WaitOneRow									; if any other metatile with palette 3, wait until next row
+		bcs DrawThisRow									; if any metatile with palette 3, overwrite
 
 		cpy #$54
-		bne DrawThisRow									; if cracked rock terrain, overwrite
+		bne DrawThisRow									; if not cracked rock terrain, overwrite
 
 		cmp #$50
-		beq WaitOneRow									; if stem top of mushroom, wait until next row
+		beq WaitOneRow									; if writing stem top of mushroom, skip overwriting cracked rock terrain
 
 DrawThisRow:
 		sta MetatileBuffer,x							; render contents of A from routine that called this
 
 WaitOneRow:
-		inx
-		cpx #$0d										; stop rendering if we're at the bottom of the screen
-		bcs ExitUPartR
+		inx												; increment row
 		
-		ldy AreaObjectHeight							; decrement, and stop rendering if there is no more length
+		ldy AreaObjectHeight							; decrement object height, and stop rendering if there is no more length
 		dey
 		bpl RenderUnderPart
 

@@ -73,6 +73,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
 + [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.
 + [x] Status bar updates which only change the score will no longer include the coin display. (reduces risk of VRAM buffer overflow)
++ [x] RenderUnderPart now does the row check at the start of the loop to prevent out-of-bounds writes.
++ [x] Tiles with the coin palette will now always be overwritten in RenderUnderPart. (instead of only coin ? blocks)
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
 + [x] Tweaked controller reading code to mask out left+right/up+down inputs. Additionally, the polling loop now uses the ring counter technique.
 + [x] Moved the main game loop out of NMI and made the NMI handler more robust. (no more glitched scanlines, HUD flickering, or music slowdown)
