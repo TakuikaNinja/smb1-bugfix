@@ -44,6 +44,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] BlockBufferCollision will now correctly clamp the Y tile coordinate to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
 + [x] When Mario enters/exits a warp-pipe or falls into a pit, the gameplay will now halt in the same manner as being killed by an enemy. (prevents getting hit)
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
++ [x] An off-by-one error in the enemy ID has been fixed in 5-3 to properly end the Bullet Bill frenzy. (moving platforms will now load consistently)
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
 + [x] Coin Heavens (cloud levels accessed via vines) now have the cloud backdrop.

@@ -8461,7 +8461,7 @@ ChkUpM:
 		beq ExVMove										; if set to zero, branch to leave
 
 		lda $02
-		eor #%11111111									; otherwise get two's compliment of maximum speed
+		eor #$ff										; otherwise get two's compliment of maximum speed
 		tay
 		iny
 		sty $07											; store two's compliment here
@@ -9214,12 +9214,12 @@ DifLoop:
 		beq UsePosv										; branch if neither bits are set
 
 		tya
-		eor #%11111111									; otherwise get two's compliment of Y
+		eor #$ff										; otherwise get two's compliment of Y
 		tay
 		iny
 
 UsePosv:
-		tya												; put value from A in Y back to A 
+		tya												; put value from A in Y back to A
 
 SetSpSpd:
 		ldy #$02
@@ -11332,8 +11332,8 @@ PlayerLakituDiff:
 		iny												; increment Y for left of player
 		lda $00
 		eor #$ff										; get two's compliment of low byte of horizontal difference
-		clc
-		adc #$01										; store two's compliment as horizontal difference
+		sec
+		adc #$00										; store two's compliment as horizontal difference
 		sta $00
 
 ChkLakDif:
@@ -11986,7 +11986,6 @@ TimerChkLoop:
 		cmp GameTimerDisplay+2							; otherwise check against game timer's last digit
 		bne TimerChkLoop								; fall through loop if digits match
 
-SetFWS:
 		eor #$ff										; subtract A from $06
 		sec
 		adc #$06

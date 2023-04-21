@@ -96,7 +96,7 @@ E_GroundArea6:
 ; level 1-3/5-3
 E_GroundArea7:
 	.db $2b, $d7, $e3, $03, $c2, $86, $e2, $06, $76, $a5
-	.db $a3, $8f, $03, $86, $2b, $57, $68, $28, $e9, $28
+	.db $a3, $8f, $03, $86, $2b, $58, $68, $28, $e9, $28 ; End frenzy before spawning platforms in 5-3 ($57 -> $58)
 	.db $e5, $83, $24, $8f, $36, $a8, $5b, $03
 	.db $ff
 
@@ -118,7 +118,7 @@ E_GroundArea10:
 
 ; level 5-1
 E_GroundArea11:
-	.db $0b, $80, $60, $38, $10, $b8, $c0, $3b, $db, $8e
+	.db $0b, $80, $60, $38, $10, $bb, $b0, $38, $db, $8e ; Ben (SMB2J-2Q): switch enemy groups around for smoother shell chain
 	.db $40, $b8, $f0, $38, $7b, $8e, $a0, $b8, $c0, $b8
 	.db $fb, $00, $a0, $b8, $30, $bb, $ee, $42, $88, $0f, $0b
 	.db $2b, $0e, $67, $0e
@@ -195,7 +195,7 @@ E_GroundArea21:
 
 ; level 3-2
 E_GroundArea22:
-	.db $1b, $80, $bb, $38, $4b, $bc, $eb, $3b, $0f, $04
+	.db $1b, $80, $bb, $38, $4b, $bb, $eb, $3c, $0f, $04 ; Ben (SMB2J-2Q): switch enemy groups around for smoother shell chain
 	.db $2b, $00, $ab, $38, $eb, $00, $cb, $8e, $fb, $80
 	.db $ab, $b8, $6b, $80, $fb, $3c, $9b, $bb, $5b, $bc
 	.db $fb, $00, $6b, $b8, $fb, $38
