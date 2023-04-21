@@ -10292,12 +10292,12 @@ MovePodoboo:
 		ora #%10000000									; set d7
 		sta Enemy_Y_MoveForce,x							; store as movement force
 		and #%00001111									; mask out high nybble
-		ora #$06										; set for at least six intervals
+		ora #$07										; SMAS diff: $07 intervals instead of $06
 		sta EnemyIntervalTimer,x						; store as new enemy timer
 		lda #$f9
 		sta Enemy_Y_Speed,x								; set vertical speed to move podoboo upwards
 PdbM:
-		jmp MoveJ_EnemyVertically						; branch to impose gravity on podoboo
+		jmp MoveJ_EnemyVertically						; jump to impose gravity on podoboo
 
 ; --------------------------------
 ; $00 - used in HammerBroJumpCode as bitmask
@@ -12115,13 +12115,13 @@ MovePiranhaPlant:
 
 		lda $00											; otherwise get saved horizontal difference
 		eor #$ff
-		clc												; and change to two's compliment
-		adc #$01
+		sec												; and change to two's compliment
+		adc #$00
 		sta $00											; save as new horizontal difference
 
 ChkPlayerNearPipe:
 		lda $00											; get saved horizontal difference
-		cmp #$21
+		cmp #$19										; SMBDX diff: $19 instead of $21, slightly braver
 		bcc PutinPipe									; if player within a certain distance, branch to leave
 
 ReversePlantSpeed:
