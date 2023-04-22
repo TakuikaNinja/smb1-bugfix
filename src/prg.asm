@@ -3950,7 +3950,7 @@ WarpNum:
 		jsr WriteGameText								; print text and warp zone numbers
 		
 		lda #PiranhaPlant
-		jmp KillEnemies									; load identifier for piranha plants and do sub
+		jsr KillEnemies									; load identifier for piranha plants and do sub
 
 ScrollLockObject:
 		lda #$01										; explicitly set scroll lock instead of toggling it
@@ -5639,7 +5639,7 @@ VerticalPipeEntry:
 		
 		lda #$01										; set 1 as movement amount
 		jsr MovePlayerYAxis								; do sub to move player downwards
-		jsr ScrollHandler								; do sub to scroll screen with saved force if necessary
+;		jsr ScrollHandler								; do sub to scroll screen with saved force if necessary
 		
 		ldy #$00										; load default mode of entry
 		lda WarpZoneControl								; check warp zone control variable/flag
@@ -9879,7 +9879,7 @@ InitEnemyFrenzy:
 		sta EnemyFrenzyBuffer							; save in enemy frenzy buffer
 
 		sec
-		sbc #$12										; subtract 12 and use as offset for jump engine
+		sbc #$12										; subtract $12 and use as offset for jump engine
 		jsr JumpEngine
 
 ; frenzy object jump table

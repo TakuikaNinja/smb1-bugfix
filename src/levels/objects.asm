@@ -327,7 +327,7 @@ L_GroundArea16:
 	.db $29, $12, $63, $12, $62, $42, $69, $14, $a5, $12
 	.db $a4, $42, $e2, $14, $e1, $44, $f8, $16, $37, $c1
 	.db $8f, $38, $02, $bb, $28, $7a, $68, $7a, $a8, $7a
-	.db $e0, $6a, $f0, $6a, $0d, $c5, $6d, $47 ; move warp zone trigger forward + extra scroll lock
+	.db $e0, $6a, $f0, $6a, $6d, $c5
 	.db $fd
 
 ; level 8-1
@@ -436,8 +436,7 @@ L_UndergroundArea1:
 	.db $5f, $b3, $97, $63, $9e, $00, $0e, $81, $16, $24
 	.db $66, $04, $8e, $00, $fe, $01, $08, $d2, $0e, $06
 	.db $6f, $47, $9e, $0f, $0e, $82, $2d, $47, $28, $7a
-	.db $68, $7a, $a8, $7a, $ae, $01, $de, $0f, $0d, $c5
-	.db $6d, $47 ; move warp zone trigger forward + extra scroll lock
+	.db $68, $7a, $a8, $7a, $ae, $01, $de, $0f, $6d, $c5
 	.db $fd
 
 ; level 4-2
@@ -458,12 +457,12 @@ L_UndergroundArea2:
 	.db $ae, $00, $fe, $04, $04, $d1, $17, $04, $26, $49
 	.db $27, $29, $df, $33, $fe, $02, $44, $f6, $7c, $01
 	.db $8e, $06, $bf, $47, $ee, $0f, $4d, $c7, $0e, $82
-	.db $68, $7a, $ae, $01, $de, $0f, $0d, $c5, $6d, $47 ; move warp zone trigger forward + extra scroll lock
+	.db $68, $7a, $ae, $01, $de, $0f, $6d, $c5
 	.db $fd
 
 ; underground bonus rooms area used in many levels
 L_UndergroundArea3:
-	.db $48, $01
+	.db $08, $01
 	.db $0e, $01, $00, $5a, $3e, $06, $45, $46, $47, $46
 	.db $53, $44, $ae, $01, $df, $4a, $4d, $c7, $0e, $81
 	.db $00, $5a, $2e, $04, $37, $28, $3a, $48, $46, $47
@@ -482,7 +481,7 @@ L_UndergroundArea3:
 
 ; water area used in levels 5-2 and 6-2
 L_WaterArea1:
-	.db $41, $01
+	.db $01, $01
 	.db $b4, $34, $c8, $52, $f2, $51, $47, $d3, $6c, $03
 	.db $65, $49, $9e, $07, $be, $01, $cc, $03, $fe, $07
 	.db $0d, $c9, $1e, $01, $6c, $01, $62, $35, $63, $53
@@ -510,7 +509,7 @@ L_WaterArea2:
 
 ; water area used in level 8-4
 L_WaterArea3:
-	.db $4f, $0f ; use "all grey" backdrop since this is in a castle
+	.db $07, $0f ; use "all grey" backdrop since this is in a castle
 	.db $1e, $01, $39, $73, $5e, $07, $ae, $0b, $1e, $82
 	.db $6e, $88, $9e, $02, $0d, $04, $2e, $0b, $3e, $0f ; PAL bugfix: Close 1-tile gap above exit pipe
 	.db $45, $09, $ed, $47
