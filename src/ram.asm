@@ -103,7 +103,7 @@ PrimaryMsgCounter     = $0719
 SecondaryMsgCounter   = $0749
 
 HorizontalScroll      = $073f
-VerticalScroll        = $0740
+VerticalScroll        = $0740	; free
 ScrollLock            = $0723
 ScrollThirtyTwo       = $073d
 Player_X_Scroll       = $06ff

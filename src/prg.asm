@@ -133,10 +133,8 @@ ProceedWithNMI:
 		lda $01
 		pha												; backup zpg vars used by nmi
 
-		lda Mirror_PPU_CTRL_REG1						; disable NMIs in mirror reg
-		and #%01111111									; save all other bits
-		sta Mirror_PPU_CTRL_REG1
-		and #%01111110									; alter name table address to be $2800
+		lda Mirror_PPU_CTRL_REG1						; get mirror reg
+		and #%11111110									; alter name table address to be $2800
 		sta PPU_CTRL_REG1								; (essentially $2000) but save other bits
 		
 		lda NMISyncFlag									; is the NMI sync flag set?
@@ -248,7 +246,7 @@ RotPRandomBit:
 		clc												; clear carry before proceeding
 
 LagFrameSpr0:
-		lda Sprite0HitDetectFlag						; check for flag here
+		ldy Sprite0HitDetectFlag						; check for flag here
 		beq HUDSkip
 
 Sprite0Clr:
@@ -267,21 +265,20 @@ Sprite0Hit:
 		bit PPU_STATUS									; do sprite #0 hit detection
 		bvc Sprite0Hit
 		
-		ldy #$14										; small delay, to wait until we hit hblank time
+		ldy #$25										; small delay, to wait for about 2 scanlines
 
 HBlankDelay:
 		dey
 		bne HBlankDelay									; decrement until it hits 0
 
 HUDSkip:
+		jsr EnableNMI									; write nametable value now (waste some cycles)	
+		
 		bit PPU_STATUS									; reset flip-flop
-		lda HorizontalScroll							; set scroll registers from variables
+		lda HorizontalScroll							; set scroll value now
 		sta PPU_SCROLL_REG
+		sty PPU_SCROLL_REG								; Y is already 0
 		
-		lda VerticalScroll
-		sta PPU_SCROLL_REG
-		
-		jsr EnableNMI
 		jsr SoundEngine									; play sound
 
 		pla
@@ -459,7 +456,7 @@ GameMenuRoutine:
 		cmp #Start_Button
 		beq StartGame
 		
-		cmp #A_Button+Start_Button						; check to see if A + start was pressed
+		cmp #A_Button | Start_Button					; check to see if A + start was pressed
 		bne ChkSelect									; if not, branch to check select button
 
 StartGame:
@@ -2354,8 +2351,7 @@ InitATLoop:
 		dey
 		bne InitATLoop
 		
-		sta HorizontalScroll							; reset scroll variables
-		sta VerticalScroll
+		sta HorizontalScroll							; reset scroll variable
 		jmp InitScroll									; initialize scroll registers to zero
 
 ; -------------------------------------------------------------------------------------
@@ -2386,7 +2382,7 @@ MaskInputLoop:
 		lda $00,x										; get input from temp variable
 		tay												; back up input to Y
 
-		and #%00001010									; compare up & left...
+		and #Up_Dir | #Left_Dir							; compare up & left...
 		lsr
 		and $00,x										; to down & right
 		beq NotUpDown									; not pressed at the same time, so branch
@@ -2402,7 +2398,7 @@ NotUpDown:
 		sta SavedJoypadBits,x							; and properly save it
 		tay												; back up input to Y
 		
-		and #%00110000									; check for select or start
+		and #Select_Button | #Start_Button				; check for select or start
 		and JoypadBitMask,x								; if saved state and current state
 		bne SSMask										; have any of these two set, branch
 
@@ -2412,7 +2408,7 @@ NotUpDown:
 
 SSMask:
 		tya												; get input back from Y
-		and #%11001111									; store without select
+		and #$ff ^ (#Select_Button | #Start_Button)		; store without select
 		sta SavedJoypadBits,x							; or start bits
 
 NoSSMask:
@@ -2680,7 +2676,7 @@ DefaultSprOffsets:
 	.db $d8, $e8, $24, $f8, $fc, $28, $2c
 
 Sprite0Data:
-	.db $18, $ff, $23, $58
+	.db $17, $ff, $23, $58								; decrement Y value to account for scanline delay
 
 ; -------------------------------------------------------------------------------------
 
@@ -5466,18 +5462,18 @@ DisJoyp:
 
 SaveJoyp:
 		lda SavedJoypadBits								; otherwise store A and B buttons in $0a
-		and #%11000000
+		and #A_Button | #B_Button
 		sta A_B_Buttons
 		
 		lda SavedJoypadBits								; store left and right buttons in $0c
-		and #%00000011
+		and #Left_Dir | #Right_Dir
 		sta Left_Right_Buttons
 		
 		lda SavedJoypadBits								; store up and down buttons in $0b
-		and #%00001100
+		and #Up_Dir | #Down_Dir
 		sta Up_Down_Buttons
 		
-		and #%00000100									; check for pressing down
+		and #Down_Dir									; check for pressing down
 		beq SizeChk										; if not, branch
 		
 		lda Player_State								; check player's state
@@ -5491,12 +5487,10 @@ SaveJoyp:
 
 SizeChk:
 		jsr PlayerMovementSubs							; run movement subroutines
-		ldy #$01										; is player small?
-		lda PlayerSize
-		bne ChkMoveDir
+		ldy PlayerSize									; is player small?
+		bne ChkMoveDir									; if so, branch ahead
 		
-		ldy #$00										; check for if crouching
-		lda CrouchingFlag
+		ldy CrouchingFlag								; check for if crouching
 		beq ChkMoveDir									; if not, branch ahead
 		
 		ldy #$02										; if big and crouching, load y with 2
@@ -5688,15 +5682,14 @@ EnterSidePipe:
 		lda #$08										; set player's horizontal speed
 		sta Player_X_Speed
 		
-		ldy #$01										; set controller right button by default
+		ldy #Right_Dir									; set controller right button by default
 		lda Player_X_Position							; mask out higher nybble of player's
 		and #%00001111									; horizontal position
 		bne RightPipe
 		
 		sta Player_X_Speed								; if lower nybble = 0, set as horizontal speed
 		
-		ora #Down_Dir									; force the player to crouch if big
-		tay												; and nullify controller bit override here
+		ldy #Down_Dir									; force the player to crouch if big and nullify controller bit override
 
 RightPipe:
 		tya												; use contents of Y to
@@ -5708,18 +5701,12 @@ RightPipe:
 PlayerChangeSize:
 		lda TimerControl								; check master timer control
 		cmp #$f8										; for specific moment in time
-		bne EndChgSize									; branch if before or after that point
-		
-		jmp InitChangeSize								; otherwise run code to get growing/shrinking going
+		beq InitChangeSize								; if so, branch to get growing/shrinking going
 
-EndChgSize:
 		cmp #$c4										; check again for another specific moment
-		bne ExitBoth									; and branch to leave if before or after that point
-		
-		jmp DonePlayerTask								; otherwise do sub to init timer control and set routine
+		beq DonePlayerTask								; if so, branch to init timer control and set routine
 
-;ExitChgSize:
-;		rts												; and then leave
+		rts												; otherwise leave
 
 ; -------------------------------------------------------------------------------------
 
@@ -6137,7 +6124,7 @@ PlayerPhysicsSub:
 		beq ProcClimb									; if not pressing up or down, branch
 		
 		iny
-		and #%00001000									; check for pressing up
+		and #Up_Dir										; check for pressing up
 		bne ProcClimb
 		
 		iny
@@ -6367,10 +6354,10 @@ GetPlayerAnimSpeed:
 
 ChkSkid:
 		lda SavedJoypadBits								; get controller bits
-		and #%01111111									; mask out A button
+		and #$ff ^ #A_Button							; mask out A button
 		beq SetAnimSpd									; if no other buttons pressed, branch ahead of all this
 		
-		and #$03										; mask out all others except left and right
+		and #Left_Dir | Right_Dir						; mask out all others except left and right
 		beq SetRunSpd									; if not pressing any directions, don't play the skidding animation
 		
 		cmp Player_MovingDir							; check against moving direction
@@ -14411,7 +14398,7 @@ NoJSFnd:
 
 HandlePipeEntry:
 		lda Up_Down_Buttons								; check saved controller bits from earlier
-		and #%00000100									; for pressing down
+		and #Down_Dir									; for pressing down
 		beq ExPipeE										; if not pressing down, branch to leave
 
 		lda $00
@@ -14504,6 +14491,7 @@ NXSpd:
 		sty SideCollisionTimer							; set timer of some sort
 
 		ldy #$00
+		sty Player_X_Speed								; nullify player's horizontal speed
 
 		cmp #$00										; if value set in A not set to $ff,
 		bpl PlatF										; branch ahead, do not decrement Y
@@ -14527,10 +14515,6 @@ ExIPM:
 		eor #$ff
 		and Player_CollisionBits						; mask out bit that was set here
 		sta Player_CollisionBits						; store to clear bit
-
-		ldy #$00
-		sty Player_X_Speed								; nullify player's horizontal speed
-		sty Player_X_MoveForce							; and horizontal movement force
 		rts
 
 ; --------------------------------

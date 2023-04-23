@@ -74,6 +74,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
 + [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.
 + [x] Status bar updates which only change the score will no longer include the coin display. (reduces risk of VRAM buffer overflow)
++ [x] Sprite 0 (used for the status bar scroll split) is better hidden, and the scroll split timing has been adjusted to account for this.
 + [x] RenderUnderPart now does the row check at the start of the loop to prevent out-of-bounds writes.
 + [x] Tiles with the coin palette will now always be overwritten in RenderUnderPart. (instead of only coin ? blocks)
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
