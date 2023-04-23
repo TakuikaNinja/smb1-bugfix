@@ -2408,8 +2408,8 @@ NotUpDown:
 
 SSMask:
 		tya												; get input back from Y
-		and #$ff ^ (#Select_Button | #Start_Button)		; store without select
-		sta SavedJoypadBits,x							; or start bits
+		and <~(#Select_Button | #Start_Button)			; store without select or start bits
+		sta SavedJoypadBits,x
 
 NoSSMask:
 		inx												; increment joypad
@@ -6354,7 +6354,7 @@ GetPlayerAnimSpeed:
 
 ChkSkid:
 		lda SavedJoypadBits								; get controller bits
-		and #$ff ^ #A_Button							; mask out A button
+		and <~(#A_Button)								; mask out A button (< required since d7 is set)
 		beq SetAnimSpd									; if no other buttons pressed, branch ahead of all this
 		
 		and #Left_Dir | Right_Dir						; mask out all others except left and right
