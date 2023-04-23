@@ -203,7 +203,7 @@ E_GroundArea22:
 
 ; level 1-2
 E_UndergroundArea1:
-	.db $0a, $86, $1a, $06, $db, $06, $de, $c2, $02, $f0, $3b ; adjust Y coordinate of first Goomba/Buzzy Beetle to compensate for different air movement
+	.db $0a, $b9, $db, $86, $de, $c2, $02, $f0, $3b ; use duo for first 2 Goomba/Buzzy Beetles to compensate for air movement
 	.db $bb, $80, $eb, $06, $0b, $86, $93, $06, $f0, $39
 	.db $0f, $06, $60, $b8, $1b, $86, $a0, $b9, $b7, $27
 	.db $bd, $27, $2b, $83, $a1, $26, $a9, $26, $ee, $25, $0b
