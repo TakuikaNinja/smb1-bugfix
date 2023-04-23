@@ -5201,6 +5201,9 @@ ScrollHandler:
 		cmp #$0b
 		beq InitScrlAmt									; branch to init scroll if so
 		
+		lda TimerControl								; is the timer control set?
+		bne InitScrlAmt									; branch to init scroll if so
+		
 		lda Player_X_Scroll								; load scroll speed
 		clc
 		adc Platform_X_Scroll							; add value used by left/right platforms
@@ -5477,26 +5480,19 @@ SaveJoyp:
 		beq SizeChk										; if not, branch
 		
 		lda Player_State								; check player's state
-		bne SizeChk										; if not on the ground, branch
+		ora PlayerSize									; and size
+		bne SizeChk										; branch if either has bits set
 		
-		lda PlayerSize
-		bne SizeChk
-		
-		lda #$00										; don't press left and right
-		sta Left_Right_Buttons							; if we're crouching
+		sta Left_Right_Buttons							; don't press left and right if we're crouching on terrain
 
 SizeChk:
 		jsr PlayerMovementSubs							; run movement subroutines
-		ldy PlayerSize									; is player small?
-		bne ChkMoveDir									; if so, branch ahead
-		
-		ldy CrouchingFlag								; check for if crouching
-		beq ChkMoveDir									; if not, branch ahead
-		
-		ldy #$02										; if big and crouching, load y with 2
+		lda CrouchingFlag								; get crouching flag bits ($04 if big & crouching, $00 otherwise)
+		lsr												; shift right ($02 or $00 now)
+		ora PlayerSize									; add player size bits ($01 if small)
 
 ChkMoveDir:
-		sty Player_BoundBoxCtrl							; set contents of Y as player's bounding box size control
+		sta Player_BoundBoxCtrl							; set contents of A as player's bounding box size control
 		
 		lda #$01										; set moving direction to right by default
 		ldy Player_X_Speed								; check player's horizontal speed
@@ -5896,9 +5892,7 @@ PlayerMovementSubs:
 		bne ProcMove									; if not on the ground, branch
 		
 		lda Up_Down_Buttons								; load controller bits for up and down
-		and #%00000100									; single out bit for down button
-		lsr
-		lsr
+		and #Down_Dir									; single out bit for down button
 
 SetCrouch:
 		sta CrouchingFlag								; store value in crouch flag
