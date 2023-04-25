@@ -16,15 +16,6 @@
 ; ----------------------------------------------------------------------------------------------------------------------------------
 
 SoundEngine:
-		lda OperMode									; are we in title screen mode?
-		bne SndOn
-
-		sta SND_MASTERCTRL_REG							; if so, disable sound and leave
-		rts
-
-; ----------------------------------------------------------------------------------------------------------------------------------
-
-SndOn:
 		lda #$ff
 		sta JOYPAD_PORT2								; disable irqs and set frame counter mode???
 		
@@ -115,9 +106,14 @@ SkipPIn:
 ; ----------------------------------------------------------------------------------------------------------------------------------
 
 RunSoundSubroutines:
+		lda OperMode									; if on title screen,
+		beq NoSFX										; skip SFX
+		
 		jsr Square1SfxHandler							; play sfx on square channel 1
 		jsr Square2SfxHandler							; '''''' square channel 2
 		jsr NoiseSfxHandler								; '''''' noise channel
+
+NoSFX:
 		jsr MusicHandler								; play music on all channels
 		
 		lda #$00										; clear the music queues
@@ -919,6 +915,9 @@ HandleSquare2Music:
 		bne Squ2LengthHandler							; otherwise it is length data
 
 EndOfMusicData:
+		lda OperMode									; if on title screen,
+		beq EndPlayback									; do not loop
+		
 		lda EventMusicBuffer							; check secondary buffer for time running out music
 		cmp #TimeRunningOutMusic
 		bne NotTRO

@@ -21,8 +21,10 @@ Start:
 		ldx #$ff										; reset stack pointer
 		txs
 		inx												; now X = 0
-		stx PPU_CTRL_REG2								; disable NMI
 		stx SND_DELTA_REG								; disable DMC IRQs
+		
+		lda #%00000110									; disable NMIs
+		sta PPU_CTRL_REG2								; and turn off clipping for OAM and background
 
 		bit PPU_STATUS									; clear vblank flag as it is unknown after reset
 
@@ -66,9 +68,6 @@ ColdBoot:
 VBlank2:
 		bit PPU_STATUS									; wait another frame until PPU registers are available
 		bpl VBlank2										; once this terminates, carry on with game init
-
-		lda #%00000110
-		sta PPU_CTRL_REG2								; turn off clipping for OAM and background
 
 		jsr MoveAllSpritesOffscreen
 		jsr InitializeNameTables						; initialize both name tables
@@ -161,7 +160,7 @@ ScreenOff:
 		and #%11100111									; disable screen for now
 		sta PPU_CTRL_REG2
 		
-		ldx PPU_STATUS									; reset flip-flop and reset scroll registers to zero
+		bit PPU_STATUS									; reset flip-flop and reset scroll registers to zero
 		lda #$00
 		jsr InitScroll
 		sta PPU_SPR_ADDR								; reset spr-ram address register
@@ -629,14 +628,14 @@ ExitIcon:
 ; -------------------------------------------------------------------------------------
 
 DemoActionData:
-	.db $01, $80, $02, $81, $41, $80, $01
-	.db $42, $c2, $02, $80, $41, $c1, $41, $c1
-	.db $01, $c1, $01, $02, $80, $00
+	.db $01, $80, $02, $81, $41, $82, $41
+	.db $42, $c1, $01, $c2, $41, $c1, $41, $c1
+	.db $01, $c1, $01, $02, $82, $00
 
 DemoTimingData:
-	.db $9b, $10, $18, $05, $2c, $20, $24
-	.db $15, $5a, $10, $20, $28, $30, $20, $10
-	.db $80, $20, $30, $30, $01, $ff, $00
+	.db $9b, $10, $18, $05, $1c, $20, $24
+	.db $1d, $2a, $10, $30, $28, $30, $30, $10
+	.db $50, $50, $50, $07, $07, $ff, $00
 
 DemoEngine:
 		ldx DemoAction									; load current demo action
@@ -697,7 +696,7 @@ SetupVictoryMode:
 
 		lda #EndOfCastleMusic
 		sta EventMusicQueue								; play win castle music
-		jmp IncModeTask_B								; jump to set next major task in victory mode
+		jmp IncModeTask_A								; jump to set next major task in victory mode
 
 ; -------------------------------------------------------------------------------------
 
@@ -779,17 +778,14 @@ FinishedMusic:
 
 VictoryMusicSet:
 		cmp #$06										; < 6?
-		bcc ThankPlayer									; if so branch to print message
-		bcs IncMsgCounter								; otherwise branch ahead [unconditional branch]
+		bcs IncMsgCounter								; if not branch ahead
+		
+	.db $24												; [skip 1 byte]
 
 Retainer:
 		plp												; get rid of flags on stack
 
 ThankPlayer:
-		tay												; put primary message counter into Y
-
-PrintMsg:
-		tya												; put primary message counter in A
 		clc
 		adc #$07										; add 7 to get to victory messages
 		jsr WriteGameText								; and write game text
@@ -1022,47 +1018,34 @@ InitScreen:
 		lda OperMode
 		beq NextSubtask									; if mode still 0, do not load
 		
-		ldx #$03										; into buffer pointer
+		lda #$03										; into buffer pointer
 		bne SetVRAMAddr_A								; [unconditional branch]
 
 ; -------------------------------------------------------------------------------------
 
 SetupIntermediate:
 		lda BackgroundColorCtrl							; save current background color control
-		pha												; and player status to stack
-		
-		lda PlayerStatus
-		pha
-		
-		lda #$00										; set background color to black
-		sta PlayerStatus								; and player status to not fiery
+		pha												; to stack
 		
 		lda #$02										; this is the ONLY time background color control
 		sta BackgroundColorCtrl							; is set to less than 4
-		
 		jsr GetPlayerColors
 		
-		pla												; we only execute this routine for
-		sta PlayerStatus								; the intermediate lives display
-		
 		pla												; and once we're done, we return bg
-		sta BackgroundColorCtrl							; color ctrl and player status from stack
-		bpl NextSubtask									; then move onto the next task [unconditional branch]
+		sta BackgroundColorCtrl							; color ctrl from stack
+
+NextSubtask:
+		jmp IncSubtask									; then move onto the next task
 
 ; -------------------------------------------------------------------------------------
 
-AreaPalette:
-	.db $01, $02, $03, $04
-
 GetAreaPalette:
-		ldy AreaType									; select appropriate palette to load
-		ldx AreaPalette,y								; based on area type
+		ldy AreaType									; get area type
+		iny												; add 1
+		tya												; and set as buffer pointer
 
 SetVRAMAddr_A:
-		stx VRAM_Buffer_AddrCtrl						; store offset into buffer control
-
-NextSubtask:
-		jmp IncSubtask									; move onto next task
+		jmp SetVRAMAddr									; set buffer pointer and leave
 
 ; -------------------------------------------------------------------------------------
 ; $00 - used as temp counter in GetPlayerColors
@@ -1151,7 +1134,7 @@ GetAlternatePalette1:
 		
 		lda #$0b										; if found, load appropriate palette
 
-SetVRAMAddr_B:
+SetVRAMAddr:
 		sta VRAM_Buffer_AddrCtrl
 
 NoAltPal:
@@ -1256,7 +1239,7 @@ GameOverInter:
 
 		lda #$04										; output game over screen to buffer
 		jsr WriteGameText
-		jmp IncModeTask_B
+		jmp IncModeTask_A								; increment task and leave
 
 NoInter:
 		lda #$08										; set for specific task and leave
@@ -1324,7 +1307,7 @@ ChkHiByte:
 		bcc OutputTScr									; if not, loop back and do another
 
 		lda #$05										; set buffer transfer control to $0300,
-		jmp SetVRAMAddr_B								; increment task and exit
+		jmp SetVRAMAddr									; increment task and exit
 
 ; -------------------------------------------------------------------------------------
 
@@ -1354,8 +1337,7 @@ WriteTopScore:
 		jsr UpdateNumber
 
 IncModeTask_B:
-		inc OperMode_Task								; move onto next mode
-		rts
+		jmp IncModeTask_A								; increment task and leave
 
 ; -------------------------------------------------------------------------------------
 ; $fe is reserved to denote the player's name in the text data.
@@ -2886,11 +2868,16 @@ SkipByte:
 MusicSelectData:
 	.db WaterMusic, GroundMusic, UndergroundMusic, CastleMusic
 	.db CloudMusic, PipeIntroMusic
+	.db CloudMusic | WaterMusic
 
 GetAreaMusic:
-		lda OperMode									; if in title screen mode, leave
-		beq ExitGetM
+		lda OperMode									; if not in title screen mode, branch ahead
+		bne NotTitle
 		
+		ldy #$06										; otherwise set music to Cloud + Water theme
+		bne StoreMusic									; [uncomditional branch]
+		
+NotTitle:
 		lda AltEntranceControl							; check for specific alternate mode of entry
 		cmp #$02										; if found, branch without checking starting position
 		beq ChkAreaType									; from area object data header
@@ -3042,18 +3029,18 @@ HalfwayPageNybbles:
 	.db $00, $00
 
 PlayerLoseLife:
-		inc DisableScreenFlag							; disable screen and sprite #0 check
+		inc DisableScreenFlag							; disable screen
 		
 		lda #Silence									; silence music
 		sta EventMusicQueue
-
-		lda #$00
-		sta Sprite0HitDetectFlag
 		
+		lda #$00										; disable sprite #0 hit
+		sta Sprite0HitDetectFlag
+
 		dec NumberofLives								; take one life from player
 		bne StillInGame									; if player still has lives, branch
 		
-		sta OperMode_Task								; initialize mode task,
+		sta OperMode_Task								; otherwise initialize mode task (A is still 0)
 
 		lda #GameOverModeValue							; switch to game over mode
 		sta OperMode									; and leave
@@ -5197,10 +5184,6 @@ ExitEng:
 ; -------------------------------------------------------------------------------------
 
 ScrollHandler:
-		lda GameEngineSubroutine						; is the death routine running?
-		cmp #$0b
-		beq InitScrlAmt									; branch to init scroll if so
-		
 		lda TimerControl								; is the timer control set?
 		bne InitScrlAmt									; branch to init scroll if so
 		
@@ -5228,11 +5211,12 @@ NoCollision:
 		sbc #$70										; otherwise subtract threshold (carry already set)
 		adc Player_X_Scroll								; add current scroll amount + carry (always set)
 		lsr												; and shift right once
+		and #$0f										; then mask out upper nybble
 		tay												; to use as scroll amount
 	.db $2c												; [skip 2 bytes]
 
 SpeedUp:
-		ldy #$03										; force scroll to recenter camera
+		ldy #$04										; force scroll to recenter camera
 
 ScrollScreen:
 		tya
@@ -6600,6 +6584,9 @@ FireballExplosion:
 		jmp DrawExplosion_Fireball
 
 BubbleCheck:
+		lda TimerControl								; check master timer control
+		bne ExitBubl									; if set, branch to leave
+		
 		lda PseudoRandomBitReg+1,x						; get part of LSFR
 		and #$01
 		sta $07											; store pseudorandom bit here
@@ -6670,21 +6657,21 @@ BubbleTimerData:
 
 RunGameTimer:
 		lda OperMode									; get primary mode of operation
-		beq ExGTimer									; branch to leave if in title screen mode
+		beq ExitBubl									; branch to leave if in title screen mode
 		
 		lda GameEngineSubroutine
 		cmp #$08										; if routine number less than eight running,
-		bcc ExGTimer									; branch to leave
+		bcc ExitBubl									; branch to leave
 		
 		cmp #$0b										; if running death routine,
-		beq ExGTimer									; branch to leave
+		beq ExitBubl									; branch to leave
 		
 		lda Player_Y_HighPos
 		cmp #$02										; if player below the screen,
-		bpl ExGTimer									; branch to leave regardless of level type
+		bpl ExitBubl									; branch to leave regardless of level type
 		
 		lda GameTimerCtrlTimer							; if game timer control not yet expired,
-		bne ExGTimer									; branch to leave
+		bne ExitBubl									; branch to leave
 		
 		lda GameTimerDisplay
 		ora GameTimerDisplay+1							; otherwise check game timer digits
@@ -6717,21 +6704,17 @@ ResGTCtrl:
 TimeUpOn:
 		sta PlayerStatus								; init player status (note A will always be zero here)
 		jsr GetPlayerColors								; update the colors (fiery palette fix)
-		lda #$00										; load 0 and...
-		jsr ForceInjury									; do sub to kill the player (note player is small here)
 		inc GameTimerExpiredFlag						; set game timer expiration flag
-
-ExGTimer:
-		rts												; leave
+		jmp ForceInjury									; do sub to kill the player (note player is small here)
 
 ; -------------------------------------------------------------------------------------
 
 WarpZoneObject:
 		lda ScrollLock									; check for scroll lock flag
-		beq ExGTimer									; branch if not set to leave
+		beq ExitWh										; branch if not set to leave
 		
 		lda Player_Y_Position							; check to see if player's vertical coordinate is 0
-		bne ExGTimer									; if not, branch to leave (scroll lock fix)
+		bne ExitWh										; if not, branch to leave (scroll lock fix)
 		
 		sta ScrollLock									; otherwise nullify scroll lock flag
 		jmp EraseEnemyObject							; kill this object
@@ -6863,10 +6846,10 @@ FlagpoleRoutine:
 		stx ObjectOffset								; to special use slot
 
 		lda Enemy_ID,x
-		cmp #FlagpoleFlagObject							; if flagpole flag not found,
-		beq ContFlagP									; branch to leave
+		cmp #FlagpoleFlagObject							; if flagpole flag found,
+		beq ContFlagP									; branch ahead to continue
 
-		rts
+		rts												; otherwise leave
 
 ; -------------------------------------------------------------------------------------
 
@@ -6925,17 +6908,17 @@ Jumpspring_Y_PosData:
 JumpspringHandler:
 		jsr GetEnemyOffscreenBits						; get offscreen information
 		
-		lda TimerControl								; check master timer control
-		bne DrawJSpr									; branch to last section if set
-		
 		lda JumpspringAnimCtrl							; check jumpspring frame control
 		beq DrawJSpr									; branch to last section if not set
 
-		tay
-		dey												; subtract one from frame control,
-		tya												; the only way a poor nmos 6502 can
+		tay												; transfer frame control to Y
+		dey												; subtract one from frame control
+		lda TimerControl								; check master timer control
+		bne PosJSpr										; if set, branch to set jumpspring position
+		
+		tya												; move frame control back to A
 		and #%00000010									; mask out all but d1, original value still in Y
-		bne DownJSpr									; if set, branch to move player up
+		bne DownJSpr									; if d1 set, branch to move player up
 
 		inc Player_Y_Position
 		inc Player_Y_Position							; move player's vertical position down two pixels
@@ -7048,6 +7031,9 @@ VineObjectHandler:
 		lda VineHeight
 		cmp VineHeightData,y							; if vine has reached certain height,
 		beq RunVSubs									; branch ahead to skip this part
+
+		lda TimerControl								; check master timer control
+		bne RunVSubs									; if set, branch ahead to skip this part
 
 		lda FrameCounter								; get frame counter
 		lsr												; shift d1 into carry
@@ -7523,6 +7509,9 @@ ProcJumpCoin:
 		beq MiscLoopBack								; and move onto next slot [unconditional branch]
 
 JCoinRun:
+		lda TimerControl								; if master timer control set,
+		bne RunJCSubs									; branch to skip moving coin
+		
 		txa
 		clc												; add 13 bytes to offset for next subroutine
 		adc #$0d
@@ -7550,7 +7539,6 @@ JCoinRun:
 RunJCSubs:
 		jsr RelativeMiscPosition						; get relative coordinates
 		jsr GetMiscOffscreenBits						; get offscreen information
-;		jsr GetMiscBoundBox								; get bounding box coordinates (why?)
 		jsr JCoinGfxHandler								; draw the coin or floatey number
 
 MiscLoopBack:
@@ -7692,11 +7680,10 @@ PowerUpObjHandler:
 
 		lda Enemy_State+5								; check power-up object's state
 		beq ExitPUp										; if not set, branch to leave
-
 		bpl GrowThePowerUp								; if d7 not set, branch ahead to skip this part
 
-		lda TimerControl								; if master timer control set,
-		bne RunPUSubs									; branch ahead to enemy object routines
+		lda TimerControl								; check master timer control
+		bne RunPUSubs									; if set, branch to run other power-up subroutines
 
 		lda PowerUpType									; check power-up type
 		beq ShroomM										; if normal mushroom, branch ahead to move it
@@ -7716,7 +7703,10 @@ ShroomM:
 		jsr EnemyToBGCollisionDet						; deal with collisions
 		jmp RunPUSubs									; run the other subroutines
 
-GrowThePowerUp:
+GrowThePowerUp:	
+		lda TimerControl								; check master timer control set
+		bne ChkPUSte									; if set, branch ahead
+		
 		lda FrameCounter								; get frame counter
 		and #$03										; mask out all but 2 LSB
 		bne ChkPUSte									; if any bits set here, branch
@@ -8091,6 +8081,9 @@ BlockObjectsCore:
 		dey												; decrement Y to check for solid block state
 		beq BouncingBlockHandler						; branch if found, otherwise continue for brick chunks
 
+		lda TimerControl								; check for master timer control
+		bne SusBrickChunks								; if set, branch to skip movement
+
 		jsr ImposeGravityBlock							; do sub to impose gravity on one block object object
 		jsr MoveObjectHorizontally						; do another sub to move horizontally
 
@@ -8099,6 +8092,7 @@ BlockObjectsCore:
 		jsr ImposeGravityBlock							; do sub to impose gravity on other block object
 		jsr MoveObjectHorizontally						; do another sub to move horizontally
 
+SusBrickChunks:
 		jsr BlockObjCommon								; get block object offset, relative coordinates, and offscreen information
 		jsr DrawBrickChunks								; draw the brick chunks
 
@@ -8122,7 +8116,12 @@ ChkTop:
 		bcs KillBlock									; otherwise do unconditional branch to kill it
 
 BouncingBlockHandler:
+		lda TimerControl								; check for master timer control
+		bne NoBlockJump									; if set, branch to skip movement
+
 		jsr ImposeGravityBlock							; do sub to impose gravity on block object
+		
+NoBlockJump:
 		jsr BlockObjCommon								; get block object offset, relative coordinates, and offscreen information
 		jsr DrawBlock									; draw the block
 		
@@ -8347,7 +8346,7 @@ ImposeGravityBlock:
 		lda #$50										; set movement amount here
 		sta $00
 
-		lda #$08											; get maximum speed
+		lda #$08										; get maximum speed
 
 ImposeGravitySprObj:
 		sta $02											; set maximum speed here
@@ -8382,7 +8381,7 @@ SetDplSpd:
 
 RedPTroopaGrav:
 		jsr ImposeGravity								; do a sub to move object gradually
-
+		
 		ldx ObjectOffset								; get enemy object offset and leave
 		rts
 
@@ -8393,7 +8392,7 @@ RedPTroopaGrav:
 
 ImposeGravity:
 		pha												; push value to stack
-
+		
 		lda SprObject_YMF_Low,x
 		clc												; add value in movement force to contents of low byte
 		adc SprObject_Y_MoveForce,x
@@ -10410,7 +10409,6 @@ SetShim:
 
 MoveNormalEnemy:
 		ldy #$00										; init Y to leave horizontal movement as-is
-
 		lda Enemy_State,x
 		and #%01000000									; check enemy state for d6 set, if set skip
 		bne FallE										; to move enemy vertically, then horizontally if necessary
@@ -13022,8 +13020,7 @@ UpToSuper:
 		lda #$09										; set value to be used by subroutine tree (super)
 
 UpToFiery:
-		ldy #$02										; set value to be used as new player state (item jump fix)
-		jmp SetPRout									; set values to stop certain things in motion
+		jmp SetKRout									; set values to stop certain things in motion
 
 ; --------------------------------
 
@@ -13175,16 +13172,13 @@ ChkInj2:
 		cmp Enemy_Y_Position,x							; compare modified player's position to enemy's position
 		bcc EnemyStomped								; branch if this player's position above (less than) enemy's
 
-ChkETmrs:
 		lda StompTimer									; check stomp timer
 		bne EnemyStomped								; branch if set
-		lda InjuryTimer									; check to see if injured invincibility timer still
-		bne ExInjColRoutines							; counting down, and branch elsewhere to leave if so
 
 InjurePlayer:
-		lda InjuryTimer									; check again to see if either of the two
-		ora StarInvincibleTimer							; invincibility timers have expired, branch if not
-		bne ExInjColRoutines							; at zero, and branch to leave if so
+		lda InjuryTimer									; check to see if either of the two
+		ora StarInvincibleTimer							; invincibility timers have expired,
+		bne ExInjColRoutines							; and branch to leave if so
 
 ForceInjury:
 		ldx PlayerStatus								; check player's status
@@ -13213,17 +13207,14 @@ ForceInjury:
 		lda #$0c										; if so, change the subroutine (fiery)
 
 SetKRout:
-		ldy #$01										; set new player state
-
-SetPRout:
 		sta GameEngineSubroutine						; load new value to run subroutine on next frame
-		sty Player_State								; store new player state
 
 		ldy #$ff
 		sty TimerControl								; set master timer control flag to halt timers
 
 		iny
-		sty ScrollAmount								; initialize scroll speed
+		sty Player_X_Scroll								; clear residual scroll
+		sty ScrollAmount
 
 ExInjColRoutines:
 		ldx ObjectOffset								; get enemy offset
@@ -13238,12 +13229,13 @@ KillPlayer:
 
 		inx
 		stx EventMusicQueue								; set event music queue to death music
+		stx Player_State								; set jumping state for the death animation
 
 		lda #$fc
-		sta Player_Y_Speed								; set new vertical speed
+		sta Player_Y_Speed								; set new vertical speed for the death animation
 
-		lda #$0b										; set subroutine to run on next frame
-		bne SetKRout									; branch to set player's state and other things [unconditional]
+		lda #$0b										; set subroutine to run on next frame (player death)
+		bne SetKRout									; set values to stop certain things in motion [unconditional]
 
 StompedEnemyPtsData:
 	.db $02, $06, $05, $06
@@ -14477,7 +14469,7 @@ RImpd:
 		ldx #$02										; return $02 to X
 		cpy #$01										; if player moving to the right,
 		bpl ExIPM										; branch to invert bit and leave
-
+		
 		lda #$01										; otherwise load A with value to be used here
 
 NXSpd:
@@ -14494,7 +14486,7 @@ NXSpd:
 
 PlatF:
 		sty $00											; store Y as high bits of horizontal adder
-		sta CollisionAdder
+		sta CollisionAdder								; set collision adder for scroll handler
 
 		clc
 		adc Player_X_Position							; add contents of A to player's horizontal
@@ -15829,10 +15821,16 @@ JCoinGfxHandler:
 		sta Sprite_X_Position,y
 		sta Sprite_X_Position+4,y						; store as X coordinate for first and second sprites
 
+		ldx #$00										; load default offset
+		lda TimerControl								; if master timer control set,
+		bne SusJCoin									; branch to force this offset
+
 		lda FrameCounter								; get frame counter
 		lsr												; divide by 2 to alter every other frame
 		and #%00000011									; mask out d2-d1
 		tax												; use as graphical offset
+
+SusJCoin:
 		lda JumpingCoinTiles,x							; load tile number
 
 		iny												; increment OAM data offset to write tile numbers
@@ -15913,9 +15911,18 @@ PUpDrawLoop:
 
 		sta $00											; store power-up type here now
 
+		lda TimerControl								; check the master timer control
+		beq NoPalReset									; if not set, branch ahead to use frame counter
+		
+		lda #02											; otherwise force $02
+		bne PalReset									; [unconditional branch]
+
+NoPalReset:
 		lda FrameCounter								; get frame counter
 		lsr												; divide by 2 to change colors every two frames
 		and #%00000011									; mask out all but d1 and d0 (previously d2 and d1)
+		
+PalReset:
 		ora Enemy_SprAttrib+5							; add background priority bit if any set
 		sta Sprite_Attributes,y							; set as new palette bits for top left and
 		sta Sprite_Attributes+4,y						; top right sprites for fire flower and star
@@ -16826,6 +16833,13 @@ DChunks:
 		iny												; increment to start with tile bytes in OAM
 		jsr DumpFourSpr									; do sub to dump tile number into all four sprites
 
+		lda TimerControl								; check the master timer control
+		beq NotSet										; if not set, branch ahead to use frame counter
+		
+		lda #$00										; otherwise force no flip
+	.db $2c												; [skip 2 bytes]
+
+NotSet:
 		lda FrameCounter								; get frame counter
 		jsr MathASL4									; move low nybble to high
 		and #$c0										; get what was originally d3-d2 of low nybble
@@ -16903,6 +16917,13 @@ DrawFireball:
 		sta Sprite_X_Position,y							; store as sprite X coordinate, then do shared code
 
 DrawFirebar:
+		lda TimerControl								; check master timer control
+		beq UseFC										; if not set, branch ahead to use frame counter
+
+		lda #$00										; otherwise force tile $64
+	.db $2c												; [skip 2 bytes]
+
+UseFC:
 		lda FrameCounter								; get frame counter
 		lsr												; divide by four
 		lsr
@@ -17279,7 +17300,7 @@ NPROffscr:
 ; -------------------------------------------------------------------------------------
 
 IntermediatePlayerData:
-	.db $58, $01, $00, $60, $ff, $04
+	.db $68, $01, $00, $60, $ff, $02					; use 2 sprite rows instead of 4
 
 DrawPlayer_Intermediate:
 		ldx #$05										; store data into zero page memory
@@ -17291,14 +17312,27 @@ PIntLoop:
 		dex
 		bpl PIntLoop									; do this until all data is loaded
 
-		ldx #$b8										; load offset for small standing
+		ldx #$bc										; load offset for bottom half of small standing
 		ldy #$04										; load sprite data offset
+		
+		lda PlayerSize									; if player is small,
+		php												; (save zero flag)
+		bne PIntSml										; branch ahead
+		
+		ldx #$c8										; load offset for top half of big standing
+		
+PIntSml:
 		jsr DrawPlayerLoop								; draw player accordingly
 
-		lda Sprite_Attributes+36						; get empty sprite attributes
+		plp												; if player is not small,
+		beq NotSmall									; branch ahead
+		
+		lda Sprite_Attributes+12						; otherwise get attributes from bottom-left sprite
 		ora #%01000000									; set horizontal flip bit for bottom-right sprite
-		sta Sprite_Attributes+32						; store and leave
-		rts
+		sta Sprite_Attributes+16						; store
+
+NotSmall:
+		rts												; leave
 
 ; -------------------------------------------------------------------------------------
 ; $00-$01 - used to hold tile numbers, $00 also used to hold upper extent of animation frames

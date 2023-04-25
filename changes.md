@@ -2,7 +2,7 @@ This file is based on the changes originally done by Ribiveer.
 Changes marked with '+' are new additions/contributions that were not part of Ribiveer's original set of changes.
 
 ## Music Changes
-- [ ] There is now music on the title screen: an alternate version of the underwater theme.
+- [x] There is now music on the title screen: an alternate version of the underwater theme.
 - [x] The final victory song has been extended, with a B-section and an ending. (ported over from Vs.SMB; may need to adjust further)
 + [x] Level music now uses a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes are left unchanged.
 
@@ -17,8 +17,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 ## Bug Fixes & Small Tweaks
 + [x] Scroll unlock object in underground warp zone now works as intended. (no more minus world)
 + [x] An erroneous increment of the warp zone value has been removed. (1-2 warpzone pipe destination stays at 1-2 exit until warp zone loads)
-+ [x] The positions of warp zone triggers have been adjusted so that they are now loaded before the player can enter the pipes early. (1-2, 4-2)
-+ [x] Warp zone triggers and flagpoles will no longer set the scroll lock. Extra scroll lock objects have been added to compensate for this. (also prevents running past the flagpole)
++ [x] Flagpoles will no longer set the scroll lock. Instead, extra scroll lock objects have been added to prevent the player from running past the flagpole.
 + [x] Scroll lock objects now explicitly set the scroll lock instead of toggling it.
 - [x] Lakitus now throw their spinies as originally intended.
 + [x] The initial number of lives is now set to 5 like in later entries, to compensate for the difficulty change.
@@ -26,13 +25,13 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Falling while crouching now keeps your sprite crouched. Additionally, the down input now nullifies left/right inputs while crouching on the ground.
 - [x] While underwater, crouching no longer messes up the hitbox.
 - [x] Small Mario's walking animation now flows better.
-- [x] Stars are now guaranteed to jump out of their blocks, as opposed to sometimes falling down.
+- [x] Super Stars are now guaranteed to jump out of their blocks, as opposed to sometimes falling down.
 + [x] The lives system now uses the zero flag instead of the negative flag for game over detection. (no more 128 lives glitch, even if you could reach it)
 - [x] The lives counter now displays the number of lives above 9 like normal, until the 10's digit exceeds 9 in which it will be displayed as 👑 (crown).
 - [x] Lives are now capped at 👑👑 (two crowns) to prevent overflows.
-- [ ] The lives screen now properly reflects Mario's power-up state.
-- [x] Player status is now correctly set to falling while collecting a power-up. (no more item jump)
-- [x] Getting the flagpole stops the star invincibility, to prevent audio glitches.
+- [x] The lives screen now properly reflects Mario's power-up state.
+- [x] Player status is now correctly maintained while collecting a power-up or getting injured. (no more item jump)
+- [x] Getting the flagpole stops the Super Star invincibility, to prevent audio glitches.
 - [x] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
 - [x] Holding the jump button no longer makes Mario jump while entering an area.
 + [x] Getting hit on the same frame as touching the axe will no longer damage Mario. (no more Small Fire Mario, sorry)
@@ -43,6 +42,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The enemy's high Y coordinate is now checked instead of relying on addition overflow in SubtEnemyYPos. (e.g. enemies will no longer hover when stomped in pits)
 + [x] BlockBufferCollision will now correctly clamp the Y tile coordinate to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
 + [x] When Mario enters/exits a warp-pipe or falls into a pit, the gameplay will now halt in the same manner as being killed by an enemy. (prevents getting hit)
++ [x] Power-ups, jumping coins/blocks, shattered brick chunks, fireballs, bubbles, springboards, and growing vines will now properly halt in the above situations.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] An off-by-one error in the enemy ID has been fixed in 5-3 to properly end the Bullet Bill frenzy. (moving platforms will now load consistently)
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
@@ -53,9 +53,9 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The underwater section of 8-4 now uses the grey colour scheme for better continuity within the level.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Green Cheep Cheeps now appear green underwater. (they are still called grey internally)
-+ [x] Stomped Goombas can no longer be defeated again using a star or shell.
++ [x] Stomped Goombas can no longer be defeated again using a Super Star or shell.
 + [x] Mario can no longer stay inside enemies after the injury timer has expired.
-- [x] When entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch.
+- [x] After entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch. (hides visible pixels)
 + [x] When entering a vertical warp-pipe, Mario will now always stand still like in later entries.
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
 + [x] The locations of some warp destination change and loop command triggers have been tweaked. (no more wrong warps; notably 4-2, 8-4)
@@ -67,7 +67,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Tweaked parameters of the PAL optimized Cheep Cheep code to better replicate the behavior of the NTSC version. (jump-height and gravity)
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] The shattered brick sprites will now appear even when the brick block is partially offscreen.
-+ [x] Hitting partially offscreen enemies from under blocks will no longer cause Koopas to appear.
++ [x] Hitting enemies from under blocks near the left edge of the screen will no longer cause Koopas to appear.
 + [x] Made floatey numbers (the score sprites) stay within the screen better. (less position under/overflows)
 + [x] Mario's sprite will no longer be cut off when he is pushed against the left screen edge by blocks or platforms.
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
