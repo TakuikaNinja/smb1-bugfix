@@ -2359,8 +2359,11 @@ PortLoop:
 		cmp #$01
 		rol $01
 		bcc PortLoop									; loop until the ring counter sets the carry flag
+		
+		jsr MaskInput									; mask inputs for player 1
+		inx												; increment to player 2 and mask inputs
 
-MaskInputLoop:
+MaskInput:
 		lda $00,x										; get input from temp variable
 		tay												; back up input to Y
 
@@ -2394,9 +2397,6 @@ SSMask:
 		sta SavedJoypadBits,x
 
 NoSSMask:
-		inx												; increment joypad
-		cpx #$02										; have we finished joypad 2?
-		bne MaskInputLoop								; branch to loop if not
 		rts												; otherwise leave
 
 ; -------------------------------------------------------------------------------------
@@ -2875,7 +2875,7 @@ GetAreaMusic:
 		bne NotTitle
 		
 		ldy #$06										; otherwise set music to Cloud + Water theme
-		bne StoreMusic									; [uncomditional branch]
+		bne StoreMusic									; [unconditional branch]
 		
 NotTitle:
 		lda AltEntranceControl							; check for specific alternate mode of entry
@@ -4162,7 +4162,7 @@ NotTall:
 		
 		jsr GetAreaObjXPosition							; otherwise, obtain and save horizontal pixel coordinate
 		pha
-		jsr FindEmptyEnemySlot							; find an empty place on the enemy object buffer
+		jsr FindEmptyEnemySlot							; find an empty place on the enemy object buffer (force last slot if full)
 		pla
 		sta Enemy_X_Position,x							; then write horizontal coordinate for star flag
 		
@@ -8785,7 +8785,7 @@ CheckFrenzyBuffer:
 		cmp #$01
 		bne ExEPar										; if other value <> 1, leave
 
-		lda #VineObject									; otherwise put vine in enemy identifier
+		lda #VineObject									; otherwise put vine in enemy identifier to load its top half
 
 StrFre:
 		sta Enemy_ID,x									; store contents of frenzy buffer into enemy identifier value
@@ -8909,7 +8909,7 @@ InitEnemyRoutines:
 	.dw PlatLiftDown-1
 	.dw InitBowser-1
 	.dw NoInitCode-1									; possibly dummy value
-	.dw Setup_Vine-1
+	.dw Setup_Vine-1									; this call is for loading the top half
 
 	.dw NoInitCode-1									; for objects $30-$36
 	.dw NoInitCode-1
@@ -9880,16 +9880,20 @@ LakituChk:
 		cmp #Lakitu										; for lakitu
 		bne NextFSlot
 
-		lda #$01										; if found, set state
+		lda Enemy_State,y								; if found, check for defeated state (d5)
+		and #%00100000
+		bne NextFSlot									; if set, branch to skip setting state
+		
+		lda #$01										; otherwise, set state to make lakitu leave
 		sta Enemy_State,y
 
 NextFSlot:
 		dey												; move onto the next slot
 		bpl LakituChk									; do this until all slots are checked
 
-		lda #$00
-		sta EnemyFrenzyBuffer							; empty enemy frenzy buffer
-		sta Enemy_Flag,x								; disable enemy buffer flag for this object
+		iny												; now Y = 0
+		sty EnemyFrenzyBuffer							; empty enemy frenzy buffer
+		sty Enemy_Flag,x								; disable enemy buffer flag for this object
 
 ; --------------------------------
 
@@ -11277,7 +11281,7 @@ LdLDa:
 		sta $0001,y										; store in zero page
 
 		dey
-		bpl LdLDa										; do this until all values are stired
+		bpl LdLDa										; do this until all values are stored
 
 		jsr PlayerLakituDiff							; execute sub to set speed and create spinys
 
@@ -11816,6 +11820,9 @@ SetGfxF:
 		sta $00											; write first tile number
 
 		ldy #$02										; load attributes without vertical flip by default
+		lda TimerControl								; if master timer control flag set,
+		bne FlmeAt										; branch to skip frame counter check
+		
 		lda FrameCounter
 		and #%00000010									; invert vertical flip bit every 2 frames
 		beq FlmeAt										; if d1 not set, write default value
@@ -13161,7 +13168,7 @@ ChkForPlayerInjury:
 ChkInj:
 		lda #$14										; PAL bugfix: Vertical difference depends on the enemy
 
-		ldy Enemy_ID,x									; branch if enemy object < $07
+		ldy Enemy_ID,x									; branch if enemy object != $14 (flying cheep-cheep)
 		cpy #FlyingCheepCheep
 		bne ChkInj2
 
@@ -13505,13 +13512,17 @@ ProcEnemyCollisions:
 		and #%00100000									; if d5 is set in either state, or both, branch
 		bne ExitProcessEColl							; to leave and do nothing else at this point
 
+		lda Enemy_ID,x									; check second enemy identifier for hammer bro
+		cmp #HammerBro									; if hammer bro not in alt state, branch to continue
+		bne ContinueProc								; SMAS bugfix: do this check first
+		
+		lda #$00										; SMAS bugfix: otherwise clear hammer bro's state
+		sta Enemy_State,x								; this should make shell hits more reliable
+
+ContinueProc:
 		lda Enemy_State,x
 		cmp #$06										; if second enemy state < $06, branch elsewhere
 		bcc ProcSecondEnemyColl
-
-		lda Enemy_ID,x									; check second enemy identifier for hammer bro
-		cmp #HammerBro									; if hammer bro found in alt state, branch to leave
-		beq ExitProcessEColl
 
 		lda Enemy_State,y								; check first enemy state for d7 set
 		bpl ShellCollisions								; branch if d7 is clear

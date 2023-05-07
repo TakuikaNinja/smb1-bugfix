@@ -30,6 +30,7 @@ special thanks
 - Every speedrunner, glitch-hunter, researcher & wiki contributor - for extensively breaking, researching & documenting the games they love
 - Ribiveer - for originally doing some of the QoL improvements which got me interested in this project
 - NaotoNTP - for doing a massive formatting overhaul + moving the game logic out of NMI to improve lag frame handling
+- ShaneM, SMB2J-2Q, and other SMB1 hackers - for researching & providing some of the fixes
 
 wait, is that Rare rumour even true?
 ========================================

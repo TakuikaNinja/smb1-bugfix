@@ -42,9 +42,10 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The enemy's high Y coordinate is now checked instead of relying on addition overflow in SubtEnemyYPos. (e.g. enemies will no longer hover when stomped in pits)
 + [x] BlockBufferCollision will now correctly clamp the Y tile coordinate to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
 + [x] When Mario enters/exits a warp-pipe or falls into a pit, the gameplay will now halt in the same manner as being killed by an enemy. (prevents getting hit)
-+ [x] Power-ups, jumping coins/blocks, shattered brick chunks, fireballs, bubbles, springboards, and growing vines will now properly halt in the above situations.
++ [x] Power-ups, jumping coins/blocks, shattered brick chunks, Bowser's flames, fireballs, bubbles, springboards, and growing vines will now properly halt in the above situations.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] An off-by-one error in the enemy ID has been fixed in 5-3 to properly end the Bullet Bill frenzy. (moving platforms will now load consistently)
++ [x] The "end frenzy" object will now check if Lakitus are defeated before setting their states. (prevents instances of Lakitu revival)
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
 + [x] Coin Heavens (cloud levels accessed via vines) now have the cloud backdrop.
@@ -103,6 +104,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Red Paratroopas will now be properly demoted to Red Koopas when stomped.
 + [x] Stomped Goombas will now stay in midair, like later entries.
 + [x] Bullet Bills fired from cannons are now able to collide with enemies, including kicked shells. (notably 7-1, now you can farm lives there)
++ [x] Hammer Bros can now be defeated reliably using kicked shells.
 + [x] Jumping Green Paratroopas now move faster in Quest 2 and demote to the appropriate speed in Quest 2.
 + [x] Swimming Cheep Cheeps now move up and down farther after 5-3.
 + [x] Lakitus respawn more quickly after 5-3. Additionally, they will now always spawn at the correct height with the correct hitbox.
