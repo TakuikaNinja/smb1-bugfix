@@ -1,7 +1,7 @@
 ; music header offsets
 
 MusicHeaderData:
-	.db DeathMusHdr-MHD                          ; event music
+	.db DeathMusHdr-MHD									; event music
 	.db GameOverMusHdr-MHD
 	.db VictoryMusHdr-MHD
 	.db WinCastleMusHdr-MHD
@@ -10,7 +10,7 @@ MusicHeaderData:
 	.db TimeRunningOutHdr-MHD
 	.db SilenceHdr-MHD
 
-	.db GroundLevelPart1Hdr-MHD                  ; area music
+	.db GroundLevelPart1Hdr-MHD							; area music
 	.db WaterMusHdr-MHD
 	.db UndergroundMusHdr-MHD
 	.db CastleMusHdr-MHD
@@ -19,7 +19,7 @@ MusicHeaderData:
 	.db Star_CloudHdr-MHD
 	.db SilenceHdr-MHD
 
-	.db GroundLevelLeadInHdr-MHD                 ; ground level music layout
+	.db GroundLevelLeadInHdr-MHD						; ground level music layout
 	.db GroundLevelPart1Hdr-MHD, GroundLevelPart1Hdr-MHD
 	.db GroundLevelPart2AHdr-MHD, GroundLevelPart2BHdr-MHD, GroundLevelPart2AHdr-MHD, GroundLevelPart2CHdr-MHD
 	.db GroundLevelPart2AHdr-MHD, GroundLevelPart2BHdr-MHD, GroundLevelPart2AHdr-MHD, GroundLevelPart2CHdr-MHD
@@ -214,16 +214,16 @@ GroundM_P4BData:
 	.db $22, $22, $82, $2c, $2c, $22, $04
 
 DeathMusData:
-	.db $86, $04                                 ; death music share data with fourth part c of ground level music
+	.db $86, $04										; death music shares data with fourth part c of ground level music
 
 GroundM_P4CData:
 	.db $82, $2a, $36, $04, $36, $87, $36, $34, $30, $86, $2c, $04, $00
 
-	.db $00, $68, $6a, $6c, $45                  ; death music only
+	.db $00, $68, $6a, $6c, $45							; death music only
 
 	.db $a2, $31, $b0, $f1, $ed, $eb, $a2, $1d, $9c, $95
 
-	.db $86, $04                                 ; death music only
+	.db $86, $04										; death music only
 
 	.db $85, $22, $82, $22, $87, $22, $26, $2a, $84, $2c, $22, $86, $14
 
@@ -392,24 +392,26 @@ MusicLengthLookupTbl:
 	.db $36, $03, $09, $06, $12, $1b, $24, $0c
 	.db $24, $02, $06, $04, $0c, $12, $18, $08
 	.db $12, $01, $03, $02, $06, $09, $0c, $04
-	.db $51, $12, $0D, $09, $1b, $28, $36, $12       ; 30 (ported from vs.smb)
+	.db $51, $12, $0D, $09, $1b, $28, $36, $12			; 30 (ported from vs.smb)
 
 AreaMusicEnvData:
 	.db $90, $94, $94, $95, $95, $96, $97, $97
 
 EndOfCastleMusicEnvData:
-	.db $98                                          ; shared with area music envelope
+	.db $98												; shared with area music envelope
 	.db $99, $9a, $9b
 
 WaterEventMusEnvData:
-	.db $90, $91, $92, $92, $93, $93, $93, $94
+	.db $90												; shared with win castle music envelope (unintentional silence)
+	.db $91, $92, $92, $93, $93, $93, $94
 	.db $94, $94, $94, $94, $94, $95, $95, $95
 	.db $95, $95, $95, $96, $96, $96, $96, $96
 	.db $96, $96, $96, $96, $96, $96, $96, $96
 	.db $96, $96, $96, $96, $95, $95, $94, $93
 
 ShatterFlameEnvData:
-	.db $15, $16, $16, $17, $17, $18, $19, $19
+	.db $15												; shared with water music envelope (unintentional pluck)
+	.db $16, $16, $17, $17, $18, $19, $19
 	.db $1a, $1a, $1c, $1d, $1d, $1e, $1e, $1f
 	.db $1f, $1f, $1f, $1e, $1d, $1c, $1e, $1f
 	.db $1f, $1e, $1d, $1c, $1a, $18, $16, $14

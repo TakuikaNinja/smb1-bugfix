@@ -143,7 +143,7 @@ NoIncDAC:
 		dec DAC_Counter									; decrement counter
 
 StrWave:
-		sty SND_DELTA_REG+1								; store into DMC load register (??)
+		sty SND_DELTA_VAL								; store into delta counter (abuse non-linear mixing)
 		rts												; we are done here
 
 ; ----------------------------------------------------------------------------------------------------------------------------------

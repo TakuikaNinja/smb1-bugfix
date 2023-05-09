@@ -55,7 +55,7 @@ WBootCheck:
 
 ColdBoot:
 		jsr InitializeMemory							; clear memory using pointer in Y
-		sta SND_DELTA_REG+1								; reset delta counter load register
+		sta SND_DELTA_VAL								; reset delta counter
 		sta OperMode									; reset primary mode of operation
 
 		lda #$a5										; set warm boot flag
@@ -72,7 +72,10 @@ VBlank2:
 		jsr MoveAllSpritesOffscreen
 		jsr InitializeNameTables						; initialize both name tables
 		inc DisableScreenFlag							; set flag to disable screen output
-		jsr EnableNMI
+		
+		lda Mirror_PPU_CTRL_REG1
+		ora #%10000000									; enable NMIs
+		jsr WritePPUReg1								; write to PPU register
 
 GameLoop:
 		lda GamePauseStatus								; if in pause mode, do not perform operation mode stuff
@@ -264,19 +267,19 @@ Sprite0Hit:
 		bit PPU_STATUS									; do sprite #0 hit detection
 		bvc Sprite0Hit
 		
-		ldy #$25										; small delay, to wait for about 2 scanlines
+		ldy #$2a										; small delay, to wait for about 2 scanlines
 
 HBlankDelay:
 		dey
 		bne HBlankDelay									; decrement until it hits 0
 
 HUDSkip:
-		jsr EnableNMI									; write nametable value now (waste some cycles)	
-		
+		lda HorizontalScroll							; get scroll value now
+		ldx Mirror_PPU_CTRL_REG1						; same with nametable
 		bit PPU_STATUS									; reset flip-flop
-		lda HorizontalScroll							; set scroll value now
-		sta PPU_SCROLL_REG
+		sta PPU_SCROLL_REG								; set horizontal scroll
 		sty PPU_SCROLL_REG								; Y is already 0
+		stx PPU_CTRL_REG1								; set nametable
 		
 		jsr SoundEngine									; play sound
 
@@ -545,7 +548,6 @@ ResetTitle:
 		sta OperMode									; sprite #0 check and disable
 		sta OperMode_Task								; screen output
 		sta Sprite0HitDetectFlag
-		
 		inc DisableScreenFlag
 		rts
 
@@ -2476,12 +2478,7 @@ InitScroll:
 
 ; -------------------------------------------------------------------------------------
 
-EnableNMI:
-		lda Mirror_PPU_CTRL_REG1
-		ora #%10000000									; enable NMIs
-
 WritePPUReg1:
-		bit PPU_STATUS									; clear vblank flag to prevent extra NMI
 		sta PPU_CTRL_REG1								; write contents of A to PPU register 1
 		sta Mirror_PPU_CTRL_REG1						; and its mirror
 		rts
