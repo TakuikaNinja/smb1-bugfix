@@ -780,7 +780,7 @@ FinishedMusic:
 
 VictoryMusicSet:
 		cmp #$06										; < 6?
-		bcs IncMsgCounter								; if not branch ahead
+		bcs IncMsgCounter								; if not, branch ahead
 		
 	.db $24												; [skip 1 byte]
 
@@ -1478,11 +1478,11 @@ GameTextOffsets_High:
 ; $01 - game text pointer high byte
 ; $02 - name pointer low byte
 ; $03 - name pointer high byte
-; temp - temp current player variable
+; ztemp - temp current player variable
 
 WriteGameText:
 		ldx CurrentPlayer								; save current player to temp variable
-		stx temp
+		stx ztemp
 		cmp #$02										; top status bar or world/lives display?
 		bcc LdGameText									; if so, branch to use current offset as-is
 		
@@ -1493,9 +1493,9 @@ WriteGameText:
 		bcs NoPlayerSwap								; branch ahead if so
 
 		tay
-		lda temp										; otherwise swap player name
+		lda ztemp										; otherwise swap player name
 		eor #$01
-		sta temp
+		sta ztemp
 		tya
 
 NoPlayerSwap:
@@ -1525,7 +1525,7 @@ WritePlayerName:
 		tya												; transfer Y...
 		tax												; to X
 		pha												; and back it up
-		ldy temp										; use player as index
+		ldy ztemp										; use player as index
 		lda NameOffsets_Low,y							; into name offset table
 		sta $02
 		lda NameOffsets_High,y							; to use as a pointer to player name
@@ -3884,9 +3884,7 @@ AlterAreaAttributes:
 		and #%01000000
 		bne Alter2										; branch if d6 is set
 		
-		pla
-		pha												; pull and push offset to copy to A
-		
+		lda (AreaData),y								; reload second byte (2/1 cycles faster than pla+pha)
 		and #%00001111									; mask out high nybble and store as
 		sta TerrainControl								; new terrain height type bits
 		
@@ -3915,7 +3913,7 @@ SetFore:
 ScrollLockObject_Warp:
 		ldx #$04										; load value of 4 for game text routine as default
 		lda WorldNumber									; warp zone (4-3-2), then check world number
-		beq WarpNum
+		beq WarpNum										; if at world 1, branch ahead
 
 		inx												; if world number > 1, increment for next warp zone (5)
 		ldy AreaType									; check area type
@@ -6503,11 +6501,11 @@ FireballObjCore:
 		lda Fireball_State,x							; check for d7 = 1
 		bmi FireballExplosion							; if so, branch to get relative coordinates and draw explosion
 		
-		ldy Fireball_State,x							; if fireball inactive, branch to leave
-		beq NoFBall
+		tay												; copy to Y
+		beq NoFBall										; if fireball inactive, branch to leave
 		
-		lda TimerControl								; if master timer control set, branch
-		bne SkipCore									; this branch just keeps the fireballs onscreen without moving them
+		lda TimerControl								; if master timer control set, 
+		bne SkipCore									; branch to keep the fireballs onscreen without moving them
 		
 		dey												; if fireball state set to 1, skip this part and just run it
 		beq RunFB
@@ -7380,7 +7378,7 @@ RunHSubs:
 ; $06 - used to store low byte of block buffer address
 
 CoinWrapChk:
-		sta temp										; save A in temp
+		sta ztemp										; save A in ztemp
 		lda Player_Pos_ForScroll						; SM get Player_Pos_ForScroll
 		cmp #$02										; SM check if at a certain point
 		php												; save flag for later
@@ -7391,7 +7389,7 @@ CoinWrapChk:
 		lda #$07										; SM otherwise change value to 7
 
 NoWrap:
-		ora temp										; add to value in temp
+		ora ztemp										; add to value in ztemp
 		sta Misc_X_Position,y							; store as horizontal coordinate of misc object
 		rts												; and leave
 
@@ -7612,13 +7610,13 @@ AddToScore:
 		jmp DigitsMathRoutine							; update the score internally with value in digit modifier
 
 ; -------------------------------------------------------------------------------------
-; temp - used to store incoming lower nybble, upper nybble assumed to be clear
+; ztemp - used to store incoming lower nybble, upper nybble assumed to be clear
 UpdateScore:
-		sta temp
+		sta ztemp
 		jsr AddToScore									; add to player score
 		lda CurrentPlayer								; get player on the screen
 		jsr MathASL4									; move low nybble to high
-		ora temp										; set lower nybble from temp
+		ora ztemp										; set lower nybble from ztemp
 		jmp UpdateNumber								; update the number and leave
 
 ; -------------------------------------------------------------------------------------
@@ -15697,7 +15695,7 @@ ExitDumpSpr:
 		rts
 
 ; -------------------------------------------------------------------------------------
-; temp - temp OAM data offset
+; ztemp - temp OAM data offset
 
 DrawLargePlatform:
 		ldy Enemy_SprDataOffset,x						; get OAM data offset
@@ -15746,7 +15744,7 @@ SetPlatformTilenum:
 
 		inx												; increment X for enemy objects
 		jsr GetXOffscreenBits							; get offscreen bits again
-		sta temp										; and save to a temp variable
+		sta ztemp										; and save to a temp variable
 
 		dex
 		ldy Enemy_SprDataOffset,x						; get OAM data offset
@@ -15755,7 +15753,7 @@ SetPlatformTilenum:
 		ldx #$06										; prepare X for loops
 
 SChkLoop:
-		asl	temp										; rotate d7 into carry
+		asl	ztemp										; rotate d7 into carry
 		bcc NotOffscreen
 
 		lda #$f8										; if d7 was set, move sprite offscreen
@@ -16323,7 +16321,7 @@ CheckToAnimateEnemy:
 		cmp #Goomba
 		beq CheckDefeatedState							; branch if goomba
 
-		cmp #$08
+		cmp #BulletBill_FrenzyVar
 		beq CheckDefeatedState							; branch if bullet bill (note both variants use $08 here)
 
 		cmp #Podoboo
@@ -16391,11 +16389,8 @@ DrawEnemyObject:
 		ldy Enemy_SprDataOffset,x						; get sprite data offset
 
 		lda $ef
-		cmp #$08										; get saved enemy object and check
-		bne CheckForVerticalFlip						; for bullet bill, branch if not found
-
-SkipToOffScrChk:
-		jmp SprObjectOffscrChk							; jump if found
+		cmp #BulletBill_FrenzyVar						; get saved enemy object and check
+		beq SkipToOffScrChk								; for bullet bill, branch if found
 
 CheckForVerticalFlip:
 		lda VerticalFlipFlag							; check if vertical flip flag is set here
@@ -16454,9 +16449,10 @@ CheckForESymmetry:
 		lda $ef
 
 		ldx $ec											; get alternate enemy state
-		cmp #$05										; check for hammer bro object
+		cmp #HammerBro									; check for hammer bro object
 		bne ContES
 
+SkipToOffScrChk:
 		jmp SprObjectOffscrChk							; jump if found
 
 ContES:
@@ -16573,55 +16569,45 @@ CheckToMirrorJSpring:
 
 SprObjectOffscrChk:
 		ldx ObjectOffset								; get enemy buffer offset
+		
+		lda #$00										; init ztemp as counter
+		sta ztemp
+		
+		lda Enemy_OffscreenBits							; get offscreen information
+		and #%11101100									; mask out d0,d1,d4 as these are not required
+		sta ztemp2										; save in ztemp2
 
-		lda Enemy_OffscreenBits							; check offscreen information
-		lsr
-		lsr												; shift three times to the right
-		lsr												; which puts d2 into carry
-		pha												; save to stack
-
-		bcc LcChk										; branch if not set
-
-		lda #$04										; set for right column sprites
-		jsr MoveESprColOffscreen						; and move them offscreen
-
-LcChk:
-		pla												; get from stack
-		lsr												; move d3 to carry
-		pha												; save to stack
-
-		bcc Row3C										; branch if not set
-
-		lda #$00										; set for left column sprites,
-		jsr MoveESprColOffscreen						; move them offscreen
-
-Row3C:
-		pla												; get from stack again
-		lsr												; move d5 to carry this time
-		lsr
-		pha												; save to stack again
-
-		bcc Row23C										; branch if carry not set
-
-		lda #$10										; set for third row of sprites
-		jsr MoveESprRowOffscreen						; and move them offscreen
-
-Row23C:
-		pla												; get from stack
-		lsr												; move d6 into carry
-		pha												; save to stack
-
-		bcc AllRowC
-
-		lda #$08										; set for second and third rows
-		jsr MoveESprRowOffscreen						; move them offscreen
-
-AllRowC:
-		pla												; get from stack once more
-		lsr												; move d7 into carry
-		bcc ExEGHandler
-
-		jsr MoveESprRowOffscreen						; move all sprites offscreen (A should be 0 by now)
+OffscrChkLoop:
+		lsr ztemp2										; shift ztemp2 right to put d0 into carry
+		bcc NotOffscr									; if not set, skip to end of loop
+		
+		ldy ztemp										; otherwise use temp counter as index
+		lda SprDataOffsetAdder,y						; into SprDataOffsetAdder table
+		clc												; and add entry to enemy object OAM data offset
+		adc Enemy_SprDataOffset,x
+		tay												; use as offset
+		
+		lda ztemp										; get ztemp counter
+		cmp #$05										; >= 5?
+		bcs MoveESprRowOffscreen						; if so move sprite row offscreen
+		
+MoveESprColOffscreen:									; otherwise... (now inline)
+		jsr MoveColOffscreen							; move first and second row sprites in column offscreen
+		sta Sprite_Data+16,y							; move third row sprite in column offscreen
+		bne NotOffscr									; [unconditional branch]
+		
+MoveESprRowOffscreen:									; (now inline as well)
+		lda #$f8
+		jsr DumpTwoSpr									; move first row of sprites offscreen
+		
+NotOffscr:
+		inc ztemp										; increment and check ztemp counter
+		lda ztemp
+		cmp #$08										; < 8?
+		bcc OffscrChkLoop								; branch to loop until counter >= 8
+		
+		lda Enemy_OffscreenBits							; check again if d7 was set
+		bpl ExEGHandler									; if not, branch to leave
 
 		lda Enemy_ID,x
 		cmp #Podoboo									; check enemy identifier for podoboo
@@ -16635,6 +16621,16 @@ AllRowC:
 		
 ExEGHandler:
 		rts
+		
+SprDataOffsetAdder:
+	.db $ff, $ff, $04, $00, $ff, $10, $08, $00			; indexes 0,1,4 are dummy values
+
+; -------------------------------------------------------------------------------------
+; $00-$01 - tile numbers
+; $02 - Y coordinate
+; $03 - flip control
+; $04 - sprite attributes
+; $05 - X coordinate
 
 DrawEnemyObjRow:
 		lda EnemyGraphicsTable,x						; load two tiles of enemy graphics
@@ -16644,13 +16640,6 @@ DrawEnemyObjRow:
 
 DrawOneSpriteRow:
 		sta $01
-
-; -------------------------------------------------------------------------------------
-; $00-$01 - tile numbers
-; $02 - Y coordinate
-; $03 - flip control
-; $04 - sprite attributes
-; $05 - X coordinate
 
 DrawSpriteObject:										; this is inline now
 		lda $03											; get saved flip control bits
@@ -16706,21 +16695,6 @@ SetHFAt:
 
 		inx												; increment offset to return it to the
 		inx												; routine that called this subroutine
-		rts
-
-MoveESprRowOffscreen:
-		clc												; add A to enemy object OAM data offset
-		adc Enemy_SprDataOffset,x
-		tay												; use as offset
-		lda #$f8
-		jmp DumpTwoSpr									; move first row of sprites offscreen
-
-MoveESprColOffscreen:
-		clc												; add A to enemy object OAM data offset
-		adc Enemy_SprDataOffset,x
-		tay												; use as offset
-		jsr MoveColOffscreen							; move first and second row sprites in column offscreen
-		sta Sprite_Data+16,y							; move third row sprite in column offscreen
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -16959,9 +16933,19 @@ ExplosionTiles:
 	.db $68, $67, $66
 
 DrawExplosion_Fireball:
+		ldx TimerControl								; check if master timer control is set
+		php												; save flags
+		
+		ldx ObjectOffset								; reload object offset
 		ldy Alt_SprDataOffset,x							; get OAM data offset of alternate sort for fireball's explosion
-
 		lda Fireball_State,x							; load fireball state
+		
+		plp												; get flags back
+		beq IncFireballState							; if master timer control not set, branch to increment state
+		
+	.db $2c												; [skip 2 bytes]
+		
+IncFireballState:
 		inc Fireball_State,x							; increment state for next frame
 		lsr												; divide by 2
 		and #%00000111									; mask out all but d3-d1
@@ -17019,7 +17003,7 @@ KillFireBall:
 		rts
 
 ; -------------------------------------------------------------------------------------
-; temp - temp enemy offscreen bits
+; ztemp - temp enemy offscreen bits
 
 DrawSmallPlatform:
 		ldy Enemy_SprDataOffset,x						; get OAM data offset
@@ -17075,14 +17059,14 @@ BotSP:
 		sta Sprite_Y_Position+20,y
 
 		lda Enemy_OffscreenBits							; get offscreen bits
-		sta temp										; save to temp variable
+		sta ztemp										; save to temp variable
 
 		tya												; save OAM data offset to stack
 		pha
 		ldx #$03										; prepare X for loops
 
 SOfsLoop:
-		lda temp										; get current bits
+		lda ztemp										; get current bits
 		and #%00001000									; check for d3
 		beq SkipSOfs									; branch if not set
 
@@ -17091,7 +17075,7 @@ SOfsLoop:
 		sta Sprite_Y_Position+12,y
 
 SkipSOfs:
-		asl temp										; shift current bits to the left
+		asl ztemp										; shift current bits to the left
 		jsr MathINY4									; increment Y 4 times
 		dex												; decrement X
 		bne SOfsLoop									; branch to loop if > 0

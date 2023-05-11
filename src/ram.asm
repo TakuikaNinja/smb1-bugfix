@@ -18,6 +18,10 @@ Left_Right_Buttons    = $0c
 
 GameEngineSubroutine  = $0e
 
+ztemp                 = $15		; free zeropage variables?
+ztemp2                = $1c
+
+
 Mirror_PPU_CTRL_REG1  = $0778
 Mirror_PPU_CTRL_REG2  = $0779
 
@@ -80,7 +84,6 @@ PrimaryMsgCounter     = $0719
 SecondaryMsgCounter   = $0749
 
 HorizontalScroll      = $073f
-VerticalScroll        = $0740	; free
 ScrollLock            = $0723
 ScrollThirtyTwo       = $073d
 Player_X_Scroll       = $06ff
@@ -405,7 +408,8 @@ FireballCounter       = $06ce
 FireballThrowingTimer = $0711
 
 HammerEnemyOffset     = $06ae
-temp                  = $03f0	; general-use temp variable
+temp                  = $03f0	; general-use temp variables
+temp2                 = $0740
 
 Block_Buffer_1        = $0500
 Block_Buffer_2        = $05d0
