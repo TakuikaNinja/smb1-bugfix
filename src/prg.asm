@@ -16570,12 +16570,14 @@ CheckToMirrorJSpring:
 SprObjectOffscrChk:
 		ldx ObjectOffset								; get enemy buffer offset
 		
-		lda #$00										; init ztemp as counter
-		sta ztemp
-		
 		lda Enemy_OffscreenBits							; get offscreen information
 		and #%11101100									; mask out d0,d1,d4 as these are not required
+		beq ExEGHandler									; branch to leave if value is 0
+		
 		sta ztemp2										; save in ztemp2
+		
+		lda #$00										; init ztemp as counter
+		sta ztemp
 
 OffscrChkLoop:
 		lsr ztemp2										; shift ztemp2 right to put d0 into carry
