@@ -5190,12 +5190,6 @@ ScrollHandler:
 		lda ScrollLock									; check scroll lock flag
 		bne InitScrlAmt									; skip a bunch of code here if set
 		
-		lda SideCollisionTimer							; if timer related to player's side collision
-		beq NoCollision									; is expired, branch
-
-		lda CollisionAdder								; otherwise use the collision adder as the scroll
-		sta Player_X_Scroll
-		
 NoCollision:
 		lda Player_Pos_ForScroll						; check player's horizontal screen position
 		bmi SpeedUp										; if on right side, branch ahead
@@ -13863,8 +13857,6 @@ PlayerBGUpperExtent:
 	.db $20, $10
 
 PlayerBGCollision:
-		lda #$00										; clear collision adder
-		sta CollisionAdder								; used for scroll adjustment
 		lda DisableCollisionDet							; if collision detection disabled flag set,
 		bne ExPBGCol									; branch to leave
 
@@ -14479,9 +14471,6 @@ RImpd:
 		lda #$01										; otherwise load A with value to be used here
 
 NXSpd:
-		ldy #$10
-		sty SideCollisionTimer							; set timer of some sort
-
 		ldy #$00
 		sty Player_X_Speed								; nullify player's horizontal speed
 
@@ -14492,7 +14481,6 @@ NXSpd:
 
 PlatF:
 		sty $00											; store Y as high bits of horizontal adder
-		sta CollisionAdder								; set collision adder for scroll handler
 
 		clc
 		adc Player_X_Position							; add contents of A to player's horizontal
@@ -16572,8 +16560,6 @@ SprObjectOffscrChk:
 		
 		lda Enemy_OffscreenBits							; get offscreen information
 		and #%11101100									; mask out d0,d1,d4 as these are not required
-		beq ExEGHandler									; branch to leave if value is 0
-		
 		sta ztemp2										; save in ztemp2
 		
 		lda #$00										; init ztemp as counter
@@ -16581,8 +16567,11 @@ SprObjectOffscrChk:
 
 OffscrChkLoop:
 		lsr ztemp2										; shift ztemp2 right to put d0 into carry
-		bcc NotOffscr									; if not set, skip to end of loop
+		bcs Offscreen									; branch to put sprites offscreen if carry set
+		beq ExEGHandler									; branch to leave if value is now 0
+		bcc NotOffscr									; otherwise skip to end of loop [unconditional]
 		
+Offscreen:
 		ldy ztemp										; otherwise use temp counter as index
 		lda SprDataOffsetAdder,y						; into SprDataOffsetAdder table
 		clc												; and add entry to enemy object OAM data offset
