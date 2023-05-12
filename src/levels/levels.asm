@@ -25,12 +25,12 @@ World8Areas:
 	.db $30, $32, $21, $65
 
 ; bonus area data offsets, included here for comparison purposes
-; underground bonus area  - c2
-; cloud area 1 (day)      - 2b
-; cloud area 2 (night)    - 34
-; water area (5-2/6-2)    - 00
-; water area (8-4)        - 02
-; warp zone area (4-2)    - 2f
+; underground bonus area  - $42 ($c2 if next screen flag set)
+; cloud area 1 (day)      - $2b
+; cloud area 2 (night)    - $34
+; water area (5-2/6-2)    - $00
+; water area (8-4)        - $02
+; warp zone area (4-2)    - $2f
 
 EnemyAddrHOffsets:
 	.db $1f, $06, $1c, $00

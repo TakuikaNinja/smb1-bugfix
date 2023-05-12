@@ -567,8 +567,6 @@ ChkContinue:
 StartWorld1:
 		jsr LoadAreaPointer
 		
-		inc Hidden1UpFlag								; set 1-up box flag for both players
-		inc OffScr_Hidden1UpFlag
 		inc FetchNewGameTimerFlag						; set fetch new game timer flag
 		inc OperMode									; set next game mode
 		
@@ -2888,11 +2886,15 @@ NotTitle:
 		beq StoreMusic
 
 ChkAreaType:
-		ldy AreaType									; load area type as offset for music bit
-		lda CloudTypeOverride
-		beq StoreMusic									; check for cloud type override
+		ldy #$04
+		lda BonusMusicFlag
+		bne StoreMusic
 		
-		ldy #$04										; select music for cloud type level if found
+		dey
+		lda CastleMusicOverride
+		bne StoreMusic
+		
+		ldy AreaType
 
 StoreMusic:
 		lda MusicSelectData,y							; otherwise select appropriate music for level type
@@ -4684,15 +4686,11 @@ ExitJumpSpring:
 ; --------------------------------
 ; $07 - used to save ID of brick object
 
-Hidden1UpBlock:
-		lda Hidden1UpFlag								; if flag not set, do not render object
-		beq ExitJumpSpring
-		bne BrickWithItem								; jump to code shared with unbreakable bricks [unconditional branch]
-
 BrickWithCoins:
 		lda #$00										; initialize multi-coin timer flag
 		sta BrickCoinTimerFlag
 
+Hidden1UpBlock:
 BrickWithItem:
 		ldy $00											; get value saved from area parser routine
 		sty $07
@@ -4985,9 +4983,7 @@ GetAreaDataAddrs:
 StoreFore:
 		sta ForegroundScenery							; if less, save value here as foreground scenery
 		
-		pla												; pull byte from stack and push it back
-		pha
-		
+		lda (AreaData),y								; reload byte (2/1 cycles faster than pla+pha)
 		and #%00111000									; save player entrance control bits
 		lsr												; shift bits over to LSBs
 		lsr
@@ -5008,9 +5004,7 @@ StoreFore:
 		and #%00001111									; mask out all but lower nybble
 		sta TerrainControl
 		
-		pla												; pull and push byte to copy it to A
-		pha
-		
+		lda (AreaData),y								; reload byte (2/1 cycles faster than pla+pha)
 		and #%00110000									; save 2 MSB for background scenery type
 		jsr MathLSR4									; shift bits to LSBs
 		sta BackgroundScenery							; save as background scenery
@@ -5023,7 +5017,8 @@ StoreFore:
 		cmp #%00000011									; if set to 3, store here
 		bne StoreStyle									; and nullify other value
 		
-		sta CloudTypeOverride							; otherwise store value in other place
+		sta CloudTypeOverride							; otherwise store cloud type override
+		sta BonusMusicFlag								; and set bonus music flag
 		
 		lda #$00
 
@@ -5038,6 +5033,21 @@ StoreStyle:
 		lda AreaDataHigh
 		adc #$00
 		sta AreaDataHigh
+		
+		lda AreaPointer									; check area pointer
+		and #%01111111									; mask out next screen flag
+		cmp #$42										; underground bonus area?
+		bne NotUndergroundBonus							; branch if not
+		
+		sta BonusMusicFlag								; set bonus music flag
+
+NotUndergroundBonus:
+		cmp #$02										; underwater area in 8-4?
+		bne Not8Castle									; branch if not
+		
+		sta CastleMusicOverride							; set castle music override
+		
+Not8Castle:
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -5784,9 +5794,6 @@ NoFPObj:
 
 ; -------------------------------------------------------------------------------------
 
-Hidden1UpCoinAmts:
-	.db $15, $23, $16, $1b, $17, $18, $23				; note: world 8 amount ($63) has been removed
-
 PlayerEndLevel:
 		lda #$01										; force player to walk to the right
 		jsr AutoControlPlayer
@@ -5822,23 +5829,7 @@ RdyNextA:
 		cmp #$05										; if star flag task control not yet set
 		bne ExitNA										; beyond last valid task number, branch to leave
 		
-		lda #$00
-		sta Hidden1UpFlag								; clear flag for the upcoming check
-		
 		inc LevelNumber									; increment level number used for game logic
-		lda LevelNumber
-		cmp #$03										; check to see if we have yet reached level -4
-		bne NextArea									; and skip this last part here if not
-		
-		ldy WorldNumber									; get world number as offset
-		cpy #World8
-		bcs NextArea									; branch ahead if at world 8 and beyond
-		
-		lda CoinTallyFor1Ups							; check third area coin tally for bonus 1-ups
-		cmp Hidden1UpCoinAmts,y							; against minimum value, if player has not collected
-		bcc NextArea									; at least this number of coins, otherwise leave flag clear
-		
-		inc Hidden1UpFlag								; set hidden 1-up box control flag
 
 NextArea:
 		inc AreaNumber									; increment area number used for address loader
@@ -7431,10 +7422,7 @@ JCoinC:
 		
 		stx ObjectOffset								; store current control bit as misc object offset
 		
-		jsr GiveOneCoin									; update coin tally on the screen and coin amount variable
-		inc CoinTallyFor1Ups							; increment coin tally used to activate 1-up block flag
-		
-		rts
+		jmp GiveOneCoin									; update coin tally on the screen and coin amount variable
 
 FindEmptyMiscSlot:
 		ldy #$08										; start at end of misc objects buffer
@@ -8802,7 +8790,7 @@ ParseRow0e:
 		dey												; of the same area, like the underground bonus areas)
 		lda (EnemyData),y								; otherwise, get second byte and use as offset
 		sta AreaPointer									; to addresses for level and enemy object data
-
+		
 		iny
 		lda (EnemyData),y								; get third byte again, and this time mask out
 		and #%00011111									; the 3 MSB from before, save as page number to be
@@ -9564,7 +9552,8 @@ FireworksYPosData:
 	.db $60, $40, $70, $40, $60, $30
 
 InitFireworks:
-		lda FrenzyEnemyTimer							; if timer not expired yet, branch to leave
+		lda EventMusicBuffer							; if win level music still playing,
+		ora FrenzyEnemyTimer							; or if timer not expired yet, branch to leave
 		bne ExitFWk
 
 		lda #$20										; otherwise reset timer
@@ -11980,7 +11969,7 @@ AwardGameTimerPoints:
 		ora GameTimerDisplay+2
 		beq IncrementSFTask1							; if no time left on game timer at all, branch to next task
 		
-		lda EventMusicBuffer							; if event music buffer not empty,
+		lda EventMusicBuffer							; if win level music still playing,
 		bne NoTTick										; branch ahead
 		
 		lda FrameCounter
@@ -14191,7 +14180,6 @@ AreaChangeTimerData:
 
 HandleCoinMetatile:
 		jsr ErACM										; do sub to erase coin metatile from block buffer
-		inc CoinTallyFor1Ups							; increment coin tally used for 1-up blocks
 		jmp GiveOneCoin									; update coin amount and tally on the screen
 
 HandleAxeMetatile:
@@ -14441,7 +14429,6 @@ GetWNum:
 		sta LevelNumber									; initialize level number used for world display
 		sta AltEntranceControl							; initialize mode of entry
 
-		inc Hidden1UpFlag								; set flag for hidden 1-up blocks
 		inc FetchNewGameTimerFlag						; set flag to load new game timer
 
 ExPipeE:

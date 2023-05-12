@@ -5,6 +5,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] There is now music on the title screen: an alternate version of the underwater theme.
 - [x] The final victory song has been extended, with a B-section and an ending. (ported over from Vs.SMB; may need to adjust further)
 + [x] Level music now uses a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes are left unchanged.
++ [x] Underground bonus areas will now use the Coin Heaven/Super Star music, following a similar logic as SMAS.
++ [x] The underwater section of 8-4 will now keep the castle music, in line with SMAS.
 
 ## Sound Changes
 + [x] Skidding now has a sound effect, in line with SMB2J and later entries.
@@ -13,6 +15,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The 1-up sound now has top priority in its queue, fixing a bug where one sound can be initialized and play for a single frame, but continued as a corrupted 1-up sound.
 + [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays. (unrelated to the aforementioned bug).
 + [x] The timer countdown sound will no longer play while the level clear fanfare is still playing.
++ [ ] The timer countdown sequence will now wait until the level clear fanfare has finished playing. (replace the above)
++ [x] Similarly, the fireworks bonus will now wait until the level clear fanfare has finished playing.
 
 ## Bug Fixes & Small Tweaks
 + [x] Scroll unlock object in underground warp zone now works as intended. (no more minus world)
@@ -89,11 +93,14 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Getting a Fire Flower as Small Mario now turns Mario into Fire Mario, as opposed to Super Mario.
 - [x] Getting hit as Fire Mario now turns Mario into Super Mario, as opposed to Small Mario.
 + [x] Fireballs will now remain onscreen when Fire Mario has been hit. They will freeze during the hit animation, just like enemies do.
-- [x] Hidden 1-up blocks no longer despawn after dying. The requirement to spawn them has been retained.
+- [x] Hidden 1-up blocks will now always spawn.
 - [ ] Hitting the top of the flagpole now gives Mario a 1-up.
 - [ ] The scoring system has been adjusted to that of later entries.
 - [ ] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
 - [ ] Defeating consecutive enemies now increases the sound effect pitch with every enemy.
++ [ ] The timer countdown sequence will now be faster, in line with SMB3 and later entries.
++ [ ] The timer countdown sequence will now also occur in castle levels, in line with SMB2J and later entries.
++ [ ] Princess Peach will now give you bonus points for each remaining life, in line with SMB2J. Her text will pause to accomodate for this.
 
 ## Enemy Behaviour Changes
 - [x] Hammers now travel along their arc, regardless of whether they touch Mario.

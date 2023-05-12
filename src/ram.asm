@@ -189,18 +189,16 @@ OnscreenPlayerInfo    = $075a
 NumberofLives         = $075a	; used by current player
 HalfwayPage           = $075b
 LevelNumber           = $075c	; the actual dash number
-Hidden1UpFlag         = $075d
+Hidden1UpFlag         = $075d	; free
 CoinTally             = $075e
 WorldNumber           = $075f
 AreaNumber            = $0760	; internal number used to find areas
-
-CoinTallyFor1Ups      = $0748
 
 OffscreenPlayerInfo   = $0761
 OffScr_NumberofLives  = $0761	; used by offscreen player
 OffScr_HalfwayPage    = $0762
 OffScr_LevelNumber    = $0763
-OffScr_Hidden1UpFlag  = $0764
+OffScr_Hidden1UpFlag  = $0764	; free
 OffScr_CoinTally      = $0765
 OffScr_WorldNumber    = $0766
 OffScr_AreaNumber     = $0767
@@ -408,8 +406,9 @@ FireballCounter       = $06ce
 FireballThrowingTimer = $0711
 
 HammerEnemyOffset     = $06ae
-temp                  = $03f0	; general-use temp variables
-temp2                 = $0740
+
+BonusMusicFlag        = $0740
+CastleMusicOverride   = $0748
 
 Block_Buffer_1        = $0500
 Block_Buffer_2        = $05d0
