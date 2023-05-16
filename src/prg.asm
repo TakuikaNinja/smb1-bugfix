@@ -2901,8 +2901,7 @@ ExitGetM:
 ; -------------------------------------------------------------------------------------
 
 PlayerStarting_X_Pos:
-	.db $28, $18
-	.db $38, $28
+	.db $28, $18, $38, $28
 
 AltYPosOffset:
 	.db $08, $00
@@ -2945,10 +2944,8 @@ ChkStPos:
 
 		ldx PlayerEntranceCtrl							; get starting position loaded from header
 		ldy AltEntranceControl							; check alternate mode of entry flag for 0 or 1
-		beq SetStPos
-
-		cpy #$01
-		beq SetStPos
+		cpy #$02
+		bcc SetStPos
 		
 		ldx AltYPosOffset-2,y							; if not 0 or 1, override $0710 with new offset in X
 
