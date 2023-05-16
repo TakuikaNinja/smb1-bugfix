@@ -14113,8 +14113,7 @@ ContSChk:
 		jmp StopPlayerMove								; otherwise jump to impede player's movement
 
 ChkPBtm:
-		ldy Player_State								; get player's state
-		cpy #$00										; check for player's state set to normal
+		ldy Player_State								; check for player's state set to normal
 		bne StopPlayerMove								; if not, branch to impede player's movement
 
 		ldy PlayerFacingDir								; get player's facing direction
@@ -14142,16 +14141,14 @@ PlyrPipe:
 		and #%00001111									; get lower nybble of player's horizontal coordinate
 		beq ChkGERtn									; if at zero, branch ahead to skip this part
 
-		ldy #$00										; set default offset for timer setting data
+		lda #$a0										; load area change timer value
+		ldy ScreenLeft_PageLoc							; check page location for left side of screen
+		beq SetCATmr									; if at page zero, use current value
 
-		lda ScreenLeft_PageLoc							; load page location for left side of screen
-		beq SetCATmr									; if at page zero, use default offset
-
-		iny												; otherwise increment offset
+		lda #$34										; otherwise change timer value
 
 SetCATmr:
-		lda AreaChangeTimerData,y						; set timer for change of area as appropriate
-		sta ChangeAreaTimer
+		sta ChangeAreaTimer								; set timer for change of area as appropriate
 
 ChkGERtn:
 		lda GameEngineSubroutine						; get number of game engine routine running
@@ -14174,9 +14171,6 @@ ExCSM:
 
 StopPlayerMove:
 		jmp ImpedePlayerMove							; stop player's movement
-
-AreaChangeTimerData:
-	.db $a0, $34
 
 HandleCoinMetatile:
 		jsr ErACM										; do sub to erase coin metatile from block buffer
