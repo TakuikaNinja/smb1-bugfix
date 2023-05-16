@@ -2487,15 +2487,13 @@ WritePPUReg1:
 ; $03 - used to store length of status bar number
 
 ; status bar name table offset and length data
-StatusBarData:
-	.db $f0, $06										; top score display on title screen
-	.db $62, $06										; player score
-	.db $62, $06
-	.db $6d, $02										; coin tally
-	.db $6d, $02
-	.db $7a, $03										; game timer
+StatusBarDataAddrs:
+	.db $f0, $62, $62, $6d, $6d, $7a					; top score, player score 1 & 2, coin tally 1 & 2, timer
 
-StatusBarOffset:
+StatusBarDataLengths:
+	.db $06, $06, $06, $02, $02, $03					; top score, player score 1 & 2, coin tally 1 & 2, timer
+
+StatusBarOffsets:
 	.db $06, $0c, $12, $18, $1e, $24
 
 PrintStatusBarNumbers:
@@ -2513,9 +2511,7 @@ OutputNumbers:
 		bcs ExitOutputN
 		
 		pha												; save incremented value to stack for now and
-		
-		asl												; shift to left and use as offset
-		tay
+		tay												; use as offset
 		ldx VRAM_Buffer1_Offset							; get current buffer pointer
 		lda #$20										; put at top of screen by default
 		cpy #$00										; are we writing top score on title screen?
@@ -2526,20 +2522,19 @@ OutputNumbers:
 SetupNums:
 		sta VRAM_Buffer1,x
 		
-		lda StatusBarData,y								; write low vram address and length of thing
+		lda StatusBarDataAddrs,y						; write low vram address and length of thing
 		sta VRAM_Buffer1+1,x							; we're printing to the buffer
 		
-		lda StatusBarData+1,y
+		lda StatusBarDataLengths,y
 		sta VRAM_Buffer1+2,x
 		sta $03											; save length byte in counter
 		stx $02											; and buffer pointer elsewhere for now
 		
 		pla												; pull original incremented value from stack
 		tax
-		
-		lda StatusBarOffset,x							; load offset to value we want to write
+		lda StatusBarOffsets,x								; load offset to value we want to write
 		sec
-		sbc StatusBarData+1,y							; subtract from length byte we read before
+		sbc $03											; subtract length byte we read before
 		tay												; use value as offset to display digits
 		
 		ldx $02
