@@ -208,8 +208,8 @@ L_GroundArea7:
 	.db $53, $c1, $d2, $41, $12, $c1, $29, $13, $85, $17
 	.db $1b, $92, $1a, $42, $47, $13, $83, $41, $a7, $13
 	.db $0e, $91, $a7, $63, $b7, $63, $c5, $65, $d5, $65
-	.db $dd, $4a, $e3, $67, $f3, $67, $8d, $c1, $ae, $42
-	.db $df, $20, $ad, $c7 ; extra scroll lock
+	.db $e3, $67, $f3, $67, $8d, $c1, $ae, $42, $df, $20 ; remove redundant frenzy end object
+	.db $ad, $c7 ; extra scroll lock
 	.db $fd
 
 ; level 2-3/7-3
