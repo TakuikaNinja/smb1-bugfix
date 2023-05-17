@@ -48,7 +48,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] When Mario enters/exits a warp-pipe or falls into a pit, the gameplay will now halt in the same manner as being killed by an enemy. (prevents getting hit)
 + [x] Power-ups, jumping coins/blocks, shattered brick chunks, Bowser's flames, fireballs/explosions, bubbles, springboards, and growing vines will now properly halt in the above situations.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
-+ [x] An off-by-one error in the enemy ID has been fixed in 5-3 to properly end the Bullet Bill frenzy. (moving platforms will now load consistently)
++ [x] An off-by-one error in the enemy ID has been fixed in 5-3 to properly end the Bullet Bill frenzy. The redundant level object has also been removed. (moving platforms will now load consistently)
 + [x] The "end frenzy" object will now check if Lakitus are defeated before setting their states. (prevents instances of Lakitu revival)
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.

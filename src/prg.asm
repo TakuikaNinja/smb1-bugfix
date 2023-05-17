@@ -9607,9 +9607,6 @@ Bitmasks:
 Enemy17YPosData:
 	.db $40, $30, $90, $50, $20, $60, $a0, $70
 
-SwimCC_IDData:
-	.db $0a, $0b
-
 BulletBillCheepCheep:
 		lda FrenzyEnemyTimer							; if timer not expired yet, branch to leave
 		bne ExF17
@@ -9620,7 +9617,7 @@ BulletBillCheepCheep:
 		cpx #$03										; are we past third enemy slot?
 		bcs ExF17										; if so, branch to leave
 
-		ldy #$00										; load default offset
+		tay												; A is already 0, so load default offset into Y
 		lda PseudoRandomBitReg,x
 		cmp #$aa										; check first part of LSFR against preset value
 		bcc ChkW2										; if less than preset, do not increment offset
@@ -9637,9 +9634,8 @@ ChkW2:
 Get17ID:
 		tya
 		and #%00000001									; mask out all but last bit of offset
-		tay
-
-		lda SwimCC_IDData,y								; load identifier for cheep-cheeps
+		clc
+		adc #GreyCheepCheep								; add offset to enemy identifier for grey cheep-cheep
 
 Set17ID:
 		sta Enemy_ID,x									; store whatever's in A as enemy identifier
@@ -10003,10 +9999,10 @@ CommonSmallLift:
 ; --------------------------------
 
 PlatPosDataLow:
-	.db $08,$0c,$f8
+	.db $08, $0c, $f8
 
 PlatPosDataHigh:
-	.db $00,$00,$ff
+	.db $00, $00, $ff
 
 PosPlatform:
 		lda Enemy_X_Position,x							; get horizontal coordinate
@@ -10337,14 +10333,12 @@ SetHJ:
 		ora #$01
 		sta Enemy_State,x
 
-		lda $00											; load preset value here to use as bitmask
+		ldy SecondaryHardMode							; check secondary hard mode flag
+		beq HJump										; if not set, branch to use 0 as offset
+
+		lda $00											; otherwise load preset value here to use as bitmask
 		and PseudoRandomBitReg+2,x						; and do bit-wise comparison with part of LSFR
 		tay												; then use as offset
-
-		lda SecondaryHardMode							; check secondary hard mode flag
-		bne HJump
-
-		tay												; if secondary hard mode flag clear, set offset to 0
 
 HJump:
 		lda HammerBroJumpLData,y						; get jump length timer data using offset from before
@@ -10761,7 +10755,7 @@ CCSwim:
 
 		lda Enemy_ID,x									; get enemy identifier
 		sec
-		sbc #$0a										; subtract ten for cheep-cheep identifiers
+		sbc #GreyCheepCheep								; subtract ten for cheep-cheep identifiers
 		tay												; use as offset
 
 		lda SwimCCXMoveData,y							; load value here
@@ -11912,9 +11906,6 @@ StarFlagYPosAdder:
 StarFlagXPosAdder:
 	.db $00, $08, $00, $08
 
-StarFlagTileData:
-	.db $54, $55, $56, $57
-
 RunStarFlagObj:
 		lda #$00										; initialize enemy frenzy buffer
 		sta EnemyFrenzyBuffer
@@ -12010,7 +12001,9 @@ DSFLoop:
 		adc StarFlagYPosAdder,x							; add Y coordinate adder data
 		sta Sprite_Y_Position,y							; store as Y coordinate
 
-		lda StarFlagTileData,x							; get tile number
+		txa												; copy index to A
+		clc
+		adc #$54										; and add base tile number
 		sta Sprite_Tilenumber,y							; store as tile number
 
 		lda #$22										; set palette and background priority bits
@@ -15767,9 +15760,6 @@ NotRsNum:
 		sta Sprite_Tilenumber+4,y
 		rts												; then leave
 
-JumpingCoinTiles:
-	.db $60, $61, $62, $63
-
 JCoinGfxHandler:
 		ldy Misc_SprDataOffset,x						; get coin/floatey number's OAM data offset
 
@@ -15798,7 +15788,9 @@ JCoinGfxHandler:
 		tax												; use as graphical offset
 
 SusJCoin:
-		lda JumpingCoinTiles,x							; load tile number
+		txa												; copy index to A
+		clc
+		adc #$60										; and add base tile number
 
 		iny												; increment OAM data offset to write tile numbers
 		jsr DumpTwoSpr									; do sub to dump tile number into both sprites
@@ -16668,9 +16660,6 @@ SetHFAt:
 ; $04 - attributes
 ; $05 - relative X position
 
-DefaultBlockObjTiles:
-	.db $85, $85, $86, $86								; brick w/ line (these are sprite tiles, not BG!)
-
 DrawBlock:
 		lda Block_Rel_YPos								; get relative vertical coordinate of block object
 		sta $02											; store here
@@ -16685,16 +16674,14 @@ DrawBlock:
 		sta $03											; set horizontal flip bit here (will not be used)
 
 		ldy Block_SprDataOffset,x						; get sprite data offset
-		ldx #$00										; reset X for use as offset to tile data
 
-DBlkLoop:
-		lda DefaultBlockObjTiles,x						; get left tile number
-		sta $00											; set here
-
-		lda DefaultBlockObjTiles+1,x					; get right tile number
-		jsr DrawOneSpriteRow							; do sub to write tile numbers to first row of sprites
-		cpx #$04										; check incremented offset
-		bne DBlkLoop									; and loop back until all four sprites are done
+		lda #$85										; load tile number for top half
+		sta $00											; set here for the subroutine
+		jsr DrawOneSpriteRow							; do sub to draw sprite row
+		
+		lda #$86										; load tile number for bottom half
+		sta $00											; set here for subroutine
+		jsr DrawOneSpriteRow							; do sub to draw sprite row
 
 		ldx ObjectOffset								; get block object offset
 		ldy Block_SprDataOffset,x						; get sprite data offset
@@ -16893,9 +16880,6 @@ FireA:
 
 ; -------------------------------------------------------------------------------------
 
-ExplosionTiles:
-	.db $68, $67, $66
-
 DrawExplosion_Fireball:
 		ldx TimerControl								; check if master timer control is set
 		php												; save flags
@@ -16917,9 +16901,10 @@ IncFireballState:
 		bcs KillFireBall								; branch if so, otherwise continue to draw explosion
 
 DrawExplosion_Fireworks:
-		tax												; use whatever's in A for offset
-
-		lda ExplosionTiles,x							; get tile number using offset
+		eor #$ff										; subtract A from base tile number
+		sec
+		adc #$68
+		
 		iny												; increment Y (contains sprite data offset)
 		jsr DumpFourSpr									; and dump into tile number part of sprite data
 
