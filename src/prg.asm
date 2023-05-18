@@ -9915,7 +9915,7 @@ SetYO:
 ; --------------------------------
 
 CommonPlatCode:
-		jsr InitVStf									; do a sub to init certain other values
+		jsr InitVStf									; init vertical speed and movement force
 
 SPBBox:
 		lda #$05										; set default bounding box size control
@@ -11414,7 +11414,7 @@ RemoveBridge:
 		cmp #$0f										; if bridge collapse offset has not yet reached
 		bne NoBFall										; the end, go ahead and skip this part
 
-		jsr InitVStf									; initialize whatever vertical speed bowser has
+		jsr InitVStf									; init vertical speed and movement force
 
 		lda #%01000000
 		sta Enemy_State,x								; set bowser's state to one of defeated states (d6 set)
@@ -11588,7 +11588,7 @@ MakeBJump:
 
 		dec Enemy_Y_Position,x							; otherwise decrement vertical coordinate
 
-		jsr InitVStf									; initialize movement amount
+		jsr InitVStf									; init vertical speed and movement force
 
 		lda #$fe
 		sta Enemy_Y_Speed,x								; set vertical speed to move bowser upwards
@@ -12420,7 +12420,7 @@ InitPlatformFall:
 		ldy Enemy_State,x								; reload offset for other platform into Y
 
 StopPlatforms:
-		jsr InitVStf									; initialize vertical speed and low byte
+		jsr InitVStf									; initialize vertical speed and movement force
 		sta Enemy_Y_Speed,y								; for both platforms and leave
 		sta Enemy_Y_MoveForce,y
 		rts
@@ -12774,7 +12774,7 @@ HurtBowser:
 		dec BowserHitPoints								; decrement bowser's hit points
 		bne ExHCF										; if bowser still has hit points, branch to leave
 
-		jsr InitVStf									; otherwise do sub to init vertical speed and movement force
+		jsr InitVStf									; otherwise init vertical speed and movement force
 		sta Enemy_X_Speed,x								; initialize horizontal speed
 		sta EnemyFrenzyBuffer							; init enemy frenzy buffer
 
@@ -12969,10 +12969,6 @@ UpToFiery:
 
 KickedShellXSpdData:
 	.db $30, $d0
-
-DemotedKoopaXSpdData:
-	.db $08, $0c 
-	.db $f8, $f4
 
 PlayerEnemyCollision:
 		lda FrameCounter								; check counter for d0 set
@@ -13232,7 +13228,7 @@ EnemyStompedPts:
 		lda #%00100000
 		sta Enemy_State,x								; set d5 in enemy state
 		
-		jsr InitVStf									; nullify vertical speed, physics-related thing,
+		jsr InitVStf									; init vertical speed, movement force,
 		sta Enemy_X_Speed,x								; and horizontal speed
 		beq SetBounce									; handle bounce physics [unconditional branch]
 
@@ -13256,14 +13252,8 @@ Green:
 		lda #$03										; award 400 points to the player
 		jsr SetupFloateyNumber
 		
-		jsr InitVStf									; nullify physics-related thing and vertical speed
-		
-		lda Enemy_MovingDir,x							; load the current movement direction (1:right or 2:left)
-		asl												; multiply by two (1 -> 2; 2 -> 4)
-		adc PrimaryHardMode								; add the quest 2 flag (possible results: 2,3,4,5)
-		tay												; transfer to Y to use as an index
-		lda DemotedKoopaXSpdData-2,y					; load speed data, adjusted by -2 (possible effective indicies: 0,1,2,3)
-		sta Enemy_X_Speed,x								; set appropriate moving speed based on direction
+		jsr InitVStf									; init vertical speed and movement force
+		jsr SetEnemySpeed								; set enemy speed based on primary hard mode and direction
 		bne SetBounce									; handle bounce physics [unconditional branch]
 
 RevivalRateData:
@@ -14800,7 +14790,7 @@ PlayerEnemyDiff:
 ; --------------------------------
 
 EnemyLanding:
-		jsr InitVStf									; do something here to vertical speed and movement force
+		jsr InitVStf									; init vertical speed and movement force
 
 		lda Enemy_Y_Position,x
 		and #%11110000									; save high nybble of vertical coordinate, and
