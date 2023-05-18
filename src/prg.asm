@@ -16674,13 +16674,11 @@ DrawBlock:
 		sta $03											; set horizontal flip bit here (will not be used)
 
 		ldy Block_SprDataOffset,x						; get sprite data offset
-
-		lda #$85										; load tile number for top half
-		sta $00											; set here for the subroutine
-		jsr DrawOneSpriteRow							; do sub to draw sprite row
-		
+	
 		lda #$86										; load tile number for bottom half
 		sta $00											; set here for subroutine
+		jsr DrawOneSpriteRow							; do sub to draw sprite row
+		lda $00											; reload tile number
 		jsr DrawOneSpriteRow							; do sub to draw sprite row
 
 		ldx ObjectOffset								; get block object offset
@@ -16688,11 +16686,11 @@ DrawBlock:
 
 		lda AreaType
 		cmp #$01										; check for ground level type area
-		beq ChkRep										; if found, branch to next part
+		bne ChkRep										; if not found, branch to next part
 
-		lda #$86
-		sta Sprite_Tilenumber,y							; otherwise remove brick tiles with lines
-		sta Sprite_Tilenumber+4,y						; and replace then with lineless brick tiles
+		lda #$85
+		sta Sprite_Tilenumber,y							; otherwise remove lineless  brick tiles
+		sta Sprite_Tilenumber+4,y						; and replace them with brick tiles with lines
 
 ChkRep:
 		lda Block_Metatile,x							; check replacement metatile
