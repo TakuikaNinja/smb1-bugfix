@@ -5165,15 +5165,9 @@ ScrollHandler:
 		lda TimerControl								; is the timer control set?
 		bne InitScrlAmt									; branch to init scroll if so
 		
-		lda Player_X_Scroll								; load scroll speed
-		clc
-		adc Platform_X_Scroll							; add value used by left/right platforms
-		sta Player_X_Scroll								; save as new value here to impose force on scroll
-		
 		lda ScrollLock									; check scroll lock flag
 		bne InitScrlAmt									; skip a bunch of code here if set
 		
-NoCollision:
 		lda Player_Pos_ForScroll						; check player's horizontal screen position
 		bmi SpeedUp										; if on right side, branch ahead
 		
@@ -5181,7 +5175,7 @@ NoCollision:
 		bcc InitScrlAmt									; if less than 112 pixels to the right, init scroll
 
 		sbc #$70										; otherwise subtract threshold (carry already set)
-		adc Player_X_Scroll								; add current scroll amount + carry (always set)
+		adc Player_X_Scroll								; add current scroll amount + carry
 		lsr												; and shift right once
 		and #$0f										; then mask out upper nybble
 		tay												; to use as scroll amount
@@ -5233,9 +5227,8 @@ ChkPOffscr:
 		bcs KeepOnscr									; branch with default offset
 		
 		iny												; otherwise use different offset (right side)
-		lda $00
-		and #%00100000									; check offscreen bits for d5 set
-		beq InitPlatScrl								; if not set, branch ahead of this part
+		and #%01000000									; check if d6 is set in A (i.e. d5 in offscreen bits)
+		beq ExitOnscr									; if not set, branch to leave
 
 KeepOnscr:
 		lda ScreenEdge_X_Pos,y							; get left or right side coordinate based on offset
@@ -5247,23 +5240,14 @@ KeepOnscr:
 		sbc #$00										; subtract borrow
 		sta Player_PageLoc								; save as player's page location
 
-		lda Left_Right_Buttons							; check saved controller bits
-		cmp OffscrJoypadBitsData,y						; against bits based on offset
-		beq InitPlatScrl								; if not equal, branch
+		lda #$00										; nullify horizontal speed of player
+		sta Player_X_Speed
 
-		lda #$00
-		sta Player_X_Speed								; otherwise nullify horizontal speed of player
-
-InitPlatScrl:
-		lda #$00										; nullify platform force imposed on scroll
-		sta Platform_X_Scroll
+ExitOnscr:
 		rts
 
 X_SubtracterData:
 	.db $00, $10
-
-OffscrJoypadBitsData:
-	.db $01, $02
 
 ; -------------------------------------------------------------------------------------
 
@@ -5339,8 +5323,6 @@ EntrMode2:
 		lda #$ff										; otherwise...
 		sta TimerControl								; temporarily set timer control to halt gameplay
 		jsr MovePlayerYAxis								; then execute sub to move player upwards (note $ff = -1)
-		
-		lda Player_Y_Position							; check to see if player is at a specific coordinate
 		cmp #$91										; if player risen to a certain point (this requires pipes
 		bcc PlayerRdy									; to be at specific height to look/function right) branch
 		
@@ -5446,8 +5428,6 @@ SizeChk:
 		lda CrouchingFlag								; get crouching flag bits ($04 if big & crouching, $00 otherwise)
 		lsr												; shift right ($02 or $00 now)
 		ora PlayerSize									; add player size bits ($01 if small)
-
-ChkMoveDir:
 		sta Player_BoundBoxCtrl							; set contents of A as player's bounding box size control
 		
 		lda #$01										; set moving direction to right by default
@@ -5545,9 +5525,8 @@ CloudExit:
 		lda #$00
 		sta JoypadOverride								; clear controller override bits if any are set
 
-		jsr SetEntr										; do sub to set secondary mode
-		inc AltEntranceControl							; set mode of entry to 3
-		rts
+		lda #$03										; set starting position to override
+		bne SetCloudEntr								; [unconditional branch]
 
 ; -------------------------------------------------------------------------------------
 
@@ -5569,6 +5548,8 @@ AutoClimb:
 
 SetEntr:
 		lda #$02										; set starting position to override
+		
+SetCloudEntr:
 		sta AltEntranceControl
 		jmp ChgAreaMode									; set modes
 
@@ -5596,8 +5577,8 @@ VerticalPipeEntry:
 		cmp #$03
 		bne ChgAreaPipe									; if not castle type level, use mode 1
 		
-		iny
-		jmp ChgAreaPipe									; otherwise use mode 2
+		iny												; otherwise use mode 2
+		bne ChgAreaPipe									; [unconditional branch]
 
 MovePlayerYAxis:
 		clc
@@ -5709,7 +5690,6 @@ DonePlayerTask:
 		rts												; leave
 
 PlayerFireFlower:
-
 		lda TimerControl								; check master timer control
 		cmp #$c0										; for specific moment in time
 		beq ResetPalFireFlower							; branch if at moment, not before or after
@@ -12510,7 +12490,6 @@ PositionPlayerOnHPlat:
 		sta Player_X_Position							; player accordingly in horizontal position
 		
 		lda Player_PageLoc								; get player's page location
-		
 		ldy $00											; check to see if saved value here is positive or negative
 		bmi PPHSubt										; if negative, branch to subtract
 		
@@ -12519,9 +12498,7 @@ PositionPlayerOnHPlat:
 
 PPHSubt:
 		sbc #$00										; subtract borrow from page location
-
 		sta Player_PageLoc								; save result to player's page location
-		sty Platform_X_Scroll							; put saved value from second sub here to be used later
 		jmp PositionPlayerOnVPlat						; position player vertically and appropriately
 
 ; --------------------------------
