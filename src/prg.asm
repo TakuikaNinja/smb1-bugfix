@@ -2122,8 +2122,8 @@ Palette0_MTiles:
 
 Palette1_MTiles:
 	.db $a2, $a2, $a3, $a3								; vertical rope
-	.db $99, $24, $99, $24								; horizontal rope
 	.db $24, $a2, $3e, $3f								; left pulley
+	.db $99, $24, $99, $24								; horizontal rope (put here for better rendering logic)
 	.db $5b, $5c, $24, $a3								; right pulley
 	.db $24, $24, $24, $24								; blank used for balance rope
 	.db $9d, $47, $9e, $47								; castle top
@@ -2532,7 +2532,7 @@ SetupNums:
 		
 		pla												; pull original incremented value from stack
 		tax
-		lda StatusBarOffsets,x								; load offset to value we want to write
+		lda StatusBarOffsets,x							; load offset to value we want to write
 		sec
 		sbc $03											; subtract length byte we read before
 		tay												; use value as offset to display digits
@@ -3038,15 +3038,11 @@ PlayerLoseLife:
 		rts
 
 StillInGame:
-		lda WorldNumber									; multiply world number by 2 and use
-		asl												; as offset
-		tax
-		
-		lda LevelNumber									; if in area -3 or -4, increment
-		and #$02										; offset by one byte, otherwise
-		beq GetHalfway									; leave offset alone
-		
-		inx
+		lda LevelNumber									; if in area -3 or greater,
+		cmp #$02										; set carry
+		lda WorldNumber									; get world number
+		rol												; rotate left to multiply by 2 & put carry in d0
+		tax												; use as offset
 
 GetHalfway:
 		ldy HalfwayPageNybbles,x						; get halfway page number with offset
@@ -4058,16 +4054,12 @@ NoUnder:
 
 ; --------------------------------
 
-; tiles used by pulleys and rope object
-PulleyRopeMetatiles:
-	.db $42, $41, $43
-
 PulleyRopeObject:
 		jsr ChkLrgObjLength								; get length of pulley/rope object
-		ldy #$00										; initialize metatile offset
+		ldy #$41										; initialize metatile
 		bcs RenderPul									; if starting, render left pulley
 		
-		iny
+		iny												; increment to rope metatile
 		
 		lda AreaObjectLength,x							; if not at the end, render rope
 		bne RenderPul
@@ -4075,8 +4067,7 @@ PulleyRopeObject:
 		iny												; otherwise render right pulley
 
 RenderPul:
-		lda PulleyRopeMetatiles,y
-		sta MetatileBuffer								; render at the top of the screen
+		sty MetatileBuffer								; store resulting metatile into buffer
 
 MushLExit:
 		rts												; and leave
@@ -4489,9 +4480,6 @@ RowOfCoins:
 		bne GetRow										; [unconditional branch]
 ; --------------------------------
 
-C_ObjectRow:
-	.db $06, $07, $08
-
 C_ObjectMetatile:
 	.db $c5, $0c, $89
 
@@ -4506,8 +4494,11 @@ AxeObj:
 
 ChainObj:
 		ldy $00											; get value loaded earlier from decoder
-		ldx C_ObjectRow-2,y								; get appropriate row and metatile for object
-		lda C_ObjectMetatile-2,y
+		tya												; copy to A
+		clc
+		adc #$04										; add 4 since ($00 + 6 - 2) = ($00 + 4)
+		tax												; transfer to X to get row for object
+		lda C_ObjectMetatile-2,y						; get metatile for object
 		bne ColObj										; [unconditional branch]
 
 EmptyBlock:
@@ -4516,8 +4507,8 @@ EmptyBlock:
 		lda #$c4
 
 ColObj:
-		ldy #$00										; column length of 1
-		jmp RenderUnderPart
+		ldy #$00										; force column length of 1
+		jmp RenderUnderPart								; jump to render object
 
 ; --------------------------------
 
@@ -16689,7 +16680,7 @@ DrawBlock:
 		bne ChkRep										; if not found, branch to next part
 
 		lda #$85
-		sta Sprite_Tilenumber,y							; otherwise remove lineless  brick tiles
+		sta Sprite_Tilenumber,y							; otherwise remove lineless brick tiles
 		sta Sprite_Tilenumber+4,y						; and replace them with brick tiles with lines
 
 ChkRep:
