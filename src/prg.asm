@@ -4871,7 +4871,7 @@ GetAreaObjYPosition:
 
 BlockBufferAddr:
 	.db <Block_Buffer_1, <Block_Buffer_2
-	.db >Block_Buffer_1, >Block_Buffer_2
+	.db >Block_Buffer_1, >Block_Buffer_2				; high byte is the same
 
 GetBlockBufferAddr:
 		pha												; take value of A, save
@@ -4887,11 +4887,6 @@ GetBlockBufferAddr:
 		adc BlockBufferAddr,y							; add to low byte
 		sta $06											; store here and leave
 		rts
-
-; -------------------------------------------------------------------------------------
-
-; unused space
-;	.db $ff, $ff
 
 ; -------------------------------------------------------------------------------------
 
@@ -5036,11 +5031,6 @@ Not8Castle:
 ; -------------------------------------------------------------------------------------
 
 	.include "src/levels/levels.asm"
-
-; -------------------------------------------------------------------------------------
-
-; unused space
-;	.db $ff
 
 ; -------------------------------------------------------------------------------------
 
@@ -6493,8 +6483,7 @@ FireballObjCore:
 		sta Fireball_Y_HighPos,x
 		
 		ldy PlayerFacingDir								; get player's facing direction
-		dey												; decrement to use as offset here
-		lda FireballXSpdData,y							; set horizontal speed of fireball accordingly
+		lda FireballXSpdData-1,y						; set horizontal speed of fireball accordingly
 		sta Fireball_X_Speed,x
 		
 		lda #$04										; set vertical speed of fireball
@@ -7177,8 +7166,7 @@ BulletBillHandler:
 SetupBB:
 		sty Enemy_MovingDir,x							; set bullet bill's moving direction
 		
-		dey												; decrement to use as offset
-		lda BulletBillXSpdData,y						; get horizontal speed based on moving direction
+		lda BulletBillXSpdData-1,y						; get horizontal speed based on moving direction
 		sta Enemy_X_Speed,x								; and store it
 		
 		lda $00											; get horizontal difference
@@ -7305,8 +7293,7 @@ SetHSpd:
 		sta Enemy_State,y								; store new state
 
 		ldx Enemy_MovingDir,y							; get enemy's moving direction
-		dex												; decrement to use as offset
-		lda HammerXSpdData,x							; get proper speed to use based on moving direction
+		lda HammerXSpdData-1,x							; get proper speed to use based on moving direction
 
 		ldx ObjectOffset								; reobtain hammer's buffer offset
 		sta Misc_X_Speed,x								; set hammer's horizontal speed
@@ -10407,17 +10394,12 @@ ReviveStunned:
 
 		sta Enemy_State,x								; otherwise initialize enemy state to normal
 
-		ldy Enemy_MovingDir,x							; get enemy movement direction
-		dey												; decrement for use as pointer
-
-		lda PrimaryHardMode								; check primary hard mode flag
-		beq SetRSpd										; if not set, use pointer as-is
-
-		iny
-		iny												; otherwise increment 2 bytes to next data
-
-SetRSpd:
-		lda RevivedXSpeed,y								; load and store new horizontal speed
+SetEnemySpeed:
+		lda PrimaryHardMode								; load primary hard mode (0 or 1)
+		asl												; multiply by 2 (carry will always be clear)
+		adc Enemy_MovingDir,x							; add enemy moving direction (1 or 2)
+		tay												; use as offset
+		lda RevivedXSpeed-1,y							; load and store new horizontal speed
 		sta Enemy_X_Speed,x	
 
 NKGmba:
@@ -14698,18 +14680,7 @@ SetForStn:
 		jmp EnemyLanding								; then land it properly
 
 ProcEnemyDirection:
-		lda #$08
-		sta Enemy_X_Speed,x								; set horizontal speed to the right
-	
-		ldy Enemy_MovingDir,x							; load enemy movement direction
-	
-		lda #$01
-		sta Enemy_MovingDir,x							; set enemy movement direction to the right as well
-	
-		cpy #$01										; if we were indeed moving to the right,
-		beq LandEnemyInitState							; nothing left to do
-	
-		jsr InvEnemyDir									; otherwise, invert direction.
+		jsr SetEnemySpeed								; set enemy speed based on primary hard mode and direction
 
 LandEnemyInitState:
 		jsr EnemyLanding								; land enemy properly
@@ -14730,6 +14701,8 @@ NMovShellFallBit:
 		rts
 
 ; --------------------------------
+; $00 - used to store bitmask (not used but initialized here)
+; $eb - used in DoEnemySideCheck as counter and to compare moving directions
 
 ChkForRedKoopa:
 		lda Enemy_ID,x									; check for red koopa troopa $03
@@ -14753,10 +14726,6 @@ GetSteFromD:
 
 SetD6Ste:
 		sta Enemy_State,x								; set as new state
-
-; --------------------------------
-; $00 - used to store bitmask (not used but initialized here)
-; $eb - used in DoEnemySideCheck as counter and to compare moving directions
 
 DoEnemySideCheck:
 		lda Enemy_Y_Position,x							; if enemy within status bar, branch to leave
@@ -14831,7 +14800,7 @@ PlayerEnemyDiff:
 ; --------------------------------
 
 EnemyLanding:
-		jsr InitVStf									; do something here to vertical speed and something else
+		jsr InitVStf									; do something here to vertical speed and movement force
 
 		lda Enemy_Y_Position,x
 		and #%11110000									; save high nybble of vertical coordinate, and
@@ -17822,7 +17791,7 @@ ExDivPD:
 
 ; -------------------------------------------------------------------------------------
 ; INTERRUPT VECTORS
-.org $FFFA
+.org $fffa
 	.dw NonMaskableInterrupt
 	.dw Start
 	.dw Start										; IRQ vector is never used, but point here just in case
