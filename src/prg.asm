@@ -4702,15 +4702,10 @@ QuestionBlock:
 ; --------------------------------
 
 HoleMetatiles:
-	.db $87, $00										; next 2 bytes are shared
-
-ClimbAdderHigh:
-	.db $00												; next 2 bytes are shared
+	.db $87, $00, $00									; next byte is shared
 
 HighPosUnitData:
 	.db $00, $ff
-
-	.db $ff												; remaining byte of ClimbAdderHigh
 
 PlayerPosSPlatData:
 	.db $80
@@ -5929,7 +5924,7 @@ ExitMov1:
 
 ; --------------------------------
 
-ClimbAdderLow:
+ClimbAdder:
 	.db $0e, $04, $fc, $f2
 
 ClimbingSub:
@@ -5938,20 +5933,17 @@ ClimbingSub:
 		adc Player_Y_MoveForce							; save with carry
 		sta Player_YMF_Low
 		
-		ldy #$00										; set default adder here
 		lda Player_Y_Speed								; get player's vertical speed
 		bpl MoveOnVine									; if not moving upwards, branch
 		
-		dey												; otherwise set adder to $ff
+		dec Player_Y_HighPos							; otherwise decrement high Y position
 
 MoveOnVine:
-		sty $00											; store adder here
-
-		adc Player_Y_Position							; add carry to player's vertical position
+		adc Player_Y_Position							; add Y speed and carry to player's vertical position
 		sta Player_Y_Position							; and store to move player up or down
 
-		lda Player_Y_HighPos
-		adc $00											; add carry to player's page location
+		lda #$00
+		adc Player_Y_HighPos							; add carry to player's page location
 		sta Player_Y_HighPos							; and store
 		
 		lda Left_Right_Buttons							; compare left/right controller bits
@@ -5979,25 +5971,35 @@ ClimbFD:
 		inx												; otherwise increment by 1 byte
 
 CSetFDir:
-		lda Player_X_Position
-		clc												; add or subtract from player's horizontal position
-		adc ClimbAdderLow,x								; using value here as adder and X as offset
-		sta Player_X_Position
-		
-		lda Player_PageLoc								; add or subtract carry or borrow using value here
-		adc ClimbAdderHigh,x							; from the player's page location
-		sta Player_PageLoc
-		
 		lda PlayerFacingDir								; get left/right controller bits again
 		eor #%00000011									; invert them and store them while player
 		sta PlayerFacingDir								; is on vine to face player in opposite direction
+		
+		lda ClimbAdder,x								; load value to add
+		
+AddToPlayerPosition:
+		cmp #$00										; check if A is positive
+		bpl NotNeg										; branch ahead if so
+		
+		dec Player_PageLoc								; otherwise decrement page location
 
-ExitCSub:
-		rts												; then leave
+NotNeg:
+		clc												; now A can be treated as unsigned
+		adc Player_X_Position							; add contents of A to player's horizontal
+		sta Player_X_Position							; position to move player left or right
+		lda #$00
+		adc Player_PageLoc								; add carry to
+		sta Player_PageLoc								; page location
+		rts												; and leave
 
 InitCSTimer:
 		sta ClimbSideTimer								; initialize timer here
+		
+ExitCSub:
 		rts
+		
+
+		
 
 ; -------------------------------------------------------------------------------------
 ; $00 - used to store offset to friction data
@@ -8145,15 +8147,12 @@ MoveObjectHorizontally:									; equivalent to "Object_ApplyXVel" in the SMB3 d
 
 SaveXSpd:
 		sta $00											; save result here
-		ldy #$00										; load default Y value here
-		cmp #$00										; if result positive, leave Y alone
+		cmp #$00										; if result positive, branch ahead
 		bpl UseAdder
 
-		dey												; otherwise decrement Y
+		dec	SprObject_PageLoc,x							; otherwise decrement page location
 
 UseAdder:
-		sty $02											; save Y here
-
 		lda SprObject_X_MoveForce,x						; get whatever number's here
 		clc
 		adc $01											; add low nybble moved to high
@@ -8167,9 +8166,9 @@ UseAdder:
 		lda SprObject_X_Position,x
 		adc $00											; add carry plus saved value (high nybble moved to low
 		sta SprObject_X_Position,x						; plus $f0 if necessary) to object's horizontal position
-
-		lda SprObject_PageLoc,x
-		adc $02											; add carry plus other saved value to the
+		
+		lda #$00
+		adc SprObject_PageLoc,x							; add carry plus other saved value to the							
 		sta SprObject_PageLoc,x							; object's page location and save
 
 		pla
@@ -8325,25 +8324,22 @@ ImposeGravity:
 		adc SprObject_Y_MoveForce,x
 		sta SprObject_YMF_Low,x
 
-		ldy #$00										; set Y to zero by default
 		lda SprObject_Y_Speed,x							; get current vertical speed
-		bpl AlterYP										; if currently moving downwards, do not decrement Y
+		bpl AlterYP										; if currently moving downwards, branch ahead
 
-		dey												; otherwise decrement Y
+		dec	SprObject_Y_HighPos,x						; otherwise decrement high Y position
 
 AlterYP:
-		sty $07											; store Y here
-
 		adc SprObject_Y_Position,x						; add vertical position to vertical speed plus carry
 		sta SprObject_Y_Position,x						; store as new vertical position
 
-		lda SprObject_Y_HighPos,x
-		adc $07											; add carry plus contents of $07 to vertical high byte
+		lda #$00
+		adc SprObject_Y_HighPos,x						; add carry to vertical high byte
 		sta SprObject_Y_HighPos,x						; store as new vertical high byte
 
 		lda SprObject_Y_MoveForce,x
 		clc
-		adc $00											; add downward movement amount to contents of $0433
+		adc $00											; add downward movement amount to movement force
 		sta SprObject_Y_MoveForce,x
 
 		lda SprObject_Y_Speed,x							; add carry to vertical speed and store
@@ -8361,7 +8357,7 @@ AlterYP:
 		sta SprObject_Y_Speed,x							; keep vertical speed within maximum value
 
 		lda #$00
-		sta SprObject_Y_MoveForce,x						; clear fractional
+		sta SprObject_Y_MoveForce,x						; clear movement force
 
 ChkUpM:
 		pla												; get value from stack
@@ -10740,8 +10736,8 @@ CCSwim:
 	
 		lda Enemy_YMF_Low,x
 		clc
-		adc $02											; add preset value to dummy variable to get carry
-		sta Enemy_YMF_Low,x								; and save dummy
+		adc $02											; add preset value to low byte to get carry
+		sta Enemy_YMF_Low,x								; and save low byte
 	
 		lda Enemy_Y_Position,x							; get vertical coordinate
 		adc $03											; add carry to it plus enemy state to slowly move it downwards
@@ -10754,11 +10750,11 @@ CCSwim:
 CCSwimUpwards:
 		lda Enemy_YMF_Low,x
 		sec
-		sbc $02											; subtract preset value to dummy variable to get borrow
-		sta Enemy_YMF_Low,x								; and save dummy
+		sbc $02											; subtract preset value from low byte to get borrow
+		sta Enemy_YMF_Low,x								; and save low byte
 	
 		lda Enemy_Y_Position,x							; get vertical coordinate
-		sbc $03											; subtract borrow to it plus enemy state to slowly move it upwards
+		sbc $03											; subtract borrow from it plus enemy state to slowly move it upwards
 		sta Enemy_Y_Position,x							; save as new vertical coordinate
 	
 		lda Enemy_Y_HighPos,x
@@ -12435,7 +12431,7 @@ YMovingPlatform:
 		ora Enemy_Y_MoveForce,x							; check on other position
 		bne ChkYCenterPos
 
-		sta Enemy_YMF_Low,x								; initialize dummy variable
+		sta Enemy_YMF_Low,x								; initialize low byte
 
 		lda Enemy_Y_Position,x
 		cmp YPlatformTopYPos,x							; if current vertical position => top position, branch
@@ -12467,9 +12463,6 @@ ChkYPCollision:
 
 		jmp PositionPlayerOnVPlat						; otherwise position player appropriately
 
-ExYPl:
-		rts												; leave
-
 ; --------------------------------
 ; $00 - used as adder to position player hotizontally
 
@@ -12481,24 +12474,13 @@ XMovingPlatform:
 		lda PlatformCollisionFlag,x						; if collision with player, continue
 		bpl PositionPlayerOnHPlat
 
+ExYPl:
+ExDPl:
 		rts
 
 PositionPlayerOnHPlat:
-		lda Player_X_Position
-		clc												; add saved value from second subroutine to
-		adc $00											; current player's position to position
-		sta Player_X_Position							; player accordingly in horizontal position
-		
-		lda Player_PageLoc								; get player's page location
-		ldy $00											; check to see if saved value here is positive or negative
-		bmi PPHSubt										; if negative, branch to subtract
-		
-		adc #$00										; otherwise add carry to page location
-	.db $2c												; skip subtraction [skip 2 bytes]
-
-PPHSubt:
-		sbc #$00										; subtract borrow from page location
-		sta Player_PageLoc								; save result to player's page location
+		lda $00
+		jsr AddToPlayerPosition
 		jmp PositionPlayerOnVPlat						; position player vertically and appropriately
 
 ; --------------------------------
@@ -12510,9 +12492,6 @@ DropPlatform:
 		jsr MoveDropPlatform							; otherwise do a sub to move platform down very quickly
 		jmp PositionPlayerOnVPlat						; do a sub to position player appropriately
 
-ExDPl:
-		rts												; leave
-
 ; --------------------------------
 ; $00 - residual value from sub
 
@@ -12520,15 +12499,11 @@ RightPlatform:
 		jsr MoveEnemyHorizontally						; move platform with current horizontal speed, if any
 
 		lda PlatformCollisionFlag,x						; check collision flag, if no collision between player
-		bmi ExRPl										; and platform, branch ahead, leave speed unaltered
+		bmi ExDPl										; and platform, branch ahead, leave speed unaltered
 
 		lda #$10
 		sta Enemy_X_Speed,x								; otherwise set new speed (gets moving if motionless)
-
-		jmp PositionPlayerOnHPlat						; use saved value from earlier sub to position player
-
-ExRPl:
-		rts												; then leave
+		bne PositionPlayerOnHPlat						; position player [unconditional branch]
 
 ; --------------------------------
 
@@ -12552,6 +12527,8 @@ MoveLiftPlatforms:
 		lda Enemy_Y_Position,x							; add whatever vertical speed is set to current
 		adc Enemy_Y_Speed,x								; vertical position plus carry to move up or down
 		sta Enemy_Y_Position,x							; and then leave
+
+ExLiftP:
 		rts
 
 ChkSmallPlatCollision:
@@ -12560,8 +12537,6 @@ ChkSmallPlatCollision:
 
 		jmp PositionPlayerOnS_Plat						; use to position player correctly
 
-ExLiftP:
-		rts												; then leave
 
 ; -------------------------------------------------------------------------------------
 ; $00 - page location of extended left boundary
@@ -13127,10 +13102,6 @@ SetKRout:
 
 		ldy #$ff
 		sty TimerControl								; set master timer control flag to halt timers
-
-		iny
-		sty Player_X_Scroll								; clear residual scroll
-		sty ScrollAmount
 
 ExInjColRoutines:
 		ldx ObjectOffset								; get enemy offset
@@ -14162,8 +14133,6 @@ FlagpoleCollision:
 
 		lsr
 		sta StarInvincibleTimer							; FIX: starman doesn't mess up the level complete music anymore
-		sta Player_X_Scroll								; clear residual scroll
-		sta ScrollAmount
 
 		lda GameEngineSubroutine
 		cmp #$04										; check for flagpole slide routine running
@@ -14380,21 +14349,7 @@ NXSpd:
 		ldy #$00
 		sty Player_X_Speed								; nullify player's horizontal speed
 
-		cmp #$00										; if value set in A not set to $ff,
-		bpl PlatF										; branch ahead, do not decrement Y
-
-		tay												; otherwise set Y now
-
-PlatF:
-		sty $00											; store Y as high bits of horizontal adder
-
-		clc
-		adc Player_X_Position							; add contents of A to player's horizontal
-		sta Player_X_Position							; position to move player left or right
-
-		lda Player_PageLoc
-		adc $00											; add high bits and carry to
-		sta Player_PageLoc								; page location if necessary
+		jsr AddToPlayerPosition							; add contents of A to player position
 
 ExIPM:
 		txa												; invert contents of X
