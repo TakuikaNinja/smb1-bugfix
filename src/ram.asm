@@ -116,6 +116,7 @@ EnemyObjectPageLoc    = $073a
 EnemyObjectPageSel    = $073b
 MetatileBuffer        = $06a1
 BlockBufferColumnPos  = $06a0
+BlockBufferAdders     = $0160	; stack does not go this deep, so use this to store BlockBuffer_X_Adder table
 CurrentNTAddr_Low     = $0721
 CurrentNTAddr_High    = $0720
 AttributeBuffer       = $03f9

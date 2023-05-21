@@ -2850,7 +2850,16 @@ SkipByte:
 		
 		dex												; go onto the next page
 		bpl InitPageLoop								; do this until all pages of memory have been erased
+
+		ldy #$1c										; init loop counter to length of BlockBuffer_X_Adder
 		
+TableFillLoop:
+		lda BlockBuffer_X_Adder,y						; fill unused portion of stack with contents of BlockBuffer_X_Adder
+		sta BlockBufferAdders,y
+		dey
+		bpl TableFillLoop								; loop until all bytes are filled
+		
+		lda #$00										; clear A as most callees use this value immediately
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -13797,6 +13806,24 @@ NYSpd2:
 		sty Player_Y_Speed								; jump or swim
 
 DoFootCheck:
+		lda Player_Y_Speed								; SM if vertical speed negative or 0,
+		beq BlockBuffOGVal								; branch to use original adder values
+		bmi BlockBuffOGVal
+		
+BlockBuffWJFVal:
+		lda #$0a										; SM otherwise load alternate values
+		ldy #$05
+		bne StoreBlockBuffVal
+		
+BlockBuffOGVal:
+		lda #$0c										; SM load original adder values
+		ldy #$03
+		
+StoreBlockBuffVal:
+		sta BlockBufferAdders+2							; SM store adder values into table
+		sta BlockBufferAdders+16
+		sty BlockBufferAdders+1
+		sty BlockBufferAdders+15
 		ldy $eb											; get block buffer adder offset
 		
 		lda Player_Y_Position
@@ -15128,7 +15155,7 @@ BlockBufferCollision:
 
 		sty $04											; save contents of Y here
 
-		lda BlockBuffer_X_Adder,y						; add horizontal coordinate
+		lda BlockBufferAdders,y							; add horizontal coordinate
 		clc												; of object to value obtained using Y as offset
 		adc SprObject_X_Position,x
 		sta $05											; store here
