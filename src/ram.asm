@@ -440,7 +440,7 @@ DuplicateObj_Offset   = $06cf
 NumberofGroupEnemies  = $06d3
 
 BlooperMoveCounter    = $a0
-BlooperMoveSpeed      = $58
+BlooperMoveSpeed      = $58		; bloopers no longer use this, but other enemies do
 
 BowserBodyControls    = $0363
 BowserFeetCounter     = $0364

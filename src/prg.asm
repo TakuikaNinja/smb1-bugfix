@@ -4852,6 +4852,23 @@ MathINY4:												; INYx4 is so common that this actually saves bytes...
 		iny
 		rts
 
+NegateNybble:
+		eor #%00001111									; calculate the two's complement of the low nybble
+	.db $2c												; [skip 2 bytes]
+
+NegateA:
+		eor #$ff										; calculate the two's complement of A
+		sec
+		adc #$00
+		rts
+		
+NegateY:
+		tya												; calculate the two's complement of Y (clobbers A)
+		eor #$ff
+		tay
+		iny
+		rts
+
 ; --------------------------------
 
 GetAreaObjYPosition:
@@ -5942,10 +5959,10 @@ MoveOnVine:
 		adc Player_Y_Position							; add Y speed and carry to player's vertical position
 		sta Player_Y_Position							; and store to move player up or down
 
-		lda #$00
-		adc Player_Y_HighPos							; add carry to player's page location
-		sta Player_Y_HighPos							; and store
+		bcc NoIncYPos
+		inc Player_Y_HighPos							; increment high Y position if carry was set
 		
+NoIncYPos:
 		lda Left_Right_Buttons							; compare left/right controller bits
 		and Player_CollisionBits						; to collision flag
 		beq InitCSTimer									; if not set, skip to end
@@ -5987,9 +6004,9 @@ NotNeg:
 		clc												; now A can be treated as unsigned
 		adc Player_X_Position							; add contents of A to player's horizontal
 		sta Player_X_Position							; position to move player left or right
-		lda #$00
-		adc Player_PageLoc								; add carry to
-		sta Player_PageLoc								; page location
+		bcc ExitCSub
+
+		inc Player_PageLoc								; increment page location if carry set
 		rts												; and leave
 
 InitCSTimer:
@@ -6351,9 +6368,7 @@ XSpdSign:
 		cmp #$00										; if player not moving or moving to the right,
 		bpl SetAbsSpd									; branch and leave horizontal speed value unmodified
 		
-		eor #$ff
-		clc												; otherwise get two's compliment to get absolute
-		adc #$01										; unsigned walking/running speed
+		jsr NegateA										; otherwise negate horizontal speed
 
 SetAbsSpd:
 		sta Player_XSpeedAbsolute						; store walking/running speed here and leave
@@ -8166,11 +8181,11 @@ UseAdder:
 		lda SprObject_X_Position,x
 		adc $00											; add carry plus saved value (high nybble moved to low
 		sta SprObject_X_Position,x						; plus $f0 if necessary) to object's horizontal position
+		bcc NoPageInc
 		
-		lda #$00
-		adc SprObject_PageLoc,x							; add carry plus other saved value to the							
-		sta SprObject_PageLoc,x							; object's page location and save
+		inc SprObject_PageLoc,x							; increment page location if carry set
 
+NoPageInc:
 		pla
 		clc												; pull old carry from stack and add
 		adc $00											; to high nybble moved to low
@@ -8332,11 +8347,11 @@ ImposeGravity:
 AlterYP:
 		adc SprObject_Y_Position,x						; add vertical position to vertical speed plus carry
 		sta SprObject_Y_Position,x						; store as new vertical position
+		bcc NoYPInc
+		
+		inc SprObject_Y_HighPos,x						; increment vertical high byte if carry set
 
-		lda #$00
-		adc SprObject_Y_HighPos,x						; add carry to vertical high byte
-		sta SprObject_Y_HighPos,x						; store as new vertical high byte
-
+NoYPInc:
 		lda SprObject_Y_MoveForce,x
 		clc
 		adc $00											; add downward movement amount to movement force
@@ -8363,11 +8378,9 @@ ChkUpM:
 		pla												; get value from stack
 		beq ExVMove										; if set to zero, branch to leave
 
-		lda $02
-		eor #$ff										; otherwise get two's compliment of maximum speed
-		tay
-		iny
-		sty $07											; store two's compliment here
+		lda $02											; otherwise negate max speed
+		jsr NegateA
+		sta $07											; and store here
 
 		lda SprObject_Y_MoveForce,x
 		sec												; subtract upward movement amount from contents
@@ -8840,7 +8853,7 @@ InitEnemyRoutines:
 	.dw NoInitCode-1
 	.dw NoInitCode-1
 	.dw InitRetainerObj-1
-	.dw EndOfEnemyInitCode-1
+	.dw NoInitCode-1
 
 ; -------------------------------------------------------------------------------------
 
@@ -8916,7 +8929,7 @@ InitHammerBro:
 
 InitBloober:
 		lda #$00										; initialize horizontal speed
-		sta BlooperMoveSpeed,x
+		sta Enemy_Y_MoveForce,x
 
 SmallBBox:
 		lda #$09										; set specific bounding box size control
@@ -9116,10 +9129,7 @@ DifLoop:
 		and #%00000011									; get one of the LSFR parts and save the 2 LSB
 		beq UsePosv										; branch if neither bits are set
 
-		tya
-		eor #$ff										; otherwise get two's compliment of Y
-		tay
-		iny
+		jsr NegateY										; otherwise negate Y
 
 UsePosv:
 		tya												; put value from A in Y back to A
@@ -9181,15 +9191,9 @@ InitShortFirebar:
 		adc #$04
 		sta Enemy_Y_Position,x
 
-		lda Enemy_X_Position,x
-		clc												; add four pixels to horizontal coordinate
-		adc #$04
-		sta Enemy_X_Position,x
+		lda #$04										; add four pixels to horizontal coordinate
+		jmp AddToEnemyPosition
 
-		lda Enemy_PageLoc,x
-		adc #$00										; add carry to page location
-		sta Enemy_PageLoc,x
-		rts
 
 ; --------------------------------
 ; $00-$01 - used to hold pseudorandom bits
@@ -9286,10 +9290,8 @@ RSeed:
 		and #%00000010
 		beq D2XPos1										; if d1 not set, branch
 
-		lda Enemy_X_Speed,x
-		eor #$ff										; if d1 set, change horizontal speed
-		clc												; into two's compliment, thus moving in the opposite
-		adc #$01										; direction
+		lda Enemy_X_Speed,x								; otherwise negate horizontal speed
+		jsr NegateA
 		sta Enemy_X_Speed,x
 
 		inc Enemy_MovingDir,x							; increment to move towards the left
@@ -9874,9 +9876,7 @@ InitVertPlatform:
 		lda Enemy_Y_Position,x							; check vertical position
 		bpl SetYO										; if above a certain point, skip this part
 		
-		eor #$ff
-		clc												; otherwise get two's compliment
-		adc #$01
+		jsr NegateA										; otherwise negate vertical position
 		
 		ldy #$c0										; get alternate value to add to vertical position
 
@@ -9952,24 +9952,28 @@ CommonSmallLift:
 
 ; --------------------------------
 
-PlatPosDataLow:
+PlatPosData:
 	.db $08, $0c, $f8
 
-PlatPosDataHigh:
-	.db $00, $00, $ff
-
 PosPlatform:
-		lda Enemy_X_Position,x							; get horizontal coordinate
+		lda PlatPosData,y								; get position data	
+		
+AddToEnemyPosition:
+		cmp #$00										; branch if speed is positive
+		bpl EnemyNotNeg
+		
+		dec Enemy_PageLoc,x								; otherwise decrement page location
+		
+EnemyNotNeg:
 		clc
-		adc PlatPosDataLow,y							; add or subtract pixels depending on offset
-		sta Enemy_X_Position,x							; store as new horizontal coordinate
-	
-		lda Enemy_PageLoc,x
-		adc PlatPosDataHigh,y							; add or subtract page location depending on offset
-		sta Enemy_PageLoc,x								; store as new page location
+		adc Enemy_X_Position,x							; Add speed to horizontal position
+		sta Enemy_X_Position,x
+		bcc NoEnemyInc
 
-EndOfEnemyInitCode:
-		rts												; and go back
+		inc Enemy_PageLoc,x								; increment page location if carry set
+
+NoEnemyInc:
+		rts
 
 ; -------------------------------------------------------------------------------------
 
@@ -10451,12 +10455,10 @@ MoveFlyGreenPTroopa:
 		ldy #$ff										; otherwise set Y to move green paratroopa up
 
 YSway:
-		sty $00											; store adder here
-
-		lda Enemy_Y_Position,x
-		clc												; add or subtract from vertical position
-		adc $00											; to give green paratroopa a wavy flight
-		sta Enemy_Y_Position,x
+		tya												; transfer to A
+		clc
+		adc Enemy_Y_Position,x							; add or subtract from vertical position
+		sta Enemy_Y_Position,x							; to give green paratroopa a wavy flight
 
 NoMGPT:
 		rts												; leave!
@@ -10505,10 +10507,8 @@ MoveWithXMCntrs:
 		and #%00000010									; if d1 of primary counter is
 		bne XMRight										; set, branch ahead of this part here
 
-		lda XMoveSecondaryCounter,x
-		eor #$ff										; otherwise change secondary
-		clc												; counter to two's compliment
-		adc #$01
+		lda XMoveSecondaryCounter,x						; otherwise negate secondary counter
+		jsr NegateA
 		sta XMoveSecondaryCounter,x
 
 		ldy #$02										; load alternate value here
@@ -10567,30 +10567,15 @@ BlooberSwim:
 		sta Enemy_Y_Position,x							; otherwise, set new vertical position, make bloober swim
 
 SwimX:
+		lda Enemy_Y_MoveForce,x							; load horizontal speed
 		ldy Enemy_MovingDir,x							; check moving direction
 		dey
-		bne LeftSwim									; if moving to the left, branch to second part
+		beq RightSwim									; if moving to the right, branch to second part
 
-		lda Enemy_X_Position,x
-		clc												; add movement speed to horizontal coordinate
-		adc BlooperMoveSpeed,x
-		sta Enemy_X_Position,x							; store result as new horizontal coordinate
+		jsr NegateA										; otherwise negate speed
 
-		lda Enemy_PageLoc,x
-		adc #$00										; add carry to page location
-		sta Enemy_PageLoc,x								; store as new page location and leave
-		rts
-
-LeftSwim:
-		lda Enemy_X_Position,x
-		sec												; subtract movement speed from horizontal coordinate
-		sbc BlooperMoveSpeed,x
-		sta Enemy_X_Position,x							; store result as new horizontal coordinate
-
-		lda Enemy_PageLoc,x
-		sbc #$00										; subtract borrow from page location
-		sta Enemy_PageLoc,x								; store as new page location and leave
-		rts
+RightSwim:
+		jmp AddToEnemyPosition
 
 MoveDefeatedBloober:
 		jmp MoveEnemySlowVert							; jump to move defeated bloober downwards
@@ -10602,20 +10587,14 @@ ProcSwimmingB:
 	
 		lda FrameCounter
 		and #%00000111									; get 3 LSB of frame counter
-		pha												; and save it to the stack
+		bne BSwimE										; branch to leave, execute code only every eighth frame
 	
 		lda BlooperMoveCounter,x						; get enemy's movement counter
 		lsr												; check for d0 set
 		bcs SlowSwim									; branch if set
 	
-		pla												; pull 3 LSB of frame counter from the stack
-		bne BSwimE										; branch to leave, execute code only every eighth frame
-	
-		lda Enemy_Y_MoveForce,x
-		clc												; add to movement force to speed up swim
-		adc #$01
-		sta Enemy_Y_MoveForce,x							; set movement force
-		sta BlooperMoveSpeed,x							; set as movement speed
+		lda #$01										; otherwise add 1 to horizontal speed
+		jsr AddToBlooperSpeed
 	
 		cmp #$02
 		bne BSwimE										; if certain horizontal speed, branch to leave
@@ -10626,14 +10605,8 @@ BSwimE:
 		rts
 
 SlowSwim:
-		pla												; pull 3 LSB of frame counter from the stack
-		bne NoSSw										; branch to leave, execute code only every eighth frame
-	
-		lda Enemy_Y_MoveForce,x
-		sec												; subtract from movement force to slow swim
-		sbc #$01
-		sta Enemy_Y_MoveForce,x							; set movement force
-		sta BlooperMoveSpeed,x							; set as movement speed
+		lda #$ff										; subtract 1 from horizontal speed
+		jsr AddToBlooperSpeed
 		bne NoSSw										; if any speed, branch to leave
 	
 		inc BlooperMoveCounter,x						; otherwise increment movement counter
@@ -10643,6 +10616,12 @@ SlowSwim:
 
 NoSSw:
 		rts												; leave
+		
+AddToBlooperSpeed:
+		clc
+		adc Enemy_Y_MoveForce,x							; add to the horizontal speed
+		sta Enemy_Y_MoveForce,x
+		rts
 
 ChkForFloatdown:
 		lda EnemyIntervalTimer,x						; get enemy timer
@@ -10700,7 +10679,7 @@ MoveSwimmingCheepCheep:
 		jmp MoveEnemySlowVert							; otherwise jump to move defeated cheep-cheep downwards
 
 CCSwim:
-		sta $03											; save enemy state in $03
+		sta $03											; save enemy state in $03 (always 0)
 
 		lda Enemy_ID,x									; get enemy identifier
 		sec
@@ -10714,14 +10693,10 @@ CCSwim:
 		sec
 		sbc $02											; subtract preset value from horizontal force
 		sta Enemy_X_MoveForce,x							; store as new horizontal force
-
-		lda Enemy_X_Position,x							; get horizontal coordinate
-		sbc #$00										; subtract borrow (thus moving it slowly)
-		sta Enemy_X_Position,x							; and save as new horizontal coordinate
-
-		lda Enemy_PageLoc,x
-		sbc #$00										; subtract borrow again, this time from the
-		sta Enemy_PageLoc,x								; page location, then save
+		
+		lda #$00										; subtract carry from horizontal position
+		sbc #$00
+		jsr AddToEnemyPosition
 	
 		ldy SecondaryHardMode							; if 5-3 or beyond, set the Y-speed to its SMB2J value
 		lda SwimCCYSpdData,y
@@ -10730,10 +10705,21 @@ CCSwim:
 		cpx #$02										; check enemy object offset
 		bcc ExSwCC										; if in first or second slot, branch to leave
 	
-		lda CheepCheepMoveMFlag,x						; check movement flag
-		cmp #$10										; if movement speed set to $00,
-		bcc CCSwimUpwards								; branch to move upwards
-	
+		ldy CheepCheepMoveMFlag,x						; check movement flag
+		bne CCSwimDownwards								; if not set, branch to move downwards
+
+		jsr NegateA										; otherwise negate speed
+		sta $02
+		
+		dec $03											; decrement state to $ff to subtract instead
+
+CCSwimDownwards:
+		lda $03											; branch if state positive
+		bpl CCNotNeg
+		
+		dec Enemy_Y_HighPos,x							; otherwise decrement page location
+
+CCNotNeg:
 		lda Enemy_YMF_Low,x
 		clc
 		adc $02											; add preset value to low byte to get carry
@@ -10742,45 +10728,25 @@ CCSwim:
 		lda Enemy_Y_Position,x							; get vertical coordinate
 		adc $03											; add carry to it plus enemy state to slowly move it downwards
 		sta Enemy_Y_Position,x							; save as new vertical coordinate
+		bcc NoCCYPosInc
 	
-		lda Enemy_Y_HighPos,x
-		adc #$00										; add carry to page location and
-		jmp ChkSwimYPos									; jump to end of movement code
-
-CCSwimUpwards:
-		lda Enemy_YMF_Low,x
-		sec
-		sbc $02											; subtract preset value from low byte to get borrow
-		sta Enemy_YMF_Low,x								; and save low byte
-	
-		lda Enemy_Y_Position,x							; get vertical coordinate
-		sbc $03											; subtract borrow from it plus enemy state to slowly move it upwards
-		sta Enemy_Y_Position,x							; save as new vertical coordinate
-	
-		lda Enemy_Y_HighPos,x
-		sbc #$00										; subtract borrow from page location
-
-ChkSwimYPos:
-		sta Enemy_Y_HighPos,x							; save new page location here
-	
+		inc Enemy_Y_HighPos,x							; increment page location if carry set
+		
+NoCCYPosInc:
 		ldy #$00										; load movement speed to upwards by default
-	
 		lda Enemy_Y_Position,x							; get vertical coordinate
 		sec
 		sbc CheepCheepOrigYPos,x						; subtract original coordinate from current
 		bpl YPDiff										; if result positive, skip to next part
 	
 		ldy #$10										; otherwise load movement speed to downwards
-		eor #$ff
-		clc												; get two's compliment of result
-		adc #$01										; to obtain total difference of original vs. current
+		jsr NegateA										; and negate subtraction result
 
 YPDiff:
 		cmp #$0f										; if difference between original vs. current vertical
 		bcc ExSwCC										; coordinates < 15 pixels, leave movement speed alone
 	
-		tya
-		sta CheepCheepMoveMFlag,x						; otherwise change movement speed
+		sty CheepCheepMoveMFlag,x						; otherwise change movement speed
 
 ExSwCC:
 		rts												; leave
@@ -10922,8 +10888,7 @@ DrawFirebar_Collision:
 		lsr $05											; shift LSB of mirror data
 		bcs AddHA										; if carry was set, skip this part
 
-		eor #$ff
-		adc #$01										; otherwise get two's compliment of horizontal adder
+		jsr NegateA										; otherwise negate horizontal adder
 
 AddHA:
 		clc												; add horizontal coordinate relative to screen to
@@ -10959,8 +10924,7 @@ VAHandl:
 		lsr $05											; shift LSB of mirror data one more time
 		bcs AddVA										; if carry was set, skip this part
 
-		eor #$ff
-		adc #$01										; otherwise get two's compliment of second part
+		jsr NegateA										; otherwise negate vertical adder
 
 AddVA:
 		clc												; add vertical coordinate relative to screen to
@@ -11011,11 +10975,9 @@ BigJp:
 FBCLoop:
 		sec												; subtract vertical position of firebar
 		sbc $07											; from the vertical coordinate of the player
-		bpl ChkVFBD										; if player lower on the screen than firebar,
+		bpl ChkVFBD										; branch if result is positive
 
-		eor #$ff										; skip two's compliment part
-		clc												; otherwise get two's compliment
-		adc #$01
+		jsr NegateA										; otherwise negate result
 
 ChkVFBD:
 		cmp #$08										; if difference => 8 pixels, skip ahead of this part
@@ -11032,11 +10994,9 @@ ChkVFBD:
 
 		sec												; subtract horizontal coordinate of firebar
 		sbc $06											; from the X coordinate of player's sprite 1
-		bpl ChkFBCl										; if modded X coordinate to the right of firebar
+		bpl ChkFBCl										; branch if result is positive
 
-		eor #$ff										; skip two's compliment part
-		clc												; otherwise get two's compliment
-		adc #$01
+		jsr NegateA										; otherwise negate result
 
 ChkFBCl:
 		cmp #$08										; if difference < 8 pixels, collision, thus branch
@@ -11093,9 +11053,7 @@ GetFirebarPosition:
 		cmp #$09
 		bcc GetHAdder									; if lower than $09, branch ahead
 	
-		eor #%00001111									; otherwise get two's compliment to oscillate
-		clc
-		adc #$01
+		jsr NegateNybble								; otherwise negate low nybble to oscilate
 
 GetHAdder:
 		sta $01											; store result, modified or not, here
@@ -11117,9 +11075,7 @@ GetHAdder:
 		cmp #$09										; if lower than $09, branch ahead
 		bcc GetVAdder
 	
-		eor #%00001111									; otherwise get two's compliment
-		clc
-		adc #$01
+		jsr NegateNybble								; otherwise negate low nybble
 
 GetVAdder:
 		sta $02											; store result here
@@ -11207,11 +11163,9 @@ SetLSpd:
 		and #$01										; get LSB of moving direction
 		bne SetLMov										; if set, branch to the end to use moving direction
 
-		lda LakituMoveSpeed,x
-		eor #$ff										; get two's compliment of moving speed
-		clc
-		adc #$01
-		sta LakituMoveSpeed,x							; store as new moving speed
+		lda LakituMoveSpeed,x							; negate moving speed
+		jsr NegateA
+		sta LakituMoveSpeed,x
 
 		iny												; increment moving direction to left
 
@@ -11225,11 +11179,9 @@ PlayerLakituDiff:
 		jsr PlayerEnemyDiff								; get horizontal difference between enemy and player
 		bpl ChkLakDif									; branch if enemy is to the right of the player
 
-		iny												; increment Y for left of player
-		lda $00
-		eor #$ff										; get two's compliment of low byte of horizontal difference
-		sec
-		adc #$00										; store two's compliment as horizontal difference
+		iny												; otherwise increment Y for left of player
+		lda $00											; and negate horizontal difference
+		jsr NegateA
 		sta $00
 
 ChkLakDif:
@@ -11515,9 +11467,7 @@ GetDToO:
 		sbc BowserOrigXPos								; horizontal position
 		bpl CompDToO									; if current position to the right of original, skip ahead
 
-		eor #$ff
-		clc												; get two's compliment
-		adc #$01
+		jsr NegateA										; otherwise negate result
 
 		ldy #$01										; set alternate movement speed here (move right)
 
@@ -11707,13 +11657,9 @@ SFlmX:
 		sbc $00
 		sta Enemy_X_MoveForce,x							; save new value
 		
-		lda Enemy_X_Position,x
-		sbc #$01										; subtract one from horizontal position to move
-		sta Enemy_X_Position,x							; to the left
-		
-		lda Enemy_PageLoc,x
-		sbc #$00										; subtract borrow from page location
-		sta Enemy_PageLoc,x
+		lda #$ff										; subtract 1 and carry from horizontal position
+		sbc #$00
+		jsr AddToEnemyPosition
 		
 		ldy BowserFlamePRandomOfs,x						; get some value here and use as offset
 		lda Enemy_Y_Position,x							; load vertical coordinate
@@ -12010,11 +11956,9 @@ MovePiranhaPlant:
 		jsr PlayerEnemyDiff								; get horizontal difference between player and
 		bpl ChkPlayerNearPipe							; piranha plant, and branch if enemy to right of player
 
-		lda $00											; otherwise get saved horizontal difference
-		eor #$ff
-		sec												; and change to two's compliment
-		adc #$00
-		sta $00											; save as new horizontal difference
+		lda $00											; otherwise negate horizontal difference
+		jsr NegateA
+		sta $00
 
 ChkPlayerNearPipe:
 		lda $00											; get saved horizontal difference
@@ -12022,11 +11966,9 @@ ChkPlayerNearPipe:
 		bcc PutinPipe									; if player within a certain distance, branch to leave
 
 ReversePlantSpeed:
-		lda PiranhaPlant_Y_Speed,x						; get vertical speed
-		eor #$ff
-		clc												; change to two's compliment
-		adc #$01
-		sta PiranhaPlant_Y_Speed,x						; save as new vertical speed
+		lda PiranhaPlant_Y_Speed,x						; otherwise negate vertical speed
+		jsr NegateA
+		sta PiranhaPlant_Y_Speed,x
 
 		inc PiranhaPlant_MoveFlag,x						; increment to set movement flag
 
@@ -13477,11 +13419,9 @@ EnemyTurnAround:
 		bcs ExTA										; if any OTHER enemy object => $07, leave
 
 RXSpd:
-		lda Enemy_X_Speed,x								; load horizontal speed
-		eor #$ff										; get two's compliment for horizontal speed
-		tay
-		iny
-		sty Enemy_X_Speed,x								; store as new horizontal speed
+		lda Enemy_X_Speed,x								; negate horizontal speed
+		jsr NegateA
+		sta Enemy_X_Speed,x
 
 		lda Enemy_MovingDir,x
 		eor #%00000011									; invert moving direction and store, then leave
