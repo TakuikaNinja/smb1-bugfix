@@ -13760,8 +13760,11 @@ HeadChk:
 		beq DoFootCheck									; player, and branch if nothing above player's head
 
 		jsr CheckForCoinMTiles							; check to see if player touched coin with their head
-		bcs AwardTouchedCoin							; if so, branch to some other part of code
+		bcc NoCoinTiles									; branch if not found
+		
+		jmp HandleCoinMetatile							; otherwise jump to handle coin metatile
 
+NoCoinTiles:
 		ldy Player_Y_Speed								; check player's vertical speed
 		bpl DoFootCheck									; if player not moving upwards, branch elsewhere
 
@@ -13800,14 +13803,19 @@ NYSpd2:
 		sty Player_Y_Speed								; jump or swim
 
 DoFootCheck:
-		lda Player_Y_Speed								; SM if vertical speed negative or 0,
+		lda #$08										; SM load adder value to prevent left side clipping
+		ldy Player_OffscreenBits						; SM branch if any offscreen bits set
+		bne BlockBuffWJFVal
+		
+		ldy Player_Y_Speed								; SM if vertical speed negative or 0,
 		beq BlockBuffOGVal								; branch to use original adder values
 		bmi BlockBuffOGVal
 		
-BlockBuffWJFVal:
 		lda #$0a										; SM otherwise load alternate values
-		ldy #$05
-		bne StoreBlockBuffVal
+
+BlockBuffWJFVal:
+		ldy #$05										; SM otherwise load alternate values
+		bne StoreBlockBuffVal							; [unconditional branch]
 		
 BlockBuffOGVal:
 		lda #$0c										; SM load original adder values
@@ -13818,6 +13826,7 @@ StoreBlockBuffVal:
 		sta BlockBufferAdders+16
 		sty BlockBufferAdders+1
 		sty BlockBufferAdders+15
+		
 		ldy $eb											; get block buffer adder offset
 		
 		lda Player_Y_Position

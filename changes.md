@@ -77,6 +77,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Made floatey numbers (the score sprites) stay within the screen better. (less position under/overflows)
 + [x] Mario's sprite will no longer be cut off when he is pushed against the left screen edge by blocks or platforms.
 + [x] Momentarily "landing" in walls is now less likely, if not impossible for it to occur. (no more wall jump, sorry)
++ [x] Similarly, landing inside walls by jumping into a small gap at the screen edges is no longer possible.
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
 + [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
 + [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.
