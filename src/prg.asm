@@ -4861,10 +4861,6 @@ MathINY4:												; INYx4 is so common that this actually saves bytes...
 		iny
 		rts
 
-NegateNybble:
-		eor #%00001111									; calculate the two's complement of the low nybble
-	.db $2c												; [skip 2 bytes]
-
 NegateA:
 		eor #$ff										; calculate the two's complement of A
 		sec
@@ -5654,32 +5650,22 @@ RightPipe:
 
 PlayerChangeSize:
 		lda TimerControl								; check master timer control
-		cmp #$f8										; for specific moment in time
-		beq InitChangeSize								; if so, branch to get growing/shrinking going
-
-		cmp #$c4										; check again for another specific moment
+		cmp #$c4										; check if we're at a specific moment
 		beq DonePlayerTask								; if so, branch to init timer control and set routine
 
 		rts												; otherwise leave
 
-; -------------------------------------------------------------------------------------
-
 PlayerInjuryBlink:
 		lda TimerControl								; check master timer control
-		cmp #$f0										; for specific moment in time
-		bcs ExitBlink									; branch if before that point
-		
-		cmp #$c8										; check again for another specific point
-		beq DonePlayerTask								; branch if at that point, and not before or after
+		cmp #$c8										; check for another specific point
+		beq DonePlayerTask								; if at that point, branch to init timer control and set routine
+		bcs ExitBlink									; if before that point, branch to leave
 		
 		jmp PlayerCtrlRoutine							; otherwise run player control routine
 
-ExitBlink:
-		bne ExitBoth									; branch to leave if condition is not met
-
 InitChangeSize:
 		ldy PlayerChangeSizeFlag						; if growing/shrinking flag already set
-		bne ExitBoth									; then branch to leave
+		bne ExitBlink									; then branch to leave
 		
 		sty PlayerAnimCtrl								; otherwise initialize player's animation frame control
 		
@@ -5689,7 +5675,7 @@ InitChangeSize:
 		eor #$01										; invert A to toggle size
 		sta PlayerSize									; save as PlayerSize
 
-ExitBoth:
+ExitBlink:
 		rts												; leave
 
 ; -------------------------------------------------------------------------------------
@@ -11062,7 +11048,9 @@ GetFirebarPosition:
 		cmp #$09
 		bcc GetHAdder									; if lower than $09, branch ahead
 	
-		jsr NegateNybble								; otherwise negate low nybble to oscilate
+		eor #%00001111									; otherwise negate low nybble to oscilate
+		sec
+		adc #$00
 
 GetHAdder:
 		sta $01											; store result, modified or not, here
@@ -11084,7 +11072,9 @@ GetHAdder:
 		cmp #$09										; if lower than $09, branch ahead
 		bcc GetVAdder
 	
-		jsr NegateNybble								; otherwise negate low nybble
+		eor #%00001111									; otherwise negate low nybble to oscilate
+		sec
+		adc #$00
 
 GetVAdder:
 		sta $02											; store result here
@@ -12835,21 +12825,28 @@ Shroom_Flower_PUp:
 		cmp #$02
 		beq NoPUp
 
-		lda PowerUpType									; is the power-up a mushroom?
-		beq UpToSuper									; if so, do the grow animation
-
-		asl												; otherwise, shift the flower bit left (1 -> 2)
-		sta PlayerStatus								; and force fire flower
+		lda PowerUpType									; get power-up type
+		asl												; shift it left (puts fire flower bit into d1)
+		sta PlayerStatus								; and set as PlayerStatus
 
 		lda PlayerSize									; is PlayerSize big?
 		beq DontGrow									; if so, jump ahead
 
 		jsr InitChangeSize								; otherwise, force the growth animation
+		
+		lda PlayerStatus								; if player status not small,
+		bne DontGrow									; branch ahead
+		
+		inc PlayerStatus								; otherwise increment PlayerStatus to big
+		lda #$09										; set value to be used by subroutine tree (super)
+		bne SetRoutine									; [unconditional branch]
 
 DontGrow:
 		jsr GetPlayerColors								; run sub to change colors of player
 		lda #$0c										; set value to be used by subroutine tree (fiery)
-		bne UpToFiery									; jump to set values accordingly [unconditional branch]
+		
+SetRoutine:
+		jmp SetKRout									; set values to stop certain things in motion		
 
 SetFor1Up:
 		lda #Sfx_ExtraLife
@@ -12860,13 +12857,6 @@ SetFor1Up:
 
 NoPUp:
 		rts
-
-UpToSuper:
-		inc PlayerStatus								; set player status to super
-		lda #$09										; set value to be used by subroutine tree (super)
-
-UpToFiery:
-		jmp SetKRout									; set values to stop certain things in motion
 
 ; --------------------------------
 
@@ -13031,7 +13021,11 @@ ForceInjury:
 		
 		lsr												; shift right to get status below (fire->super, super->small)
 		sta PlayerStatus								; and set as the player's status
+		bne DontShrink
 		
+		jsr InitChangeSize
+
+DontShrink:
 		lda #$08
 		sta InjuryTimer									; set injured invincibility timer
 		
@@ -14045,9 +14039,6 @@ HandleAxeMetatile:
 
 		lda #$02
 		sta OperMode									; set primary mode to autoctrl mode
-		
-		lsr												; shift right to get #$01
-		sta InjuryTimer									; and set as InjuryTimer (ShaneM's fix)
 
 		lda #$18
 		sta Player_X_Speed								; set horizontal speed and continue to erase axe metatile

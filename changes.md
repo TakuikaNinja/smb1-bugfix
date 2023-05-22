@@ -38,7 +38,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Getting the flagpole stops the Super Star invincibility, to prevent audio glitches.
 - [x] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
 - [x] Holding the jump button no longer makes Mario jump while entering an area.
-+ [x] Getting hit on the same frame as touching the axe will no longer damage Mario. (no more Small Fire Mario, sorry)
++ [x] PlayerSize is now changed immediately when PlayerStatus is changed. (no more Small Fire Mario, sorry)
++ [x] Dying and touching the axe at the same time will no longer decrease the player's lives. (you can still do this, though)
 + [x] Running out of time as Fire Mario will now properly change the palette before killing Mario.
 + [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
 - [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.
