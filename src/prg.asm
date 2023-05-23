@@ -5257,8 +5257,10 @@ KeepOnscr:
 		sbc #$00										; subtract borrow
 		sta Player_PageLoc								; save as player's page location
 
-		lda #$00										; nullify horizontal speed of player
-		sta Player_X_Speed
+		lda Left_Right_Buttons							; branch if left/right buttons pressed
+		bne ExitOnscr
+		
+		sta Player_X_Speed								; otherwise nullify horizontal speed of player
 
 ExitOnscr:
 		rts
@@ -13805,8 +13807,12 @@ NYSpd2:
 DoFootCheck:
 		lda #$08										; SM load adder value to prevent left side clipping
 		ldy Player_OffscreenBits						; SM branch if any offscreen bits set
-		bne BlockBuffWJFVal
+		beq WJChk
 		
+		ldy SideCollisionTimer							; SM branch if side collision timer is set
+		bne BlockBuffWJFVal
+
+WJChk:	
 		ldy Player_Y_Speed								; SM if vertical speed negative or 0,
 		beq BlockBuffOGVal								; branch to use original adder values
 		bmi BlockBuffOGVal
@@ -13823,8 +13829,10 @@ BlockBuffOGVal:
 		
 StoreBlockBuffVal:
 		sta BlockBufferAdders+2							; SM store adder values into table
-		sta BlockBufferAdders+16
+		sta BlockBufferAdders+9							; (A -> left, Y -> right)
+		sta BlockBufferAdders+16						; (ordered big, swimming, small)
 		sty BlockBufferAdders+1
+		sty BlockBufferAdders+8
 		sty BlockBufferAdders+15
 		
 		ldy $eb											; get block buffer adder offset
@@ -14313,6 +14321,9 @@ RImpd:
 		lda #$01										; otherwise load A with value to be used here
 
 NXSpd:
+		ldy #$10										; set side collision timer
+		sty SideCollisionTimer
+		
 		ldy #$00
 		sty Player_X_Speed								; nullify player's horizontal speed
 
