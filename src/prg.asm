@@ -13023,9 +13023,10 @@ ForceInjury:
 		
 		lsr												; shift right to get status below (fire->super, super->small)
 		sta PlayerStatus								; and set as the player's status
-		bne DontShrink
+		bne DontShrink									; branch if result != 0
 		
-		jsr InitChangeSize
+		sta CrouchingFlag								; otherwise clear crouching flag
+		jsr InitChangeSize								; and shrink player
 
 DontShrink:
 		lda #$08
