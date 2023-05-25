@@ -12013,7 +12013,7 @@ RiseFallPiranhaPlant:
 		bcc PutinPipe									; branch to leave if d0 set (execute code every other frame)
 		
 		lda TimerControl								; get master timer control
-		bne PutinPipe									; branch to leave if set (likely not necessary)
+		bne PutinPipe									; branch to leave if set
 		
 		lda Enemy_Y_Position,x							; get current vertical coordinate
 		clc
@@ -13256,9 +13256,6 @@ EnemiesCollision:
 		cmp #Lakitu										; if lakitu, branch to leave
 		beq ExitECRoutine
 		
-		cmp #PiranhaPlant								; if piranha plant, branch to leave
-		beq ExitECRoutine
-		
 		cmp #Goomba										; if not goomba, branch ahead
 		bne SkipChecks1
 		
@@ -13293,9 +13290,6 @@ ECLoop:
 		
 		cmp #Lakitu
 		beq ReadyNextEnemy								; branch if enemy object is lakitu
-		
-		cmp #PiranhaPlant
-		beq ReadyNextEnemy								; branch if enemy object is piranha plant
 		
 		cmp #Goomba										; if not goomba, branch ahead
 		bne SkipChecks2
@@ -14500,10 +14494,10 @@ ChkToStunEnemies:
 		cmp #Lakitu										; if the enemy object identifier is equal to the values
 		bcs SetStun										; $09, $0e, $0f or $10, it will be modified
 
-		cmp #GreyCheepCheep								; don't modify it otherwise, note that piranha plant will
-		bcc Demote										; always fail this test because A will still have vertical
+		cmp #GreyCheepCheep								; don't modify it otherwise
+		bcc Demote
 
-		cmp #PiranhaPlant								; coordinate from previous addition, also these comparisons
+		cmp #PiranhaPlant								; these comparisons
 		bcc SetStun										; are only necessary if branching here
 
 Demote:

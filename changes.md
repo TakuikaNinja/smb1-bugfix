@@ -120,6 +120,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Lakitus respawn more quickly after 5-3. Additionally, they will now always spawn at the correct height with the correct hitbox.
 + [x] Podoboos now jump higher, as seen in SMAS.
 + [x] Piranha Plants are now slightly braver, as seen in SMBDX. (the range for staying inside pipes is smaller)
++ [x] Piranha Plants are now able to collide with enemies, including kicked shells.
 + [x] Platforms moving downwards will now properly drop the player into pits.
 + [x] Balance Platforms now have more checks in place to prevent collision oddities (notably 4-3).
 + [x] Balance Platforms will no longer move if the left platform has been unloaded, or has been replaced by another enemy. (prevents the 6-3 "Bullet on a string" glitch)
