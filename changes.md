@@ -5,7 +5,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] There is now music on the title screen: an alternate version of the underwater theme.
 - [x] The final victory song has been extended, with a B-section and an ending. (ported over from Vs.SMB; may need to adjust further)
 + [x] Level music now uses a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes are left unchanged.
-+ [x] Underground bonus areas will now use the Coin Heaven/Super Star music, following a similar logic as SMAS.
++ [x] Off-by-one errors in the initial envelope length counters have been corrected. (no more underwater pluck, sorry)
++ [x] Underground bonus areas will now use the Coin Heaven/Super Star music, following the same logic as SMAS.
 + [x] The underwater section of 8-4 will now keep the castle music, in line with SMAS.
 
 ## Sound Changes

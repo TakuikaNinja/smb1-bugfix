@@ -58,7 +58,7 @@ InPause:
 
 PTone1F:
 		lda #$44										; play first tone
-		bne PTRegC										; unconditional branch
+		bne PTRegC										; [unconditional branch]
 
 ; ----------------------------------------------------------------------------------------------------------------------------------
 
@@ -183,17 +183,13 @@ PlaySqu2Sfx:
 
 SetFreq_Squ2:
 		ldx #$04										; set frequency reg offset for square 2 sound channel
-		bne Dump_Freq_Regs								; unconditional branch
+		bne Dump_Freq_Regs								; [unconditional branch]
 
 SetFreq_Tri:
 		ldx #$08										; set frequency reg offset for triangle sound channel
-		bne Dump_Freq_Regs								; unconditional branch
+		bne Dump_Freq_Regs								; [unconditional branch]
 
 ; ----------------------------------------------------------------------------------------------------------------------------------
-
-SwimStompEnvelopeData:
-	.db $9f, $9b, $98, $96, $95, $94, $92, $90
-	.db $90, $9a, $97, $95, $93, $92
 
 PlayFlagpoleSlide:
 		lda #$40										; store length of flagpole sound
@@ -227,7 +223,7 @@ ContinueSndJump:
 		
 		ldx #$5f										; load second part
 		ldy #$f6
-		bne DmpJpFPS									; unconditional branch
+		bne DmpJpFPS									; [unconditional branch]
 
 N2Prt:
 		cmp #$20										; check for third part
@@ -240,12 +236,12 @@ FPS2nd:
 
 DmpJpFPS:
 		jsr Dump_Squ1_Regs
-		bne DecJpFPS									; unconditional branch outta here
+		bne DecJpFPS									; [unconditional branch]
 
 PlayFireballThrow:
 		lda #$05
 		ldy #$99										; load reg contents for fireball throw sound
-		bne Fthrow										; unconditional branch
+		bne Fthrow										; [unconditional branch]
 
 PlayBump:
 		lda #$0a										; load length of sfx and reg contents for bump sound
@@ -267,7 +263,7 @@ ContinueBumpThrow:
 		sta SND_SQUARE1_REG+1
 
 DecJpFPS:
-		bne BranchToDecLength1							; unconditional branch
+		bne BranchToDecLength1							; [unconditional branch]
 
 
 Square1SfxHandler:
@@ -275,8 +271,8 @@ Square1SfxHandler:
 		lda Square1SoundQueue							; check for sfx in queue
 		beq CheckSfx1Buffer
 		
-		sty Square1SoundQueue
-		sta Square1SoundBuffer							; if found, put in buffer
+		sty Square1SoundQueue							; if found, clear sfx in queue
+		sta Square1SoundBuffer							; and put sfx in buffer to check for the following
 		bmi PlaySmallJump								; small jump
 		
 		lsr
@@ -301,7 +297,7 @@ Square1SfxHandler:
 		bcs PlayFlagpoleSlide							; slide flagpole
 
 CheckSfx1Buffer:
-		lda Square1SoundBuffer							; check for sfx in buffer
+		lda Square1SoundBuffer							; check sfx in buffer for the following
 		beq ExS1H										; if not found, exit sub
 		bmi ContinueSndJump								; small mario jump
 		
@@ -350,7 +346,7 @@ ContinueSwimStomp:
 		sta SND_SQUARE1_REG+2							; directly into the LSB of square 1's frequency divider
 
 BranchToDecLength1:
-		bne DecrementSfx1Length							; unconditional branch (regardless of how we got here)
+		bne DecrementSfx1Length							; [unconditional branch]
 
 PlaySmackEnemy:
 		lda #$0e										; store length of smack enemy sound
@@ -360,7 +356,7 @@ PlaySmackEnemy:
 
 		lda #$28										; store reg contents for smack enemy sound
 		jsr PlaySqu1Sfx
-		bne DecrementSfx1Length							; unconditional branch
+		bne DecrementSfx1Length							; [unconditional branch]
 
 ContinueSmackEnemy:
 		ldy Squ1_SfxLenCounter							; check about halfway through
@@ -421,21 +417,6 @@ NoPDwnL:
 
 ; ----------------------------------------------------------------------------------------------------------------------------------
 
-ExtraLifeFreqData:
-	.db $58, $02, $54, $56, $4e, $44
-
-PowerUpGrabFreqData:
-	.db $4c, $52, $4c, $48, $3e, $36, $3e, $36, $30
-	.db $28, $4a, $50, $4a, $64, $3c, $32, $3c, $32
-	.db $2c, $24, $3a, $64, $3a, $34, $2c, $22, $2c
-	.db $22, $1c, $14
-
-PUp_VGrow_FreqData:
-	.db $14, $04, $22, $24, $16, $04, $24, $26			; used by both
-	.db $18, $04, $26, $28, $1a, $04, $28, $2a
-	.db $1c, $04, $2a, $2c, $1e, $04, $2c, $2e			; used by vinegrow
-	.db $20, $04, $2e, $30, $22, $04, $30, $32
-
 PlayCoinGrab:
 		lda #$35										; load length of coin grab sound
 		ldx #$8d										; and part of reg contents
@@ -480,7 +461,7 @@ ContinueBlast:
 		lda #$18
 
 SBlasJ:
-		bne BlstSJp										; unconditional branch to load rest of reg contents
+		bne BlstSJp										; store them [unconditional branch]
 
 PlayPowerUpGrab:
 		lda #$3c										; load length of power-up grab sound
@@ -519,16 +500,14 @@ ExSfx2:
 
 Square2SfxHandler:
 		lda Square2SoundBuffer							; special handling for the 1-up sound to keep it
-		bmi ContinueExtraLife							; from being interrupted by other sounds on square 2
+		bmi ContinueExtraLife							; from being interrupted by square 2 sfx
 		
 		ldy #$00
-
 		lda Square2SoundQueue							; check for sfx in queue
 		beq CheckSfx2Buffer
 
-		sty Square2SoundQueue							; check for sfx in queue
-
-		sta Square2SoundBuffer							; if found, put in buffer and check for the following
+		sty Square2SoundQueue							; if found, clear sfx in queue
+		sta Square2SoundBuffer							; and put sfx in buffer to check for the following
 		bmi PlayExtraLife								; 1-up
 
 		lsr
@@ -553,9 +532,8 @@ Square2SfxHandler:
 		bcs PlayBowserFall								; bowser fall
 
 CheckSfx2Buffer:
-		lda Square2SoundBuffer							; check for sfx in buffer
+		lda Square2SoundBuffer							; check sfx in buffer for the following
 		beq ExS2H										; if not found, exit sub
-		bmi ContinueExtraLife							; 1-up
 
 		lsr
 		bcs Cont_CGrab_TTick							; coin grab
@@ -609,7 +587,7 @@ PBFRegs:
 		ldx #$9f										; the fireworks/gunfire sound shares part of reg contents here
 
 EL_LRegs:
-		bne LoadSqu2Regs								; this is an unconditional branch outta here
+		bne LoadSqu2Regs								; [unconditional branch]
 
 PlayExtraLife:
 		lda #$30										; load length of 1-up sound
@@ -630,7 +608,7 @@ DivLLoop:
 		lda ExtraLifeFreqData-1,y						; load our reg contents
 		ldx #$82
 		ldy #$7f
-		bne EL_LRegs									; unconditional branch
+		bne EL_LRegs									; [unconditional branch]
 
 PlayGrowPowerUp:
 		lda #$10										; load length of power-up reveal sound
@@ -667,33 +645,22 @@ StopGrowItems:
 
 ; ----------------------------------------------------------------------------------------------------------------------------------
 
-BrickShatterFreqData:
-	.db $01, $0e, $0e, $0d, $0b, $06, $0c, $0f
-	.db $0a, $09, $03, $0d, $08, $0d, $06, $0c
-
-SkidSfxFreqData:
-	.db $47, $49, $42, $4a, $43, $4b
-
 PlaySkidSfx:
-		sty NoiseSoundBuffer
-
-		lda #$06
+		lda #$06										; load length of skid sound
 		sta Noise_SfxLenCounter
 
 ContinueSkidSfx:
 		lda Noise_SfxLenCounter
-		tay
+		tay 											; divide by 2 and check for bit set to use offset
 		lda SkidSfxFreqData-1,y
-		sta SND_TRIANGLE_REG+2
+		sta SND_TRIANGLE_REG+2							; write reg contents to triangle channel
 
 		lda #$18
 		sta SND_TRIANGLE_REG
-		sta SND_TRIANGLE_REG+3
-		bne DecrementSfx3Length
+		sta SND_TRIANGLE_REG+3							; this sets the length counter as well as timer high
+		bne DecrementSfx3Length							; [unconditional branch]
 
 PlayBrickShatter:
-		sty NoiseSoundBuffer
-
 		lda #$20										; load length of brick shatter sound
 		sta Noise_SfxLenCounter
 
@@ -728,20 +695,25 @@ ExSfx3:
 		rts
 
 NoiseSfxHandler:
-		lda NoiseSoundBuffer
-		bmi ContinueSkidSfx
+		lda NoiseSoundBuffer							; special handling for skid sfx to keep it
+		bmi ContinueSkidSfx								; from being interrupted by other noise sfx
+		
+		ldy #$00
+		lda NoiseSoundQueue								; check for sfx in queue
+		beq CheckNoiseBuffer
+		
+		sty NoiseSoundQueue								; if found, clear sfx in queue
+		sta NoiseSoundBuffer							; and put sfx in buffer to check for the following
+		bmi PlaySkidSfx									; skid
 
-		ldy NoiseSoundQueue
-		bmi PlaySkidSfx
-
-		lsr NoiseSoundQueue
+		lsr
 		bcs PlayBrickShatter							; brick shatter
 
-		lsr NoiseSoundQueue
+		lsr
 		bcs PlayBowserFlame								; bowser flame
 
 CheckNoiseBuffer:
-		lda NoiseSoundBuffer							; check for sfx in buffer
+		lda NoiseSoundBuffer							; check for sfx in buffer for the following
 		beq ExNH										; if not found, exit sub
 
 		lsr
@@ -754,8 +726,6 @@ ExNH:
 		rts
 
 PlayBowserFlame:
-		sty NoiseSoundBuffer
-
 		lda #$40										; load length of bowser flame sound
 		sta Noise_SfxLenCounter
 
@@ -765,7 +735,7 @@ ContinueBowserFlame:
 		tay
 		ldx #$0f										; load reg contents of bowser flame sound
 		lda ShatterFlameEnvData-1,y
-		bne PlayNoiseSfx								; unconditional branch here
+		bne PlayNoiseSfx								; [unconditional branch]
 
 ; ----------------------------------------------------------------------------------------------------------------------------------
 
@@ -814,7 +784,7 @@ NoStopSfx:
 
 		ldx #$08										; load offset to be added to length byte of header
 		stx NoteLengthTblAdder
-		bne FindEventMusicHeader						; unconditional branch
+		bne FindEventMusicHeader						; [unconditional branch]
 
 CheckVictoryMusic:
 		cmp #VictoryMusic								; is it time victory music?
@@ -854,7 +824,7 @@ HandleAreaMusicLoopB:
 		bne LoadHeader									; branch ahead with alternate offset
 
 		ldy #$11
-		bne GMLoopB										; unconditional branch
+		bne GMLoopB										; [unconditional branch]
 
 FindAreaMusicHeader:
 		ldy #$08										; load Y for offset of area music
@@ -1014,7 +984,7 @@ FetchSqu1MusicData:
 		lda #$94										; and fetch another byte of data, used to give
 		sta SND_SQUARE1_REG+1							; death music its unique sound
 		sta AltRegContentFlag
-		bne FetchSqu1MusicData							; unconditional branch
+		bne FetchSqu1MusicData							; [unconditional branch]
 
 Squ1NoteHandler:
 		jsr AlternateLengthHandler
@@ -1134,7 +1104,7 @@ FetchNoiseBeatData:
 
 		lda NoiseDataLoopbackOfs						; if data is zero, reload original noise beat offset
 		sta MusicOffset_Noise							; and loopback next time around
-		bne FetchNoiseBeatData							; unconditional branch
+		bne FetchNoiseBeatData							; [unconditional branch]
 
 NoiseBeatHandler:
 		jsr AlternateLengthHandler
@@ -1203,19 +1173,19 @@ LoadControlRegs:
 		and #EndOfCastleMusic
 		beq NotECstlM
 
-		lda #$04										; this value is only used for win castle music
-		bne AllMus										; unconditional branch
+		lda #$03										; this value is only used for win castle music
+		bne AllMus										; [unconditional branch]
 
 NotECstlM:
 		lda AreaMusicBuffer
 		and #%01111101									; check primary buffer for water music
 		beq WaterMus
 
-		lda #$08										; this is the default value for all other music
+		lda #$07										; this is the default value for all other music
 		bne AllMus
 
 WaterMus:
-		lda #$28										; this value is used for water music and all other event music
+		lda #$27										; this value is used for water music and all other event music
 
 AllMus:
 		ldx #$82										; load contents of other sound regs for square 2

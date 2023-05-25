@@ -370,6 +370,28 @@ VictoryMusBData:
 	.db $84, $12, $1c, $20, $24, $2a, $26, $24
 	.db $26, $22, $1e, $22, $24, $1e, $22, $0c, $1e
 
+ExtraLifeFreqData:
+	.db $58, $02, $54, $56, $4e, $44
+
+PowerUpGrabFreqData:
+	.db $4c, $52, $4c, $48, $3e, $36, $3e, $36, $30
+	.db $28, $4a, $50, $4a, $64, $3c, $32, $3c, $32
+	.db $2c, $24, $3a, $64, $3a, $34, $2c, $22, $2c
+	.db $22, $1c, $14
+
+PUp_VGrow_FreqData:
+	.db $14, $04, $22, $24, $16, $04, $24, $26			; used by both
+	.db $18, $04, $26, $28, $1a, $04, $28, $2a
+	.db $1c, $04, $2a, $2c, $1e, $04, $2c, $2e			; used by vinegrow
+	.db $20, $04, $2e, $30, $22, $04, $30, $32
+
+BrickShatterFreqData:
+	.db $01, $0e, $0e, $0d, $0b, $06, $0c, $0f
+	.db $0a, $09, $03, $0d, $08, $0d, $06, $0c
+
+SkidSfxFreqData:
+	.db $47, $49, $42, $4a, $43, $4b
+
 FreqRegLookupTbl:
 	.db $00, $88, $00, $2f, $00, $00
 	.db $02, $a6, $02, $80, $02, $5c, $02, $3a
@@ -398,20 +420,21 @@ AreaMusicEnvData:
 	.db $90, $94, $94, $95, $95, $96, $97, $97
 
 EndOfCastleMusicEnvData:
-	.db $98												; shared with area music envelope
-	.db $99, $9a, $9b
+	.db $98, $99, $9a, $9b
 
 WaterEventMusEnvData:
-	.db $90												; shared with win castle music envelope (unintentional silence)
-	.db $91, $92, $92, $93, $93, $93, $94
+	.db $90, $91, $92, $92, $93, $93, $93, $94
 	.db $94, $94, $94, $94, $94, $95, $95, $95
 	.db $95, $95, $95, $96, $96, $96, $96, $96
 	.db $96, $96, $96, $96, $96, $96, $96, $96
 	.db $96, $96, $96, $96, $95, $95, $94, $93
 
 ShatterFlameEnvData:
-	.db $15												; shared with water music envelope (unintentional pluck)
-	.db $16, $16, $17, $17, $18, $19, $19
+	.db $15, $16, $16, $17, $17, $18, $19, $19
 	.db $1a, $1a, $1c, $1d, $1d, $1e, $1e, $1f
 	.db $1f, $1f, $1f, $1e, $1d, $1c, $1e, $1f
 	.db $1f, $1e, $1d, $1c, $1a, $18, $16, $14
+
+SwimStompEnvelopeData:
+	.db $9f, $9b, $98, $96, $95, $94, $92, $90
+	.db $90, $9a, $97, $95, $93, $92

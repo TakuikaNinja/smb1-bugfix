@@ -4861,19 +4861,6 @@ MathINY4:												; INYx4 is so common that this actually saves bytes...
 		iny
 		rts
 
-NegateA:
-		eor #$ff										; calculate the two's complement of A
-		sec
-		adc #$00
-		rts
-		
-NegateY:
-		tya												; calculate the two's complement of Y (clobbers A)
-		eor #$ff
-		tay
-		iny
-		rts
-
 ; --------------------------------
 
 GetAreaObjYPosition:
@@ -6365,7 +6352,9 @@ XSpdSign:
 		cmp #$00										; if player not moving or moving to the right,
 		bpl SetAbsSpd									; branch and leave horizontal speed value unmodified
 		
-		jsr NegateA										; otherwise negate horizontal speed
+		eor #$ff										; otherwise negate horizontal speed
+		sec
+		adc #$00
 
 SetAbsSpd:
 		sta Player_XSpeedAbsolute						; store walking/running speed here and leave
@@ -8376,7 +8365,9 @@ ChkUpM:
 		beq ExVMove										; if set to zero, branch to leave
 
 		lda $02											; otherwise negate max speed
-		jsr NegateA
+		eor #$ff
+		sec
+		adc #$00
 		sta $07											; and store here
 
 		lda SprObject_Y_MoveForce,x
@@ -9125,8 +9116,11 @@ DifLoop:
 		lda PseudoRandomBitReg+1,x
 		and #%00000011									; get one of the LSFR parts and save the 2 LSB
 		beq UsePosv										; branch if neither bits are set
-
-		jsr NegateY										; otherwise negate Y
+		
+		tya												; otherwise negate Y
+		eor #$ff
+		tay
+		iny
 
 UsePosv:
 		tya												; put value from A in Y back to A
@@ -9288,7 +9282,9 @@ RSeed:
 		beq D2XPos1										; if d1 not set, branch
 
 		lda Enemy_X_Speed,x								; otherwise negate horizontal speed
-		jsr NegateA
+		eor #$ff
+		sec
+		adc #$00
 		sta Enemy_X_Speed,x
 
 		inc Enemy_MovingDir,x							; increment to move towards the left
@@ -9873,7 +9869,9 @@ InitVertPlatform:
 		lda Enemy_Y_Position,x							; check vertical position
 		bpl SetYO										; if above a certain point, skip this part
 		
-		jsr NegateA										; otherwise negate vertical position
+		eor #$ff										; otherwise negate vertical position
+		sec
+		adc #$00
 		
 		ldy #$c0										; get alternate value to add to vertical position
 
@@ -10505,7 +10503,9 @@ MoveWithXMCntrs:
 		bne XMRight										; set, branch ahead of this part here
 
 		lda XMoveSecondaryCounter,x						; otherwise negate secondary counter
-		jsr NegateA
+		eor #$ff
+		sec
+		adc #$00
 		sta XMoveSecondaryCounter,x
 
 		ldy #$02										; load alternate value here
@@ -10569,7 +10569,9 @@ SwimX:
 		dey
 		beq RightSwim									; if moving to the right, branch to second part
 
-		jsr NegateA										; otherwise negate speed
+		eor #$ff										; otherwise negate speed
+		sec
+		adc #$00
 
 RightSwim:
 		jmp AddToEnemyPosition
@@ -10705,7 +10707,9 @@ CCSwim:
 		ldy CheepCheepMoveMFlag,x						; check movement flag
 		bne CCSwimDownwards								; if not set, branch to move downwards
 
-		jsr NegateA										; otherwise negate speed
+		eor #$ff										; otherwise negate speed
+		sec
+		adc #$00
 		sta $02
 		
 		dec $03											; decrement state to $ff to subtract instead
@@ -10736,8 +10740,10 @@ NoCCYPosInc:
 		sbc CheepCheepOrigYPos,x						; subtract original coordinate from current
 		bpl YPDiff										; if result positive, skip to next part
 	
-		ldy #$10										; otherwise load movement speed to downwards
-		jsr NegateA										; and negate subtraction result
+		ldy #$10										; otherwise set movement speed to downwards
+		eor #$ff										; and negate subtraction result
+		sec
+		adc #$00
 
 YPDiff:
 		cmp #$0f										; if difference between original vs. current vertical
@@ -10885,7 +10891,9 @@ DrawFirebar_Collision:
 		lsr $05											; shift LSB of mirror data
 		bcs AddHA										; if carry was set, skip this part
 
-		jsr NegateA										; otherwise negate horizontal adder
+		eor #$ff										; otherwise negate horizontal adder
+		sec
+		adc #$00
 
 AddHA:
 		clc												; add horizontal coordinate relative to screen to
@@ -10921,7 +10929,9 @@ VAHandl:
 		lsr $05											; shift LSB of mirror data one more time
 		bcs AddVA										; if carry was set, skip this part
 
-		jsr NegateA										; otherwise negate vertical adder
+		eor #$ff										; otherwise negate vertical adder
+		sec
+		adc #$00
 
 AddVA:
 		clc												; add vertical coordinate relative to screen to
@@ -10974,7 +10984,9 @@ FBCLoop:
 		sbc $07											; from the vertical coordinate of the player
 		bpl ChkVFBD										; branch if result is positive
 
-		jsr NegateA										; otherwise negate result
+		eor #$ff										; otherwise negate result
+		sec
+		adc #$00
 
 ChkVFBD:
 		cmp #$08										; if difference => 8 pixels, skip ahead of this part
@@ -10993,7 +11005,9 @@ ChkVFBD:
 		sbc $06											; from the X coordinate of player's sprite 1
 		bpl ChkFBCl										; branch if result is positive
 
-		jsr NegateA										; otherwise negate result
+		eor #$ff										; otherwise negate result
+		sec
+		adc #$00
 
 ChkFBCl:
 		cmp #$08										; if difference < 8 pixels, collision, thus branch
@@ -11165,7 +11179,9 @@ SetLSpd:
 		bne SetLMov										; if set, branch to the end to use moving direction
 
 		lda LakituMoveSpeed,x							; negate moving speed
-		jsr NegateA
+		eor #$ff
+		sec
+		adc #$00
 		sta LakituMoveSpeed,x
 
 		iny												; increment moving direction to left
@@ -11182,7 +11198,9 @@ PlayerLakituDiff:
 
 		iny												; otherwise increment Y for left of player
 		lda $00											; and negate horizontal difference
-		jsr NegateA
+		eor #$ff
+		sec
+		adc #$00
 		sta $00
 
 ChkLakDif:
@@ -11468,7 +11486,9 @@ GetDToO:
 		sbc BowserOrigXPos								; horizontal position
 		bpl CompDToO									; if current position to the right of original, skip ahead
 
-		jsr NegateA										; otherwise negate result
+		eor #$ff										; otherwise negate result
+		sec
+		adc #$00
 
 		ldy #$01										; set alternate movement speed here (move right)
 
@@ -11958,7 +11978,9 @@ MovePiranhaPlant:
 		bpl ChkPlayerNearPipe							; piranha plant, and branch if enemy to right of player
 
 		lda $00											; otherwise negate horizontal difference
-		jsr NegateA
+		eor #$ff
+		sec
+		adc #$00
 		sta $00
 
 ChkPlayerNearPipe:
@@ -11968,7 +11990,9 @@ ChkPlayerNearPipe:
 
 ReversePlantSpeed:
 		lda PiranhaPlant_Y_Speed,x						; otherwise negate vertical speed
-		jsr NegateA
+		eor #$ff
+		sec
+		adc #$00
 		sta PiranhaPlant_Y_Speed,x
 
 		inc PiranhaPlant_MoveFlag,x						; increment to set movement flag
@@ -13426,7 +13450,9 @@ EnemyTurnAround:
 
 RXSpd:
 		lda Enemy_X_Speed,x								; negate horizontal speed
-		jsr NegateA
+		eor #$ff
+		sec
+		adc #$00
 		sta Enemy_X_Speed,x
 
 		lda Enemy_MovingDir,x
