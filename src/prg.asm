@@ -8350,9 +8350,8 @@ NoYPInc:
 		cmp $02											; compare to maximum speed
 		bmi ChkUpM										; if less than preset value, skip this part
 
-		lda SprObject_Y_MoveForce,x
-		cmp #$80										; if less positively than preset maximum, skip this part
-		bcc ChkUpM
+		lda SprObject_Y_MoveForce,x						; if movement force positive, skip this part									
+		bpl ChkUpM
 
 		lda $02
 		sta SprObject_Y_Speed,x							; keep vertical speed within maximum value
@@ -8382,9 +8381,8 @@ ChkUpM:
 		cmp $07											; compare vertical speed to two's compliment
 		bpl ExVMove										; if less negatively than preset maximum, skip this part
 
-		lda SprObject_Y_MoveForce,x
-		cmp #$80										; check if fractional part is above certain amount,
-		bcs ExVMove										; and if so, branch to leave
+		lda SprObject_Y_MoveForce,x						; if movement force is negative, branch to leave
+		bmi ExVMove
 
 		lda $07
 		sta SprObject_Y_Speed,x							; keep vertical speed within maximum value
@@ -11515,9 +11513,8 @@ HammerChk:
 		jsr SpawnHammerObj								; execute sub on every fourth frame to spawn misc object (hammer)
 
 SetHmrTmr:
-		lda Enemy_Y_Position,x							; get current vertical position
-		cmp #$80										; if still above a certain point
-		bcc ChkFireB									; then skip to world number check for flames
+		lda Enemy_Y_Position,x							; branch if vertical position is positive (i.e. in upper half)
+		bpl ChkFireB
 
 		lda PseudoRandomBitReg,x
 		and #%00000011									; get pseudorandom offset
@@ -14166,9 +14163,8 @@ VineCollision:
 		cmp #$26										; check for climbing metatile used on vines
 		bne PutPlayerOnVine
 
-		lda Player_Y_Position							; check player's vertical coordinate
-		cmp #$80										; for being in upper half of screen
-		bcs PutPlayerOnVine								; branch if not that far up
+		lda Player_Y_Position							; branch if vertical coordinate is negative (i.e. in bottom half)
+		bmi PutPlayerOnVine
 
 		lda #$01
 		sta GameEngineSubroutine						; otherwise set to run autoclimb routine next frame
