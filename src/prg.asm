@@ -931,7 +931,7 @@ ChkTallEnemy:
 		cmp #HammerBro
 		beq GetAltOffset								; branch elsewhere if hammer bro
 		
-		cmp #GreyCheepCheep
+		cmp #GreenCheepCheep
 		beq FloateyPart									; branch if cheep-cheep of either color
 		
 		cmp #RedCheepCheep
@@ -1077,7 +1077,7 @@ GetPlayerColors:
 		ldx VRAM_Buffer1_Offset							; get current buffer offset
 		
 		lda PlayerStatus								; check player status
-		and #$02				 						; we only care if the player is firey, which is in bit 1.
+		and #$02				 						; we only care if the player is fiery, which is in bit 1.
 		ora CurrentPlayer								; add the current player in bit 0.
 		asl					 							; multiply by 4, the amount of colors in the palette...
 		asl
@@ -5328,11 +5328,12 @@ EntrMode2:
 		
 		lda #$ff										; otherwise...
 		sta TimerControl								; temporarily set timer control to halt gameplay
-		jsr MovePlayerYAxis								; then execute sub to move player upwards (note $ff = -1)
-		cmp #$91										; if player risen to a certain point (this requires pipes
-		bcc PlayerRdy									; to be at specific height to look/function right) branch
+		dec Player_Y_Position							; move player upwards by 1
+		lda Player_Y_Position							; if player risen to a certain point, branch
+		cmp #$91										; (requires pipes to be at specific height)
+		bcc PlayerRdy
 		
-		rts												; to the last part, otherwise leave
+		rts												; otherwise leave
 
 VineEntr:
 		lda VineHeight
@@ -5566,15 +5567,14 @@ VerticalPipeEntry:
 		sty Player_X_Speed								; reset horizontal speed
 		sty SavedJoypadBits								; nullify input (prevents running while entering pipes)
 		sty CrouchingFlag								; nullify the crouching flag as well
+		sty ScrollAmount								; clear scroll speed
 		
 		dey
 		sty TimerControl								; set master timer control flag to halt timers
 		
-		lda #$01										; set 1 as movement amount
-		jsr MovePlayerYAxis								; do sub to move player downwards
-;		jsr ScrollHandler								; do sub to scroll screen with saved force if necessary
+		inc Player_Y_Position							; move player downwards by 1
 		
-		ldy #$00										; load default mode of entry
+		iny												; load default mode of entry
 		lda WarpZoneControl								; check warp zone control variable/flag
 		bne ChgAreaPipe									; if set, branch to use mode 0
 		
@@ -5585,12 +5585,6 @@ VerticalPipeEntry:
 		
 		iny												; otherwise use mode 2
 		bne ChgAreaPipe									; [unconditional branch]
-
-MovePlayerYAxis:
-		clc
-		adc Player_Y_Position							; add contents of A to player position
-		sta Player_Y_Position
-		rts
 
 ; -------------------------------------------------------------------------------------
 
@@ -5642,7 +5636,7 @@ PlayerChangeSize:
 		cmp #$c4										; check if we're at a specific moment
 		beq DonePlayerTask								; if so, branch to init timer control and set routine
 
-		rts												; otherwise leave
+		rts
 
 PlayerInjuryBlink:
 		lda TimerControl								; check master timer control
@@ -5665,7 +5659,7 @@ InitChangeSize:
 		sta PlayerSize									; save as PlayerSize
 
 ExitBlink:
-		rts												; leave
+		rts
 
 ; -------------------------------------------------------------------------------------
 ; $00 - used in CyclePlayerPalette to store current palette to cycle
@@ -8789,7 +8783,7 @@ InitEnemyRoutines:
 	.dw NoInitCode-1
 	.dw InitHammerBro-1
 	.dw InitGoomba-1
-	.dw InitBloober-1
+	.dw InitBlooper-1
 	.dw InitBulletBill-1
 	.dw NoInitCode-1
 	.dw InitCheepCheep-1
@@ -8913,7 +8907,7 @@ InitHammerBro:
 		lda #$0b										; set specific value for bounding box size control
 		bne SetBBox										; [unconditional branch]
 
-InitBloober:
+InitBlooper:
 		lda #$00										; initialize horizontal speed
 		sta Enemy_Y_MoveForce,x
 
@@ -9582,7 +9576,7 @@ Get17ID:
 		tya
 		and #%00000001									; mask out all but last bit of offset
 		clc
-		adc #GreyCheepCheep								; add offset to enemy identifier for grey cheep-cheep
+		adc #GreenCheepCheep							; add offset to enemy identifier for green cheep-cheep
 
 Set17ID:
 		sta Enemy_ID,x									; store whatever's in A as enemy identifier
@@ -10067,7 +10061,7 @@ EnemyMovementSubs:
 	.dw MoveNormalEnemy-1
 	.dw ProcHammerBro-1
 	.dw MoveNormalEnemy-1
-	.dw MoveBloober-1
+	.dw MoveBlooper-1
 	.dw MoveBulletBill-1
 	.dw NoMoveCode-1
 	.dw MoveSwimmingCheepCheep-1
@@ -10520,18 +10514,18 @@ XMRight:
 
 ; --------------------------------
 
-BlooberBitmasks:
+BlooperBitmasks:
 	.db %00111111, %00000011
 
-MoveBloober:
+MoveBlooper:
 		lda Enemy_State,x
 		and #%00100000									; check enemy state for d5 set
-		bne MoveDefeatedBloober							; branch if set to move defeated bloober
+		bne MoveDefeatedBlooper							; branch if set to move defeated blooper
 
 		ldy SecondaryHardMode							; use secondary hard mode flag as offset
 		lda PseudoRandomBitReg+1,x						; get LSFR
-		and BlooberBitmasks,y							; mask out bits in LSFR using bitmask loaded with offset
-		bne BlooberSwim									; if any bits set, skip ahead to make swim
+		and BlooperBitmasks,y							; mask out bits in LSFR using bitmask loaded with offset
+		bne BlooperSwim									; if any bits set, skip ahead to make swim
 
 		txa
 		lsr												; check to see if on second or fourth slot (1 or 3)
@@ -10542,16 +10536,16 @@ MoveBloober:
 
 FBLeft:
 		ldy #$02										; set left moving direction by default
-		jsr PlayerEnemyDiff								; get horizontal difference between player and bloober
+		jsr PlayerEnemyDiff								; get horizontal difference between player and blooper
 		bpl SBMDir										; if enemy to the right of player, keep left
 
 		dey												; otherwise decrement to set right moving direction
 
 SBMDir:
-		sty Enemy_MovingDir,x							; set moving direction of bloober, then continue on here
+		sty Enemy_MovingDir,x							; set moving direction of blooper, then continue on here
 
-BlooberSwim:
-		jsr ProcSwimmingB								; execute sub to make bloober swim characteristically
+BlooperSwim:
+		jsr ProcSwimmingB								; execute sub to make blooper swim characteristically
 
 		lda Enemy_Y_Position,x							; get vertical coordinate
 		sec
@@ -10559,7 +10553,7 @@ BlooberSwim:
 		cmp #$20										; check to see if position is above edge of status bar
 		bcc SwimX										; if so, don't do it
 
-		sta Enemy_Y_Position,x							; otherwise, set new vertical position, make bloober swim
+		sta Enemy_Y_Position,x							; otherwise, set new vertical position, make blooper swim
 
 SwimX:
 		lda Enemy_Y_MoveForce,x							; load horizontal speed
@@ -10574,8 +10568,8 @@ SwimX:
 RightSwim:
 		jmp AddToEnemyPosition
 
-MoveDefeatedBloober:
-		jmp MoveEnemySlowVert							; jump to move defeated bloober downwards
+MoveDefeatedBlooper:
+		jmp MoveEnemySlowVert							; jump to move defeated blooper downwards
 
 ProcSwimmingB:
 		lda BlooperMoveCounter,x						; get enemy's movement counter
@@ -10590,11 +10584,11 @@ ProcSwimmingB:
 		lsr												; check for d0 set
 		bcs SlowSwim									; branch if set
 	
-		lda #$01										; otherwise add 1 to horizontal speed
-		jsr AddToBlooperSpeed
-	
+		inc Enemy_Y_MoveForce,x							; increment speed by 1
+		
+		lda Enemy_Y_MoveForce,x							; if certain horizontal speed, branch to leave
 		cmp #$02
-		bne BSwimE										; if certain horizontal speed, branch to leave
+		bne BSwimE
 	
 		inc BlooperMoveCounter,x						; otherwise increment movement counter
 
@@ -10602,8 +10596,7 @@ BSwimE:
 		rts
 
 SlowSwim:
-		lda #$ff										; subtract 1 from horizontal speed
-		jsr AddToBlooperSpeed
+		dec Enemy_Y_MoveForce,x							; decrement speed by 1
 		bne NoSSw										; if any speed, branch to leave
 	
 		inc BlooperMoveCounter,x						; otherwise increment movement counter
@@ -10613,12 +10606,6 @@ SlowSwim:
 
 NoSSw:
 		rts												; leave
-		
-AddToBlooperSpeed:
-		clc
-		adc Enemy_Y_MoveForce,x							; add to the horizontal speed
-		sta Enemy_Y_MoveForce,x
-		rts
 
 ChkForFloatdown:
 		lda EnemyIntervalTimer,x						; get enemy timer
@@ -10680,7 +10667,7 @@ CCSwim:
 
 		lda Enemy_ID,x									; get enemy identifier
 		sec
-		sbc #GreyCheepCheep								; subtract ten for cheep-cheep identifiers
+		sbc #GreenCheepCheep								; subtract ten for cheep-cheep identifiers
 		tay												; use as offset
 
 		lda SwimCCXMoveData,y							; load value here
@@ -11237,11 +11224,9 @@ ChkPSpeed:
 
 		ldy #$00										; init offset
 
-		lda Player_X_Speed
-		beq SubDifAdj									; if player not moving horizontally, branch
-
-		lda ScrollAmount
-		beq SubDifAdj									; if scroll speed not set, branch to same place
+		lda Player_X_Speed								; if player or scroll not moving horizontally, branch
+		ora ScrollAmount
+		beq SubDifAdj
 
 		iny												; otherwise increment offset
 
@@ -12661,7 +12646,7 @@ ExitFBallEnemy:
 		rts
 
 BowserIdentities:
-	.db Goomba, GreenKoopa, BuzzyBeetle, Spiny, Lakitu, Bloober, HammerBro, Bowser
+	.db Goomba, GreenKoopa, BuzzyBeetle, Spiny, Lakitu, Blooper, HammerBro, Bowser
 
 HandleEnemyFBallCol:
 		jsr RelativeEnemyPosition						; get relative coordinate of enemy
@@ -13071,6 +13056,8 @@ SetKRout:
 
 		ldy #$ff
 		sty TimerControl								; set master timer control flag to halt timers
+		iny
+		sty ScrollAmount								; clear scroll speed
 
 ExInjColRoutines:
 		ldx ObjectOffset								; get enemy offset
@@ -13127,7 +13114,7 @@ EnemyStomped:
 		beq EnemyStompedPts
 		
 		iny												; increment points data offset
-		cmp #Bloober									; branch if NOT bloober
+		cmp #Blooper									; branch if NOT blooper
 		bne ChkForDemoteKoopa
 
 EnemyStompedPts:
@@ -14490,7 +14477,7 @@ ChkToStunEnemies:
 		cmp #Lakitu										; if the enemy object identifier is equal to the values
 		bcs SetStun										; $09, $0e, $0f or $10, it will be modified
 
-		cmp #GreyCheepCheep								; don't modify it otherwise
+		cmp #GreenCheepCheep								; don't modify it otherwise
 		bcc Demote
 
 		cmp #PiranhaPlant								; these comparisons
@@ -14510,7 +14497,7 @@ SetStun:
 		dec Enemy_Y_Position,x							; subtract two pixels from enemy's vertical position
 
 		lda Enemy_ID,x
-		cmp #Bloober									; check for bloober object
+		cmp #Blooper									; check for blooper object
 		beq SetWYSpd
 
 		lda #$fd										; set default vertical speed
@@ -15805,7 +15792,7 @@ EnemyGraphicsTable:
 	.db $fc, $fc, $9a, $9b, $9c, $9d					;       frame 2
 	.db $fc, $fc, $8f, $8e, $8e, $8f					; spiny's egg frame 1
 	.db $fc, $fc, $95, $94, $94, $95					;             frame 2
-	.db $fc, $fc, $dc, $dc, $df, $df					; bloober frame 1
+	.db $fc, $fc, $dc, $dc, $df, $df					; blooper frame 1
 	.db $dc, $dc, $dd, $dd, $de, $de					;         frame 2
 	.db $fc, $fc, $b2, $b3, $b4, $b5					; cheep-cheep frame 1
 	.db $fc, $fc, $b6, $b3, $b7, $b5					;             frame 2
@@ -16116,7 +16103,7 @@ CheckForHammerBro:
 		ldy ObjectOffset
 		lda $ef											; check for hammer bro object
 		cmp #HammerBro
-		bne CheckForBloober								; branch if not found
+		bne CheckForBlooper								; branch if not found
 
 		lda $ed
 		beq CheckToAnimateEnemy							; branch if not in normal enemy state
@@ -16127,7 +16114,7 @@ CheckForHammerBro:
 		ldx #$b4										; otherwise load offset for different frame
 		bne CheckToAnimateEnemy							; unconditional branch
 
-CheckForBloober:
+CheckForBlooper:
 		cpx #$48										; check for cheep-cheep offset loaded
 		beq CheckToAnimateEnemy							; branch if found
 
@@ -16135,7 +16122,7 @@ CheckForBloober:
 		cmp #$05
 		bcs CheckDefeatedState							; branch if some timer is above a certain point
 
-		cpx #$3c										; check for bloober offset loaded
+		cpx #$3c										; check for blooper offset loaded
 		bne CheckToAnimateEnemy							; branch if not found this time
 
 		cmp #$01
@@ -16286,7 +16273,7 @@ SkipToOffScrChk:
 		jmp SprObjectOffscrChk							; jump if found
 
 ContES:
-		cmp #Bloober									; check for bloober object
+		cmp #Blooper									; check for blooper object
 		beq MirrorEnemyGfx
 
 		cmp #PiranhaPlant								; check for piranha plant object

@@ -345,7 +345,7 @@ FrictionAdderLow      = $0702
 RunningSpeed          = $0703
 SwimmingFlag          = $0704
 Player_X_MoveForce    = $0705
-CollisionAdder        = $0706	; used to force scroll when colliding with tiles
+CollisionAdder        = $0706	; free
 JumpOrigin_Y_HighPos  = $0707
 JumpOrigin_Y_Position = $0708
 VerticalForce         = $0709
@@ -441,7 +441,7 @@ DuplicateObj_Offset   = $06cf
 NumberofGroupEnemies  = $06d3
 
 BlooperMoveCounter    = $a0
-BlooperMoveSpeed      = $58		; bloopers no longer use this, but other enemies do
+BlooperMoveSpeed      = $58		; bloopers no longer use this, but other enemies use this array
 
 BowserBodyControls    = $0363
 BowserFeetCounter     = $0364
