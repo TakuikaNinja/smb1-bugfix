@@ -6715,40 +6715,26 @@ WhirlpoolActivate:
 		sta $00											; save as page location of whirlpool center
 
 		lda FrameCounter								; get frame counter
-		lsr												; shift d0 into carry (to run on every other frame)
-		bcc WhPull										; if d0 not set, branch to last part of code
+		and Player_CollisionBits						; AND with player's collision bits
+		lsr												; shift d0 into carry
+		bcc WhPull										; if d0 not set by both values, branch
 
 		lda $01											; get center
 		sec
 		sbc Player_X_Position							; subtract player's horizontal coordinate
 		lda $00											; get page location of center
 		sbc Player_PageLoc								; subtract borrow
-		bpl LeftWh										; if player to the left of center, branch
-
-		lda Player_X_Position							; otherwise slowly pull player left, towards the center
-		sec
-		sbc #$01										; subtract one pixel
-		sta Player_X_Position							; set player's new horizontal coordinate
-
-		lda Player_PageLoc
-		sbc #$00										; subtract borrow
-		jmp SetPWh										; jump to set player's new page location
+		php												; save negative flag
+		
+		lda #$ff										; prepare to subtract 1 from horizontal position
+		plp												; retrieve negative flag
+		bmi RightWh										; branch if set
 
 LeftWh:
-		lda Player_CollisionBits						; get player's collision bits
-		lsr												; shift d0 into carry
-		bcc WhPull										; if d0 not set, branch
+		lda #$01										; otherwise add 1 to horizontal position
 
-		lda Player_X_Position							; otherwise slowly pull player right, towards the center
-		clc
-		adc #$01										; add one pixel
-		sta Player_X_Position							; set player's new horizontal coordinate
-
-		lda Player_PageLoc
-		adc #$00										; add carry
-
-SetPWh:
-		sta Player_PageLoc								; set player's new page location
+RightWh:
+		jsr AddToPlayerPosition
 
 WhPull:
 		lda #$10
@@ -6792,10 +6778,12 @@ ContFlagP:
 		bne FPGfx										; branch to near the end of code
 
 		lda Enemy_Y_Position,x							; check flagpole flag's vertical coordinate
-		cmp #$a9										; if flagpole flag down to a certain point,
-		bcc MoveFlagP									; branch to end the level
+		cmp #$a9										; if flagpole flag not down to a certain point yet,
+		bcc MoveFlagP									; branch to only move it
 
-GiveFPScr:
+		lda SavedJoypadBits								; otherwise, branch if joypad bits set
+		bne FPGfx										; (i.e. wait until FlagpoleSlide clears it)
+
 		ldy FlagpoleScore								; get score offset from earlier (when player touched flagpole)
 		lda FlagpoleScoreMods,y							; get amount to award player points
 		ldx FlagpoleScoreDigits,y						; get digit with which to award points
@@ -6803,6 +6791,7 @@ GiveFPScr:
 		lda #$0a										; set lower nybble to only update score
 		jsr UpdateScore									; do sub to award player points depending on height of collision
 		inc GameEngineSubroutine						; set to run end-of-level subroutine on next frame
+		bne FPGfx										; [unconditional branch]
 		
 ; -------------------------------------------------------------------------------------
 

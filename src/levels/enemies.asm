@@ -110,7 +110,7 @@ E_GroundArea8:
 E_GroundArea9:
 	.db $85, $86, $0b, $80, $1b, $00, $db, $37, $77, $80
 	.db $eb, $37, $fe, $2b, $20, $2b, $80, $7b, $38, $ab, $b8
-	.db $77, $86, $fe, $42, $20, $49, $86, $8b, $06, $9b, $80
+	.db $77, $86, $fe, $42, $20, $39, $86, $8b, $06, $9b, $80 ; Move Goomba to account for Piranha Plant collision
 	.db $7b, $8e, $5b, $b7, $9b, $0e, $bb, $0e, $9b, $80
 ; end of data terminator here is also used by pipe intro area
 E_GroundArea10:
