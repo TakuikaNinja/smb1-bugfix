@@ -6310,14 +6310,14 @@ JoypFrict:
 		bcc RghtFrict									; if left button pressed, carry = 0, thus branch
 
 LeftFrict:
-		lda Player_X_MoveForce							; load value set here
+		lda Player_X_MoveForce							; add friction to horizontal speed (low bytes)
 		clc
-		adc FrictionAdderLow							; add to it another value set here
-		sta Player_X_MoveForce							; store here
+		adc FrictionAdderLow
+		sta Player_X_MoveForce
 		
-		lda Player_X_Speed
-		adc FrictionAdderHigh							; add value plus carry to horizontal speed
-		sta Player_X_Speed								; set as new horizontal speed
+		lda Player_X_Speed								; add friction to horizontal speed (high bytes)
+		adc FrictionAdderHigh
+		sta Player_X_Speed
 		
 		cmp MaximumRightSpeed							; compare against maximum value for right movement
 		bmi XSpdSign									; if horizontal speed greater negatively, branch
@@ -6327,14 +6327,14 @@ LeftFrict:
 		bpl SetAbsSpd									; skip to the end (unconditional)
 
 RghtFrict:
-		lda Player_X_MoveForce							; load value set here
+		lda Player_X_MoveForce							; subtract friction from horizontal speed (low bytes)
 		sec
-		sbc FrictionAdderLow							; subtract from it another value set here
-		sta Player_X_MoveForce							; store here
+		sbc FrictionAdderLow
+		sta Player_X_MoveForce
 		
-		lda Player_X_Speed
-		sbc FrictionAdderHigh							; subtract value plus borrow from horizontal speed
-		sta Player_X_Speed								; set as new horizontal speed
+		lda Player_X_Speed								; subtract friction from horizontal speed (high bytes)
+		sbc FrictionAdderHigh
+		sta Player_X_Speed
 		
 		cmp MaximumLeftSpeed							; compare against maximum value for left movement
 		bpl XSpdSign									; if horizontal speed greater positively, branch
@@ -14319,6 +14319,7 @@ NXSpd:
 		
 		ldy #$00
 		sty Player_X_Speed								; nullify player's horizontal speed
+		sty Player_X_MoveForce							; and low byte
 
 		jsr AddToPlayerPosition							; add contents of A to player position
 
