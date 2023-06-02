@@ -11422,9 +11422,9 @@ B_FaceP:
 		sta EnemyFrameTimer,x							; set timer here
 		sta BowserFireBreathTimer						; set timer used for bowser's flame
 
-		lda Enemy_X_Position,x
-		cmp #$c8										; if bowser to the right past a certain point,
-		bcs HammerChk									; skip ahead to some other section
+		lda Enemy_X_Position,x							; branch if bowser is past a certain point
+		cmp #$bf										; SM change threshold from $c8 to $bf to prevent jank
+		bcs HammerChk
 
 GetPRCmp:
 		lda FrameCounter								; get frame counter
@@ -13181,16 +13181,16 @@ SetupFloateyNumber:
 		sta FloateyNum_Y_Pos,x							; set vertical coordinate
 
 		lda Enemy_Rel_XPos
-		cmp #$f0										; SM if less than offscreen bounds
+		cmp #$ec										; SM if less than offscreen bounds
 		bcc StoreRelativePosition						; SM then branch
 
 		jsr PlayerEnemyDiff								; get horizontal difference between player and enemy object
-		php												; save negative flag
-		lda #$ef										; load default value (right edge)
-		plp												; restore negative flag
-		bpl StoreRelativePosition						; branch if not set (i.e. enemy to the right of player)
-		
-		lda #$00										; otherwise use 0 (left edge)
+		bmi LSV											; SM branch if enemy is to the left of the player
+		lda #$ec										; SM load default value (right edge)
+	.db $2c												; [unconditional branch]
+
+LSV:
+		lda #$04										; SM otherwise use 4 (left edge)
 
 StoreRelativePosition:
 		sta FloateyNum_X_Pos,x							; set horizontal coordinate and leave
@@ -14097,10 +14097,7 @@ FlagpoleCollision:
 		cmp #$05										; check for end-of-level routine running
 		beq PutPlayerOnVine								; if running, branch to end of climbing code
 
-		lda #$01
-		sta PlayerFacingDir								; set player's facing direction to right
-
-		lsr
+		lda #$00
 		sta StarInvincibleTimer							; FIX: starman doesn't mess up the level complete music anymore
 
 		lda GameEngineSubroutine
