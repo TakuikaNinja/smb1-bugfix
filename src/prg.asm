@@ -9474,8 +9474,7 @@ FireworksYPosData:
 	.db $60, $40, $70, $40, $60, $30
 
 InitFireworks:
-		lda EventMusicBuffer							; if win level music still playing,
-		ora FrenzyEnemyTimer							; or if timer not expired yet, branch to leave
+		lda FrenzyEnemyTimer							; if timer not expired yet, branch to leave
 		bne ExitFWk
 
 		lda #$20										; otherwise reset timer
@@ -11834,30 +11833,43 @@ StarFlagExit:
 		rts												; leave
 
 AwardGameTimerPoints:
+		lda EventMusicBuffer							; if win level music still playing,
+		bne StarFlagExit								; branch to leave
+		
 		lda GameTimerDisplay							; check all game timer digits for any intervals left
 		ora GameTimerDisplay+1
 		ora GameTimerDisplay+2
 		beq IncrementSFTask1							; if no time left on game timer at all, branch to next task
 		
-		lda EventMusicBuffer							; if win level music still playing,
-		bne NoTTick										; branch ahead
-		
 		lda FrameCounter
-		and #%00000100									; check frame counter for d2 set (skip ahead
-		beq NoTTick										; for four frames every four frames) branch if not set
+		and #%00000010									; check frame counter for d1 clear
+		beq StarFlagExit								; branch to leave if so
 		
-		lda #Sfx_TimerTick
-		sta Square2SoundQueue							; load timer tick sound
+		lda #Sfx_TimerTick								; otherwise load timer tick sound
+		sta Square2SoundQueue							; every 4 frames
 
 NoTTick:
-		ldy #$23										; set offset here to subtract from game timer's last digit
-
+		ldy #$23										; set offsets here to subtract from game timer's first digit
+		ldx #$03
+		
+		lda GameTimerDisplay							; branch if first digit is not 0 yet
+		bne AwardScore
+		
+		inx												; increment offset
+		lda GameTimerDisplay+1							; branch if second digit is not 0 yet
+		bne AwardScore
+		
+		inx												; otherwise increment offset for last digit (always != 0)
+		
+AwardScore:
+		stx ztemp
 		lda #$ff										; set adder here to $ff, or -1, to subtract one
-		sta DigitModifier+5								; from the last digit of the game timer
+		sta DigitModifier,x								; from the game timer's digit
 		jsr DigitsMathRoutine							; subtract digit
 		
-		lda #$05										; set now to add 50 points
-		sta DigitModifier+5								; per game timer interval subtracted
+		lda #$05										; set now to add 50*(digit) points
+		ldx ztemp										; get index into adder
+		sta DigitModifier,x								; store in adder
 		lda #$04										; set lower nybble for timer
 		jmp UpdateScore									; jump to update score + timer
 
@@ -11920,10 +11932,7 @@ IncrementSFTask2:
 DelayToAreaEnd:
 		jsr DrawStarFlag								; do sub to draw star flag
 
-		lda EnemyIntervalTimer,x						; if interval timer set in previous task
-		bne StarFlagExit2								; not yet expired, branch to leave
-
-		lda EventMusicBuffer							; if event music buffer empty,
+		lda EnemyIntervalTimer,x						; if interval timer expired,
 		beq IncrementSFTask2							; branch to increment task
 
 StarFlagExit2:

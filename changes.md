@@ -15,8 +15,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The unused notes at the beginning of the power-up sound have been restored, as originally intended.
 + [x] The 1-up sound now has top priority in its queue, fixing a bug where one sound can be initialized and play for a single frame, but continued as a corrupted 1-up sound.
 + [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays. (unrelated to the aforementioned bug).
-+ [x] The timer countdown sound will no longer play while the level clear fanfare is still playing.
-+ [ ] The timer countdown sequence will now wait until the level clear fanfare has finished playing. (replace the above)
++ [x] The timer countdown sequence will now wait until the level clear fanfare has finished playing.
 + [x] Similarly, the fireworks bonus will now wait until the level clear fanfare has finished playing.
 
 ## Bug Fixes & Small Tweaks
@@ -103,7 +102,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [ ] The scoring system has been adjusted to that of later entries.
 - [ ] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
 - [ ] Defeating consecutive enemies now increases the sound effect pitch with every enemy.
-+ [ ] The timer countdown sequence will now be faster, in line with SMB3 and later entries.
++ [x] The timer countdown sequence will now be faster, in line with SMB3 and later entries.
 + [ ] The timer countdown sequence will now also occur in castle levels, in line with SMB2J and later entries.
 + [ ] Princess Peach will now give you bonus points for each remaining life, in line with SMB2J. Her text will pause to accomodate for this.
 
