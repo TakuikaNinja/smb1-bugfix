@@ -872,13 +872,11 @@ AwardExtraLives:
 ; -------------------------------------------------------------------------------------
 
 PlayerEndWorld:
-		lda WorldEndTimer								; check to see if world end timer expired
-		bne EndExit										; branch to leave if not
-
-		ldy WorldNumber									; check world number
-		cpy #World8										; if on world 8, player is done with game,
+		lda WorldNumber									; check world number
+		cmp #World8										; if on world 8, player is done with game,
 		bcs EndChkBButton								; thus branch to read controller
 
+		lda #$00
 		sta AreaNumber									; otherwise initialize area number used as offset
 		sta LevelNumber									; and level number control to start at area 1
 		sta OperMode_Task								; initialize secondary mode of operation
