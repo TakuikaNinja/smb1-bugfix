@@ -686,6 +686,7 @@ VictoryModeSubroutines:
 	.dw PlayerVictoryWalk-1
 	.dw PrintVictoryMessages-1
 	.dw EndCastleAward-1
+	.dw AwardExtraLives-1
 	.dw PlayerEndWorld-1
 
 ; -------------------------------------------------------------------------------------
@@ -805,7 +806,7 @@ IncMsgCounter:
 		bcc ExitMsgs									; if not reached value yet, branch to leave
 
 SetEndTimer:
-		lda #$08
+		lda #$01
 		sta WorldEndTimer								; otherwise set world end timer
 
 IncModeTask_A:
@@ -817,9 +818,8 @@ ExitMsgs:
 ; -------------------------------------------------------------------------------------
 
 EndCastleAward:
-		lda WorldEndTimer								; if world end timer has not yet reached a certain point
-		cmp #$06										; then go ahead and skip all of this
-		bcs ExEWA
+		lda WorldEndTimer								; wait until world end timer has expired
+		bne ExEWA
 		
 		lda GameTimerDisplay							; if game timer points all awarded, skip this part
 		ora GameTimerDisplay+1
@@ -829,13 +829,44 @@ EndCastleAward:
 		jmp AwardTimerCastle							; otherwise jump to award points for remaining time
 
 PointsAwarded:
-;		lda #$30
-;		sta SelectTimer									; set select timer (used for world 8 ending only)
-		lda #$06
+		lda #$30
+		sta SelectTimer									; set select timer (used for world 8 ending only)
+		
+		lda #$02
 		sta WorldEndTimer								; another short delay, then on to the next task
+		
+IncTask:
 		inc OperMode_Task
 ExEWA:
    rts
+
+; -------------------------------------------------------------------------------------
+
+AwardExtraLives:
+		lda WorldNumber									; skip this task if not in world 8
+		cmp #World8
+		bne IncTask
+		
+		lda WorldEndTimer								; wait until timer expires before running this sub
+		bne ExEWA
+		
+		lda NumberofLives								; if counted all extra lives, branch
+		beq IncTask										; to run next task in victory mode
+		
+		lda SelectTimer									; wait a short delay between each count of extra lives
+		bne ExEWA
+		
+		lda #$30										; reset the timer if it expired
+		sta SelectTimer
+		
+		lda #Sfx_ExtraLife								; play 1-up sound
+		sta Square2SoundQueue
+		dec NumberofLives								; count down each extra life
+		
+		lda #$01										; give 100,000 points to player for each one
+		sta DigitModifier+1
+		lda #$0a										; set lower nybble to only update score
+		jmp UpdateScore									; update the score accordingly
 
 ; -------------------------------------------------------------------------------------
 
@@ -870,9 +901,6 @@ EndChkBButton:
 
 		lda #$01										; otherwise set world selection flag
 		sta WorldSelectEnableFlag
-
-		lsr												; shift right to clear A
-		sta NumberofLives								; remove onscreen player's lives
 
 		jmp TerminateGame								; do sub to continue other player or end game
 
@@ -1473,6 +1501,29 @@ WorldSelectMessage2:
 	.db $0a, $24, $20, $18, $1b, $15, $0d
 	.db $ff
 
+SuperPlayer1:
+; "WOW! YOU ARE A"
+	.db $25, $a9, $0e
+	.db $20, $18, $20, $2b, $24
+	.db $22, $18, $1e, $24, $0a, $1b, $0e, $24, $0a
+	.db $ff
+
+SuperPlayer2:
+; "SUPER PLAYER!"
+	.db $25, $e9, $0d
+	.db $1c, $1e, $19, $0e, $1b, $24
+	.db $19, $15, $0a, $22, $0e, $1b, $2b
+	.db $ff
+
+SuperPlayer3:
+; "CONGRATULATIONS!"
+	.db $26, $48, $10
+	.db $0c, $18, $17, $10, $1b, $0a, $1d, $1e, $15, $0a, $1d, $12, $18, $17, $1c, $2b
+
+SuperPlayer4:
+	.db $ff												; shares terminator byte
+	
+
 NameOffsets_Low:
 	.db <MarioName, <LuigiName
 
@@ -1486,6 +1537,7 @@ GameTextOffsets_Low:
 	.db <WarpZoneWelcome, <ThanksMessage
 	.db <MushroomRetainerSaved, <PrincessSaved1, <PrincessSaved2
 	.db <WorldSelectMessage1, <WorldSelectMessage2
+	.db <SuperPlayer1, <SuperPlayer2, <SuperPlayer3, <SuperPlayer4
 
 GameTextOffsets_High:
 	.db >TopStatusBarLine, >WorldLivesDisplay
@@ -1494,8 +1546,10 @@ GameTextOffsets_High:
 	.db >WarpZoneWelcome, >ThanksMessage
 	.db >MushroomRetainerSaved, >PrincessSaved1, >PrincessSaved2
 	.db >WorldSelectMessage1, >WorldSelectMessage2
+	.db >SuperPlayer1, >SuperPlayer2, >SuperPlayer3, >SuperPlayer4
 
 ; -------------------------------------------------------------------------------------
+; A - comes in with offset to game text pointer table
 ; $00 - game text pointer low byte
 ; $01 - game text pointer high byte
 ; $02 - name pointer low byte
@@ -1508,6 +1562,17 @@ WriteGameText:
 		cmp #$02										; top status bar or world/lives display?
 		bcc LdGameText									; if so, branch to use current offset as-is
 		
+		cmp #$09										; princess saved/world select messages?
+		bcc NotPrincess									; branch ahead if not
+		
+		ldx PrimaryHardMode								; branch if primary hard mode not set
+		beq LdGameText
+		
+		clc
+		adc #$04										; otherwise add 4
+		bne LdGameText									; [unconditional branch]
+		
+NotPrincess:
 		cmp #$06										; time-up or game over?
 		bcs LdGameText									; if not, branch to use current offset as-is
 
