@@ -14466,18 +14466,18 @@ GiveOEPoints:
 		jsr SetupFloateyNumber
 
 ChkToStunEnemies:
-		lda Enemy_ID,x									; load enemy ID before proceeding (demotion fix)
+		lda Enemy_ID,x									; SMB2J bugfix: load enemy ID before proceeding (demotion fix)
 		cmp #$09										; perform many comparisons on enemy object identifier
 		bcc SetStun
-
+		
 		cmp #Lakitu										; if the enemy object identifier is equal to the values
 		bcs SetStun										; $09, $0e, $0f or $10, it will be modified
 
-		cmp #GreenCheepCheep								; don't modify it otherwise
+		cmp #GreenCheepCheep							; don't modify it otherwise
 		bcc Demote
 
-		cmp #PiranhaPlant								; these comparisons
-		bcc SetStun										; are only necessary if branching here
+		cmp #GreenParatroopaJump						; (Piranha Plant value + 1 to prevent demoting it)
+		bcc SetStun										; this check is only necessary if branching here
 
 Demote:
 		and #%00000001									; erase all but LSB, essentially turning enemy object
