@@ -685,6 +685,7 @@ VictoryModeSubroutines:
 	.dw SetupVictoryMode-1
 	.dw PlayerVictoryWalk-1
 	.dw PrintVictoryMessages-1
+	.dw EndCastleAward-1
 	.dw PlayerEndWorld-1
 
 ; -------------------------------------------------------------------------------------
@@ -804,7 +805,7 @@ IncMsgCounter:
 		bcc ExitMsgs									; if not reached value yet, branch to leave
 
 SetEndTimer:
-		lda #$06
+		lda #$08
 		sta WorldEndTimer								; otherwise set world end timer
 
 IncModeTask_A:
@@ -812,6 +813,29 @@ IncModeTask_A:
 
 ExitMsgs:
 		rts												; leave
+
+; -------------------------------------------------------------------------------------
+
+EndCastleAward:
+		lda WorldEndTimer								; if world end timer has not yet reached a certain point
+		cmp #$06										; then go ahead and skip all of this
+		bcs ExEWA
+		
+		lda GameTimerDisplay							; if game timer points all awarded, skip this part
+		ora GameTimerDisplay+1
+		ora GameTimerDisplay+2
+		beq PointsAwarded
+		
+		jmp AwardTimerCastle							; otherwise jump to award points for remaining time
+
+PointsAwarded:
+;		lda #$30
+;		sta SelectTimer									; set select timer (used for world 8 ending only)
+		lda #$06
+		sta WorldEndTimer								; another short delay, then on to the next task
+		inc OperMode_Task
+ExEWA:
+   rts
 
 ; -------------------------------------------------------------------------------------
 
@@ -11837,7 +11861,8 @@ AwardGameTimerPoints:
 		ora GameTimerDisplay+1
 		ora GameTimerDisplay+2
 		beq IncrementSFTask1							; if no time left on game timer at all, branch to next task
-		
+
+AwardTimerCastle:
 		lda FrameCounter
 		and #%00000010									; check frame counter for d1 clear
 		beq StarFlagExit								; branch to leave if so

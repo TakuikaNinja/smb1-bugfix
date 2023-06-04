@@ -103,7 +103,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [ ] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
 - [ ] Defeating consecutive enemies now increases the sound effect pitch with every enemy.
 + [x] The timer countdown sequence will now be faster, in line with SMB3 and later entries.
-+ [ ] The timer countdown sequence will now also occur in castle levels, in line with SMB2J and later entries.
++ [x] The timer countdown sequence will now also occur in castle levels, in line with SMB2J and later entries.
 + [ ] Princess Peach will now give you bonus points for each remaining life, in line with SMB2J. Her text will pause to accomodate for this.
 
 ## Enemy Behaviour Changes
