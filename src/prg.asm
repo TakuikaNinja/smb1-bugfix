@@ -8187,14 +8187,12 @@ NoJSChk:
 MoveD_EnemyVertically:
 		ldy #$3d										; set quick movement amount downwards
 		lda Enemy_State,x								; then check enemy state
-		cmp #$05										; if not set to unique state for spiny's egg, go ahead
-		bne ContVMove									; and use, otherwise set different movement amount, continue on
+		cmp #$05										; if not set to unique state for spiny's egg,
+		bne SetHiMax									; branch ahead
 
 MoveFallingPlatform:
-		ldy #$20										; set movement amount
-
-ContVMove:
-		jmp SetHiMax									; jump to skip the rest of this
+		ldy #$20										; otherwise use alternate movement amount
+		bne SetHiMax									; [unconditional branch]
 
 ; --------------------------------
 
@@ -8224,12 +8222,10 @@ MoveRedPTroopa:
 
 MoveDropPlatform:
 		ldy #$7f										; set movement amount for drop platform
-		bne SetMdMax									; skip ahead of other value set here
+	.db $2c												; [skip 2 bytes]
 
 MoveEnemySlowVert:
 		ldy #$0f										; set movement amount for bowser/other objects
-
-SetMdMax:
 		lda #$02										; set maximum speed in A
 		bne SetXMoveAmt									; [unconditional branch]
 
@@ -8267,8 +8263,8 @@ ImposeGravitySprObj:
 ; --------------------------------
 
 MovePlatformDown:
-		lda #$00										; save value to stack (if branching here, execute next
-	.db $2c												; part as bit instruction) [skip 2 bytes]
+		lda #$00										; save value to stack
+	.db $2c												; [skip 2 bytes]
 
 MovePlatformUp:
 		lda #$01										; save value to stack
