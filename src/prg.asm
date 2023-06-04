@@ -844,12 +844,12 @@ ExEWA:
 ; -------------------------------------------------------------------------------------
 
 AwardExtraLives:
+		lda WorldEndTimer								; wait until timer expires before running this sub
+		bne ExEWA
+		
 		lda WorldNumber									; skip this task if not in world 8
 		cmp #World8
 		bne IncTask
-		
-		lda WorldEndTimer								; wait until timer expires before running this sub
-		bne ExEWA
 		
 		lda NumberofLives								; if counted all extra lives, branch
 		beq IncTask										; to run next task in victory mode
