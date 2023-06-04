@@ -11414,7 +11414,7 @@ B_FaceP:
 		lda #$01
 		sta Enemy_MovingDir,x							; set bowser to move and face to the right
 
-		lda #$02
+		asl
 		sta BowserMovementSpeed							; set movement speed
 
 		lda #$20
@@ -14464,9 +14464,9 @@ KEAB:
 GiveOEPoints:
 		lda #$01										; award 100 points for hitting block beneath enemy
 		jsr SetupFloateyNumber
-		lda Enemy_ID,x									; load enemy ID before proceeding (demotion fix)
 
 ChkToStunEnemies:
+		lda Enemy_ID,x									; load enemy ID before proceeding (demotion fix)
 		cmp #$09										; perform many comparisons on enemy object identifier
 		bcc SetStun
 
