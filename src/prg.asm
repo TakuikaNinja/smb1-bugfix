@@ -338,7 +338,7 @@ ChkStart:
 		
 		eor #%00000001									; invert d0 and set d7
 		ora #%10000000
-		bne SetPause									; unconditional branch
+		bne SetPause									; [unconditional branch]
 
 ClrPauseTimer:
 		lda GamePauseStatus								; clear timer flag if timer is at zero and start button
@@ -2598,8 +2598,8 @@ EraseMLoop:
 BorrowOne:
 		dec DigitModifier-1,x							; decrement the previous digit, then put $09 in
 
-		lda #$09										; the game timer digit we're currently on to "borrow
-		bne StoreNewD									; the one", then do an unconditional branch back
+		lda #$09										; the game timer digit we're currently on to "borrow the one"
+		bne StoreNewD									; [unconditional branch]
 
 CarryOne:
 		sec												; subtract ten from our digit to make it a
@@ -3368,8 +3368,8 @@ NormalScene:
 		bmi RendBack									; if less than three we're there
 
 		sec
-		sbc #$03										; if 3 or more, subtract 3 and
-		bpl NormalScene									; do an unconditional branch
+		sbc #$03										; if 3 or more, subtract 3
+		bpl NormalScene									; [unconditional branch]
 
 RendBack:
 		jsr MathASL4									; move results to higher nybble
@@ -3504,8 +3504,8 @@ EndUChk:
 		cpy #$08
 		bne TerrBChk									; if not all bits checked, loop back
 
-		ldy $01
-		bne TerrLoop									; unconditional branch, use Y to load next byte
+		ldy $01											; otherwise use Y to load next byte
+		bne TerrLoop									; [unconditional branch]
 
 RendBBuf:
 		jsr ProcessAreaData								; do the area data loading routine now
@@ -3690,7 +3690,7 @@ ChkRow14:
 		sta $07
 		
 		lda #$2e										; and load A with another value
-		bne NormObj										; unconditional branch
+		bne NormObj										; [unconditional branch]
 
 ChkRow13:
 		cmp #$0d										; row 13?
@@ -7283,7 +7283,7 @@ SetHPos:
 
 		lda #$01
 		sta Misc_Y_HighPos,x							; set hammer's vertical high byte
-		bne RunHSubs									; unconditional branch to skip first routine
+		bne RunHSubs									; [unconditional branch]
 
 RunAllH:
 		jsr PlayerHammerCollision						; handle collisions
@@ -8026,7 +8026,7 @@ ChkTop:
 		cmp #$f0										; see if it went to the bottom of the screen
 		pla												; pull block object state from stack
 		bcc UpdSte										; if not, branch to save state
-		bcs KillBlock									; otherwise do unconditional branch to kill it
+		bcs KillBlock									; otherwise branch to kill block [unconditional branch]
 
 BouncingBlockHandler:
 		lda TimerControl								; check for master timer control
@@ -8231,7 +8231,7 @@ MoveEnemySlowVert:
 
 SetMdMax:
 		lda #$02										; set maximum speed in A
-		bne SetXMoveAmt									; unconditional branch
+		bne SetXMoveAmt									; [unconditional branch]
 
 ; --------------------------------
 
@@ -8325,11 +8325,12 @@ NoYPInc:
 		clc
 		adc $00											; add downward movement amount to movement force
 		sta SprObject_Y_MoveForce,x
+		bcc NoYSpdInc
+		
+		inc SprObject_Y_Speed,x							; increment vertical speed if carry set
 
-		lda SprObject_Y_Speed,x							; add carry to vertical speed and store
-		adc #$00
-		sta SprObject_Y_Speed,x
-
+NoYSpdInc:
+		lda SprObject_Y_Speed,x							
 		cmp $02											; compare to maximum speed
 		bmi ChkUpM										; if less than preset value, skip this part
 
@@ -8498,7 +8499,7 @@ IncMLoop:
 		lda MultiLoopCorrectCntr						; if so, have we done them all correctly?
 		cmp #$03
 		beq InitMLp										; if so, branch past unnecessary check here
-		bne DoLpBack									; unconditional branch if previous branch fails
+		bne DoLpBack									; [unconditional branch]
 
 WrongChk:
 		lda WorldNumber									; are we in world 7? (check performed on
@@ -9627,7 +9628,7 @@ FireBulletBill:
 		sta Square2SoundQueue
 
 		lda #BulletBill_FrenzyVar						; load identifier for bullet bill object
-		bne Set17ID										; unconditional branch
+		bne Set17ID										; [unconditional branch]
 
 ; --------------------------------
 ; $00 - used to store Y position of group enemies
@@ -10519,8 +10520,8 @@ MoveBlooper:
 		lsr												; check to see if on second or fourth slot (1 or 3)
 		bcc FBLeft										; if not, branch to figure out moving direction
 
-		ldy Player_MovingDir							; otherwise, load player's moving direction and
-		bcs SBMDir										; do an unconditional branch to set
+		ldy Player_MovingDir							; otherwise, set player's moving direction
+		bcs SBMDir										; [unconditional branch]
 
 FBLeft:
 		ldy #$02										; set left moving direction by default
@@ -10626,7 +10627,7 @@ MoveBulletBill:
 		and #%00100000
 		beq NotDefB										; if not set, continue with movement code
 
-		jmp MoveJ_EnemyVertically						; otherwise jump to move defeated bullet bill downwards
+		jmp MoveD_EnemyVertically						; otherwise use correct movement routine (originally MoveJ_EnemyVertically)
 
 NotDefB:
 		lda #$e8										; set bullet bill's horizontal speed
@@ -11124,8 +11125,8 @@ ChkLS:
 		sta LakituMoveDirection,x						; otherwise initialize moving direction to move to left
 		sta EnemyFrenzyBuffer							; initialize frenzy buffer
 
-		lda #$10
-		bne SetLSpd										; load horizontal speed and do unconditional branch
+		lda #$10										; set horizontal speed
+		bne SetLSpd										; [unconditional branch]
 
 Fr12S:
 		lda #Spiny
@@ -12698,7 +12699,7 @@ SetDBSte:
 
 		ldx $01											; get enemy offset
 		lda #$09										; award 5000 points to player for defeating bowser
-		bne EnemySmackScore								; unconditional branch to award points
+		bne EnemySmackScore								; [unconditional branch]
 
 ChkOtherEnemies:
 		cmp #BulletBill_FrenzyVar
@@ -14858,7 +14859,7 @@ GetFireballBoundBox:
 		tax
 
 		ldy #$02										; set offset for relative coordinates
-		bne FBallB										; unconditional branch
+		bne FBallB										; [unconditional branch]
 
 GetMiscBoundBox:
 		txa												; add nine bytes to offset
@@ -15355,7 +15356,7 @@ DrawHammer:
 
 ForceHPose:
 		ldx #$00										; reset offset here
-		beq RenderH										; do unconditional branch to rendering part
+		beq RenderH										; [unconditional branch]
 
 GetHPose:
 		lda FrameCounter								; get frame counter
@@ -16108,7 +16109,7 @@ CheckForHammerBro:
 		beq CheckDefeatedState							; if d3 not set, branch further away
 
 		ldx #$b4										; otherwise load offset for different frame
-		bne CheckToAnimateEnemy							; unconditional branch
+		bne CheckToAnimateEnemy							; [unconditional branch]
 
 CheckForBlooper:
 		cpx #$48										; check for cheep-cheep offset loaded
@@ -16153,7 +16154,7 @@ CheckToAnimateEnemy:
 		ldx #$a2										; otherwise, set for mushroom retainer object instead
 		lda #$03										; set alternate state here
 		sta $ec
-		bne CheckDefeatedState							; unconditional branch
+		bne CheckDefeatedState							; [unconditional branch]
 
 CheckForSecondFrame:
 		lda FrameCounter								; load frame counter
@@ -16356,7 +16357,7 @@ CheckToMirrorLakitu:
 
 		and #%10000001
 		sta Sprite_Attributes+8,y						; preserve vertical flip and palette bits for left sprite
-		bcc SprObjectOffscrChk							; unconditional branch
+		bcc SprObjectOffscrChk							; [unconditional branch]
 
 NVFLak:
 		lda Sprite_Attributes,y							; get first row left sprite attributes
