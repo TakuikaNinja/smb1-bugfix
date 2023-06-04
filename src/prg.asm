@@ -806,7 +806,7 @@ IncMsgCounter:
 		bcc ExitMsgs									; if not reached value yet, branch to leave
 
 SetEndTimer:
-		lda #$01
+		lda #$02
 		sta WorldEndTimer								; otherwise set world end timer
 
 IncModeTask_A:
@@ -832,7 +832,7 @@ PointsAwarded:
 		lda #$30
 		sta SelectTimer									; set select timer (used for world 8 ending only)
 		
-		lda #$02
+		lda #$04
 		sta WorldEndTimer								; another short delay, then on to the next task
 		
 IncTask:
@@ -7238,14 +7238,7 @@ SetupBB:
 		sta Square2SoundQueue							; play fireworks/gunfire sound
 
 ChkDSte:
-		lda Enemy_State,x								; check enemy state for d5 set
-		and #%00100000
-		beq BBFly										; if not set, skip to move horizontally
-
-		jsr MoveD_EnemyVertically						; otherwise do sub to move bullet bill vertically
-
-BBFly:
-		jsr MoveEnemyHorizontally						; do sub to move bullet bill horizontally
+		jsr MoveBulletBill								; move the bullet bill
 
 RunBBSubs:
 		jsr GetEnemyOffscreenBits						; get offscreen information
@@ -9022,22 +9015,25 @@ InitVStf:
 ; --------------------------------
 
 InitJumpGPTroopa:
-		ldy PrimaryHardMode								; if quest 2, set to higher speed
-		lda NormalXSpdData,y							;
-		sta Enemy_X_Speed,x								; store as speed for enemy object
-
-		lda #$03										; set specific value for bounding box control
-	.db $2c												; [skip 2 bytes]
-
-; --------------------------------
-
-InitBulletBill:
-		lda #$09										; set bounding box control for $09
+		lda #$03										; set bounding box control for $03
 		sta Enemy_BoundBoxCtrl,x
+		
+		ldy PrimaryHardMode								; if quest 2, set to higher speed
+		lda NormalXSpdData,y
 
+StoreSpeed:
+		sta Enemy_X_Speed,x								; store as speed for enemy object
+		
 		lda #$02										; set moving direction for left
 		sta Enemy_MovingDir,x
 		rts
+		
+InitBulletBill:
+		lda #$09										; set bounding box control for $09
+		sta Enemy_BoundBoxCtrl,x
+		
+		lda #$e8										; set bullet bill's horizontal speed
+		bne StoreSpeed									; [unconditional branch]
 
 ; --------------------------------
 
@@ -10711,12 +10707,10 @@ MoveBulletBill:
 		and #%00100000
 		beq NotDefB										; if not set, continue with movement code
 
-		jmp MoveD_EnemyVertically						; otherwise use correct movement routine (originally MoveJ_EnemyVertically)
+		jsr MoveD_EnemyVertically						; otherwise use correct movement routine (originally MoveJ_EnemyVertically)
 
 NotDefB:
-		lda #$e8										; set bullet bill's horizontal speed
-		sta Enemy_X_Speed,x								; and move it accordingly (note: this bullet bill
-		jmp MoveEnemyHorizontally						; object occurs in frenzy object $17, not from cannons)
+		jmp MoveEnemyHorizontally						; move bullet bill horizontally
 
 ; --------------------------------
 ; $02 - used to hold preset values
@@ -14192,7 +14186,10 @@ FlagpoleCollision:
 		cmp #$05										; check for end-of-level routine running
 		beq PutPlayerOnVine								; if running, branch to end of climbing code
 
-		lda #$00
+		lda #$01										; set player's facing direction to right
+		sta PlayerFacingDir								; (prevents moving direction weirdness)
+		
+		lsr
 		sta StarInvincibleTimer							; FIX: starman doesn't mess up the level complete music anymore
 
 		lda GameEngineSubroutine
@@ -14249,8 +14246,7 @@ PutPlayerOnVine:
 		cmp #$10
 		bcc ExPVne										; if less than 16 pixels, branch to leave
 
-SetVXPl:
-		ldy PlayerFacingDir								; get current facing direction, use as offset
+		ldy PlayerFacingDir								; use facing direction as offset
 		lda $06											; get low byte of block buffer address
 		jsr MathASL4									; move low nybble to high
 		clc

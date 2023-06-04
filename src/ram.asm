@@ -18,7 +18,7 @@ Left_Right_Buttons    = $0c
 
 GameEngineSubroutine  = $0e
 
-ztemp                 = $15		; free zeropage variables?
+ztemp                 = $15		; free zeropage variables
 ztemp2                = $1c
 
 
