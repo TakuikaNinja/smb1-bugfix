@@ -56,7 +56,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
 + [x] Coin Heavens (cloud levels accessed via vines) now have the cloud backdrop.
 + [x] Dying while autoclimbing vines will no longer cause a vine to grow when respawing the player.
-+ [x] Grabbing a partially offscreen vine will no longer cause Mario to teleport. The vertical threshold for autoclimbing has also been adjusted.
++ [x] Vines can no longer be grabbed once they are offscreen. (no more teleports)
++ [x] Mario can longer bump his head on climbable metatiles.
 + [x] The underwater section of 8-4 now uses the grey colour scheme for better continuity within the level.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Grey Cheep Cheeps now appear green underwater, in line with later entries.

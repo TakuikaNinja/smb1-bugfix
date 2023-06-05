@@ -6023,8 +6023,8 @@ ClimbingSub:
 MoveOnVine:
 		adc Player_Y_Position							; add Y speed and carry to player's vertical position
 		sta Player_Y_Position							; and store to move player up or down
-
 		bcc NoIncYPos
+		
 		inc Player_Y_HighPos							; increment high Y position if carry was set
 		
 NoIncYPos:
@@ -6053,9 +6053,10 @@ ClimbFD:
 		inx												; otherwise increment by 1 byte
 
 CSetFDir:
-		lda PlayerFacingDir								; get left/right controller bits again
-		eor #%00000011									; invert them and store them while player
-		sta PlayerFacingDir								; is on vine to face player in opposite direction
+		lda PlayerFacingDir								; invert facing direction
+		eor #%00000011
+		sta PlayerFacingDir
+		sta Player_MovingDir							; and save as moving direction too
 		
 		lda ClimbAdder,x								; load value to add
 		
@@ -13810,8 +13811,11 @@ NoCoinTiles:
 		cpy #$04										; from collision detection routine
 		bcc DoFootCheck									; if low nybble < 4, branch
 
+		jsr CheckForClimbMTiles							; check for climbable metatiles first
+		bcs DoFootCheck									; branch if found (prevent unwanted bumps)
+
 		jsr CheckForSolidMTiles							; check to see what player's head bumped on
-		bcs SolidOrClimb								; if player collided with solid metatile, branch
+		bcs SolidMTiles									; if player collided with solid metatile, branch
 
 		ldy AreaType									; otherwise check area type
 		beq NYSpd										; if water level, branch ahead
@@ -13822,10 +13826,7 @@ NoCoinTiles:
 		jsr PlayerHeadCollision							; otherwise do a sub to process collision
 		jmp DoFootCheck									; jump ahead to skip these other parts here
 
-SolidOrClimb:
-		cmp #$26										; if climbing metatile,
-		beq NYSpd										; branch ahead and do not play sound
-
+SolidMTiles:
 		lda #Sfx_Bump
 		sta Square1SoundQueue							; otherwise load bump sound
 
@@ -14129,16 +14130,18 @@ ChkForFlagpole:
 		beq FlagpoleCollision							; branch if flagpole ball found
 
 		cmp #$25
-		bne VineCollision								; branch to alternate code if flagpole shaft not found
+		beq FlagpoleCollision							; branch if flagpole shaft found
+
+		cmp #$26										; check for climbing metatile used on vines
+		beq VineCollision								; branch if found
+		
+		rts												; otherwise leave
 
 FlagpoleCollision:
 		lda GameEngineSubroutine
 		cmp #$05										; check for end-of-level routine running
-		beq PutPlayerOnVine								; if running, branch to end of climbing code
-
-		lda Player_MovingDir							; match facing direction with moving direction
-		sta PlayerFacingDir
-		
+		beq NoAutoClimb									; if running, branch to end of climbing code
+	
 		lda #$00
 		sta StarInvincibleTimer							; FIX: starman doesn't mess up the level complete music anymore
 
@@ -14172,19 +14175,21 @@ MtchF:
 RunFR:
 		lda #$04
 		sta GameEngineSubroutine						; set value to run flagpole slide routine
-		jmp PutPlayerOnVine								; jump to end of climbing code
+		jmp NoAutoClimb									; jump to end of climbing code
 
 VineCollision:
-		cmp #$26										; check for climbing metatile used on vines
-		bne PutPlayerOnVine
-
-		lda Player_Y_Position							; branch if vertical coordinate is negative (i.e. in bottom half)
-		bmi PutPlayerOnVine
+		lda Player_Rel_XPos								; get player's relative horizontal coordinate
+		cmp #$10
+		bcc ExPVne										; if less than 16 pixels, branch to leave
+		
+		lda Player_Y_Position							; branch ahead if vertical coordinate is not within status bar
+		cmp #$20
+		bcs NoAutoClimb
 
 		lda #$01
 		sta GameEngineSubroutine						; otherwise set to run autoclimb routine next frame
-
-PutPlayerOnVine:
+		
+NoAutoClimb:
 		lda #$03										; set player state to climbing
 		sta Player_State
 
@@ -14192,11 +14197,13 @@ PutPlayerOnVine:
 		sta Player_X_Speed								; and fractional horizontal movement force
 		sta Player_X_MoveForce
 
-		lda Player_Rel_XPos								; get player's relative horizontal coordinate
-		cmp #$10
-		bcc ExPVne										; if less than 16 pixels, branch to leave
+		ldy Player_MovingDir							; use moving direction as offset
+		cpy PlayerFacingDir								; branch ahead if it matches the facing direction
+		beq DirectionsMatch
+		
+		sty PlayerFacingDir								; otherwise match facing direction with moving direction
 
-		ldy PlayerFacingDir								; use facing direction as offset
+DirectionsMatch:
 		lda $06											; get low byte of block buffer address
 		jsr MathASL4									; move low nybble to high
 		clc
