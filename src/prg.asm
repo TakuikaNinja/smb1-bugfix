@@ -5836,10 +5836,12 @@ PlayerEndLevel:
 		lda FlagpoleSoundQueue							; if flagpole sound queue set, branch ahead to next part
 		bne ChkStop										; because we only need to do this part once
 		
+		lda #$f0										; move floatey number offscreen
+		sta FlagpoleFNum_Y_Pos
+		
 		lda #EndOfLevelMusic
 		sta EventMusicQueue								; load win level music in event music queue
 		sta FlagpoleSoundQueue							; and set flagpole sound queue to skip this part later
-;		inc ScrollLock									; set scroll lock
 
 ChkStop:
 		lda Player_CollisionBits						; get player collision bits
@@ -6839,10 +6841,10 @@ WhPull:
 ; -------------------------------------------------------------------------------------
 
 FlagpoleScoreMods:
-	.db $05, $02, $08, $04, $01
+	.db $02, $08, $04, $01
 
 FlagpoleScoreDigits:
-	.db $03, $03, $04, $04, $04
+	.db $03, $04, $04, $04
 
 FlagpoleRoutine:
 		ldx #$05										; set enemy object offset
@@ -6873,11 +6875,19 @@ ContFlagP:
 		bne FPGfx										; (i.e. wait until FlagpoleSlide clears it)
 
 		ldy FlagpoleScore								; get score offset from earlier (when player touched flagpole)
+		bne NoFUp										; branch if not 0
+		
+		jsr IncrementLives								; otherwise award 1-up
+		bne GotFUp										; [unconditional branch]
+
+NoFUp:
 		lda FlagpoleScoreMods,y							; get amount to award player points
 		ldx FlagpoleScoreDigits,y						; get digit with which to award points
 		sta DigitModifier,x								; store in digit modifier
 		lda #$0a										; set lower nybble to only update score
 		jsr UpdateScore									; do sub to award player points depending on height of collision
+
+GotFUp:
 		inc GameEngineSubroutine						; set to run end-of-level subroutine on next frame
 		bne FPGfx										; [unconditional branch]
 		
@@ -14065,9 +14075,9 @@ ContSChk:
 		bcc ChkPBtm										; if not found, branch ahead to continue cude
 		
 		lda JumpspringAnimCtrl							; otherwise check jumpspring animation control
-		bne ExCSM										; branch to leave if set (exits too early - right foot isn't checked)
+		beq StopPlayerMove								; if not set, branch to impede player's movement
 		
-		jmp StopPlayerMove								; otherwise jump to impede player's movement
+		rts												; otherwise leave early (right side not checked)
 
 ChkPBtm:
 		ldy Player_State								; check for player's state set to normal
@@ -14186,10 +14196,10 @@ FlagpoleCollision:
 		cmp #$05										; check for end-of-level routine running
 		beq PutPlayerOnVine								; if running, branch to end of climbing code
 
-		lda #$01										; set player's facing direction to right
-		sta PlayerFacingDir								; (prevents moving direction weirdness)
+		lda Player_MovingDir							; match facing direction with moving direction
+		sta PlayerFacingDir
 		
-		lsr
+		lda #$00
 		sta StarInvincibleTimer							; FIX: starman doesn't mess up the level complete music anymore
 
 		lda GameEngineSubroutine
@@ -15498,7 +15508,7 @@ NoHOffscr:
 ; $05 - used as X coordinate for floatey number
 
 FlagpoleScoreNumTiles:
-	.db $f9, $50
+	.db $fd, $fe
 	.db $f7, $50
 	.db $fa, $fb
 	.db $f8, $fb

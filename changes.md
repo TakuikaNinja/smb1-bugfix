@@ -98,7 +98,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Getting hit as Fire Mario now turns Mario into Super Mario, as opposed to Small Mario.
 + [x] Fireballs will now remain onscreen when Fire Mario has been hit. They will freeze during the hit animation, just like enemies do.
 - [x] Hidden 1-up blocks will now always spawn.
-- [ ] Hitting the top of the flagpole now gives Mario a 1-up.
+- [x] Hitting the top of the flagpole now gives Mario a 1-up.
 - [ ] The scoring system has been adjusted to that of later entries.
 - [ ] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
 - [ ] Defeating consecutive enemies now increases the sound effect pitch with every enemy.
