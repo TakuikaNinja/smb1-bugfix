@@ -123,6 +123,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Piranha Plants are now slightly braver, as seen in SMBDX. (the range for staying inside pipes is smaller)
 + [x] Piranha Plants are now able to collide with enemies, including kicked shells.
 + [x] Platforms moving downwards will now properly drop the player into pits.
++ [x] Moving Platforms now behave as semi-solid platforms, in line with SMM/SMM2.
 + [x] Balance Platforms now have more checks in place to prevent collision oddities (notably 4-3).
 + [x] Balance Platforms will no longer move if the left platform has been unloaded, or has been replaced by another enemy. (prevents the 6-3 "Bullet on a string" glitch)
 + [x] Landing on Moving Platforms will now clear the stomp chain counter.

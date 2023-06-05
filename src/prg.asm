@@ -13602,27 +13602,14 @@ ProcSPlatCollisions:
 		ldx ObjectOffset								; return enemy object buffer offset to X, then continue
 
 ProcLPlatCollisions:
-		lda BoundingBox_DR_YPos,y						; get difference by subtracting the top
-		sec												; of the player's bounding box from the bottom
-		sbc BoundingBox_UL_YPos							; of the platform's bounding box
-		cmp #$04										; if difference too large or negative,
-		bcs ChkForTopCollision							; branch, do not alter vertical speed of player
-
-		lda Player_Y_Speed								; check to see if player's vertical speed is moving down
-		bpl ChkForTopCollision							; if so, don't mess with it
-
-		lda #$01										; otherwise, set vertical
-		sta Player_Y_Speed								; speed of player to kill jump
-
-ChkForTopCollision:
 		lda BoundingBox_DR_YPos							; get difference by subtracting the top
 		sec												; of the platform's bounding box from the bottom
 		sbc BoundingBox_UL_YPos,y						; of the player's bounding box
 		cmp #$06
-		bcs PlatformSideCollisions						; if difference not close enough, skip all of this
+		bcs NoCollision									; if difference not close enough, skip all of this
 
 		lda Player_Y_Speed
-		bmi PlatformSideCollisions						; if player's vertical speed moving upwards, skip this
+		bmi NoCollision									; if player's vertical speed moving upwards, skip this
 
 		lda $00											; get saved bounding box counter from earlier
 
@@ -13653,27 +13640,7 @@ SetCollisionFlag:
 		sta Player_State								; set player state to normal then leave
 		rts
 
-PlatformSideCollisions:
-		lda #$01										; set value here to indicate possible horizontal
-		sta $00											; collision on left side of platform
-
-		lda BoundingBox_DR_XPos							; get difference by subtracting platform's left edge
-		sec												; from player's right edge
-		sbc BoundingBox_UL_XPos,y
-		cmp #$08										; if difference close enough, skip all of this
-		bcc SideC
-
-		inc $00											; otherwise increment value set here for right side collision
-		lda BoundingBox_DR_XPos,y						; get difference by subtracting player's left edge
-		clc												; from platform's right edge
-		sbc BoundingBox_UL_XPos
-		cmp #$09										; if difference not close enough, skip subroutine
-		bcs NoSideC										; and instead branch to leave (no collision)
-
-SideC:
-		jsr ImpedePlayerMove							; deal with horizontal collision
-
-NoSideC:
+NoCollision:
 		ldx ObjectOffset								; return with enemy object buffer offset
 		rts
 
