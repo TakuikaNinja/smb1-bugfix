@@ -151,4 +151,3 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] The hands of Mario's growing sprite and jump sprite have been fixed.
 - [x] Hammer Bros. now bob up and down in their animation as well.
 - [x] Super Mario's jump sprite has been fixed to match the eyes and cap of the other sprites.
-+ [ ] Blank tiles ($fc) are now kept offscreen to ease the 8 sprites per scanline limit.
