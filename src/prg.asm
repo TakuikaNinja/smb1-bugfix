@@ -908,32 +908,29 @@ EndChkBButton:
 ; data is used as tiles for numbers
 ; that appear when you defeat enemies
 FloateyNumTileData:
-	.db $f6, $fb										; "100"
 	.db $f7, $fb										; "200"
 	.db $f8, $fb										; "400"
-	.db $f9, $fb										; "500"
 	.db $fa, $fb										; "800"
 	.db $f6, $50										; "1000"
 	.db $f7, $50										; "2000"
 	.db $f8, $50										; "4000"
-	.db $f9, $50										; "5000"
 	.db $fa, $50										; "8000"
 	.db $fd, $fe										; "1-UP"
 
 ; high nybble is digit number, low nybble is number to
 ; add to the digit of the player's score
 ScoreUpdateData:
-	.db $41, $42, $44, $45, $48
-	.db $31, $32, $34, $35, $38, $00
+	.db $42, $44, $48
+	.db $31, $32, $34, $38, $00
 
 FloateyNumbersRoutine:
 		lda FloateyNum_Control,x						; load control for floatey number
 		beq EndExit										; if zero, branch to leave
 		
-		cmp #$0b										; if less than $0b, branch
+		cmp #MaxFloateyValue										; if less than $0b, branch
 		bcc ChkNumTimer
 		
-		lda #$0b										; otherwise set to $0b, thus keeping
+		lda #MaxFloateyValue										; otherwise set to $0b, thus keeping
 		sta FloateyNum_Control,x						; it in range
 
 ChkNumTimer:
@@ -951,7 +948,7 @@ DecNumTimer:
 		cmp #$2b										; if not reached a certain point, branch
 		bne ChkTallEnemy
 		
-		cpy #$0b										; check offset for $0b
+		cpy #MaxFloateyValue										; check offset for $0b
 		bne LoadNumTiles								; branch ahead if not found
 		
 		jsr IncrementLives
@@ -8029,8 +8026,8 @@ SpawnBrickChunks:										; SM this is inline now
 		lda #$00										; inline sub complete
 		sta Player_Y_Speed								; now init player's vertical speed
 	
-		lda #$05
-		sta DigitModifier+5								; set digit modifier to give player 50 points
+		lda #$01
+		sta DigitModifier+5								; set digit modifier to give player 10 points
 		lda #$0a										; set lower nybble to only update score
 		jsr UpdateScore									; do sub to update the score
 	
@@ -12418,16 +12415,7 @@ InitPlatformFall:
 		tya												; move offset of other platform from Y to X
 		tax
 		jsr GetEnemyOffscreenBits						; get offscreen bits
-
-		lda #$06
-		jsr SetupFloateyNumber							; award 1000 points to player
-
-		lda Player_Rel_XPos
-		sta FloateyNum_X_Pos,x							; put floatey number coordinates where player is
-
-		lda Player_Y_Position
-		sta FloateyNum_Y_Pos,x
-
+		
 		lda #$01										; set moving direction as flag for
 		sta Enemy_MovingDir,x							; falling platforms
 		ldy Enemy_State,x								; reload offset for other platform into Y
@@ -12785,10 +12773,12 @@ SetDBSte:
 
 		lda #Sfx_BowserFall
 		sta Square2SoundQueue							; load bowser defeat sound
-
+		
+		jsr QueueEnemySmack								; load enemy smack sound
+		
 		ldx $01											; get enemy offset
-		lda #$09										; award 5000 points to player for defeating bowser
-		bne EnemySmackScore								; [unconditional branch]
+		lda #$07										; award 5000 points to player for defeating bowser
+		jmp SetupFloateyNumber
 
 ChkOtherEnemies:
 		cmp #BulletBill_FrenzyVar
@@ -12799,6 +12789,9 @@ ChkOtherEnemies:
 
 		cmp #$15
 		bcs ExHCF										; branch to leave if identifier => $15
+		
+		lda #$00
+		jsr SetupEnemyFloatey
 
 ShellOrBlockDefeat:
 		lda Enemy_ID,x
@@ -12827,23 +12820,7 @@ StnE:
 		ora #%00100000									; set d5 to defeat enemy and save as new state
 		sta Enemy_State,x
 
-		lda #$02										; award 200 points by default
-
-		ldy Enemy_ID,x									; check for hammer bro
-		cpy #HammerBro
-		bne GoombaPoints								; branch if not found
-
-		lda #$06										; award 1000 points for hammer bro
-
-GoombaPoints:
-		cpy #Goomba										; check for goomba
-		bne EnemySmackScore								; branch if not found
-
-		lda #$01										; award 100 points for goomba
-
-EnemySmackScore:
-		jsr SetupFloateyNumber							; update necessary score variables
-
+QueueEnemySmack:
 		lda #Sfx_EnemySmack								; play smack enemy sound
 		sta Square1SoundQueue
 
@@ -12894,7 +12871,7 @@ ExPHC:
 ; -------------------------------------------------------------------------------------
 
 HandlePowerUpCollision:
-		lda #$06
+		lda #$04
 		jsr SetupFloateyNumber							; award 1000 points to player by default
 
 		jsr EraseEnemyObject							; then erase the power-up object
@@ -13001,10 +12978,11 @@ EColl:
 		lda StarInvincibleTimer							; if star mario invincibility timer expired,
 		beq HandlePECollisions							; perform task here, otherwise kill enemy like
 
+		lda StompChainCounter
+		sta EnemyDefeatPitch
+		jsr SetupEnemyFloatey
+		sta StompChainCounter
 		jmp ShellOrBlockDefeat							; hit with a shell, or from beneath
-
-KickedShellPtsData:
-	.db $0a, $06, $04
 
 HandlePECollisions:
 		lda Enemy_CollisionBits,x						; check enemy collision bits for d0 set
@@ -13046,8 +13024,7 @@ HandlePECollisions:
 		cmp #Goomba
 		beq ExPEC
 
-		lda #Sfx_EnemySmack								; play smack enemy sound
-		sta Square1SoundQueue
+		jsr QueueEnemySmack								; load enemy smack sound
 
 		lda Enemy_State,x								; set d7 in enemy state, thus become moving shell
 		ora #%10000000
@@ -13065,19 +13042,11 @@ SFcRt:
 
 		lda KickedShellXSpdData-1,y						; load and set horizontal speed data with offset (adjusted by -1)
 		sta Enemy_X_Speed,x
-
-		lda #$03										; add three to whatever the stomp counter contains
-		clc												; to give points for kicking the shell
-		adc StompChainCounter
-		ldy EnemyIntervalTimer,x						; check shell enemy's timer
-		cpy #$03										; if above a certain point, branch using the points
-		bcs KSPts										; data obtained from the stomp counter + 3
-
-		lda KickedShellPtsData,y						; otherwise, set points based on proximity to timer expiration
-
-KSPts:
-		jmp SetupFloateyNumber							; set values for floatey number now
-
+		
+		lda #$00										; initialise enemy defeat pitch
+		sta EnemyDefeatPitch
+ 		jmp SetupEnemyFloatey							; set up enemy floatey number
+ 		
 ExPEC:
 		rts												; leave!!!
 
@@ -13168,9 +13137,6 @@ KillPlayer:
 		lda #$0b										; set subroutine to run on next frame (player death)
 		bne SetKRout									; set values to stop certain things in motion [unconditional]
 
-StompedEnemyPtsData:
-	.db $02, $06, $05, $06
-
 EnemyStomped:
 		lda Enemy_ID,x									; check for spiny, branch to hurt player
 		cmp #Spiny										; if found
@@ -13179,36 +13145,28 @@ EnemyStomped:
 		lda #Sfx_EnemyStomp								; otherwise play stomp/swim sound
 		sta Square1SoundQueue
 
-		lda Enemy_ID,x
-		ldy #$00										; initialize points data offset for stomped enemies
-		cmp #FlyingCheepCheep							; branch for cheep-cheep
-		beq EnemyStompedPts
-
-		cmp #BulletBill_FrenzyVar						; branch for either bullet bill object
-		beq EnemyStompedPts
+		inc StompTimer									; set stomp flag
+		lda StompChainCounter							; load the chain counter
+		sta EnemyDefeatPitch							; The initial value will double as our effect pitch
+		jsr SetupEnemyFloatey							; setup a floatey and increase the counter
+		sta StompChainCounter							; so set it in there
 		
-		cmp #BulletBill_CannonVar
-		beq EnemyStompedPts
+		lda Enemy_ID,x									; if enemy ID = 0
+		beq ChkForDemoteKoopa							; then check for defeat
 		
-;		cmp #Podoboo									; branch for podoboo (this branch is logically impossible
-;		beq EnemyStompedPts								; for cpu to take due to earlier checking of podoboo)
+		cmp #GreenParatroopaFly+1
+		bcs EnemyStompedPts								; Check if Enemy_ID > GreenParatroopaFly. Then it's for sure no Koopa.
 		
-		iny												; increment points data offset
-		cmp #HammerBro									; branch for hammer bro
-		beq EnemyStompedPts
+		cmp #GreenParatroopaJump
+		bcs ChkForDemoteKoopa							; Check if Enemy_ID >= GreenParatroopaJump. Then it's a Paratroopa.
 		
-		iny												; increment points data offset
-		cmp #Lakitu										; branch for lakitu
-		beq EnemyStompedPts
+		cmp #Goomba
+		beq ChkForDemoteKoopa							; Did you know that Goombas are Koopas? So true, bestie
 		
-		iny												; increment points data offset
-		cmp #Blooper									; branch if NOT blooper
-		bne ChkForDemoteKoopa
+		cmp #RedKoopa+1
+		bcc ChkForDemoteKoopa							; Check if Enemy_ID <= RedKoopa. Those are also Koopas.
 
 EnemyStompedPts:
-		lda StompedEnemyPtsData,y						; load points data using offset in Y
-		jsr SetupFloateyNumber							; run sub to set floatey number controls
-		
 		lda Enemy_MovingDir,x
 		pha												; save enemy movement direction to stack
 		
@@ -13241,9 +13199,6 @@ Green:
 		ldy #$01										; return enemy to normal state (1 is falling, so why was it 0?)
 		sty Enemy_State,x
 		
-		lda #$03										; award 400 points to the player
-		jsr SetupFloateyNumber
-		
 		jsr InitVStf									; init vertical speed and movement force
 		jsr SetEnemySpeed								; set enemy speed based on primary hard mode and direction
 		bne SetBounce									; handle bounce physics [unconditional branch]
@@ -13254,12 +13209,6 @@ RevivalRateData:
 HandleStompedShellE:
 		lda #$04										; set defeated state for enemy
 		sta Enemy_State,x
-		
-		inc StompChainCounter							; increment the stomp counter
-		lda StompChainCounter							; add whatever is in the stomp counter
-		clc												; to whatever is in the stomp timer
-		adc StompTimer
-		jsr SetupFloateyNumber							; award points accordingly
 		
 		inc StompTimer									; increment stomp timer of some sort
 		
@@ -13296,6 +13245,37 @@ StoreRelativePosition:
 
 ExSFN:
 		rts
+
+; -------------------------------------------------------------------------------------
+; A - comes in and leaves with the modified stomp chain counter
+; $00 - used to temporarily save Y
+
+SetupEnemyFloatey:
+		sty $00											; back up Y
+		
+		tay												; transfer stomp counter to Y
+		cpy #$08										; if stomp counter at 8, don't increment anymore
+		beq EnemyStompedPtsNormal
+		
+		iny												; increment stomp counter
+		cpy #$04										; and branch if result >= $04
+		bcs EnemyStompedPtsNormal
+		
+		lda Enemy_ID,x									; otherwise get enemy ID
+		cmp #HammerBro									; branch if not hammer bro
+		bne EnemyStompedPtsNormal
+		
+		cmp #Lakitu										; branch if not lakitu
+		bne EnemyStompedPtsNormal
+		
+		ldy #$04										; otherwise load stomp counter with value for 1000 points
+		
+EnemyStompedPtsNormal:
+		tya												; transfer stomp counter to A
+		jsr SetupFloateyNumber							; and use it to set up the floatey number
+		tya												; transfer stomp counter back to A
+		ldy $00											; retrieve Y
+		rts												; leave
 
 ; -------------------------------------------------------------------------------------
 ; $01 - used to hold enemy offset for second enemy
@@ -13439,8 +13419,6 @@ ContinueProc:
 		lda Enemy_State,y								; check first enemy state for d7 set
 		bpl ShellCollisions								; branch if d7 is clear
 
-		lda #$06
-		jsr SetupFloateyNumber							; award 1000 points for killing enemy
 		jsr ShellOrBlockDefeat							; then kill enemy, then load
 
 		ldy $01											; original offset of second enemy
@@ -13452,14 +13430,11 @@ ShellCollisions:
 
 		ldx ObjectOffset
 		lda ShellChainCounter,x							; get chain counter for shell
-		clc
-		adc #$04										; add four to get appropriate point offset
-
-		ldx $01
-		jsr SetupFloateyNumber							; award appropriate number of points for second enemy
-
+		sta EnemyDefeatPitch
+		jsr SetupEnemyFloatey
+		sta ShellChainCounter,x
+		
 		ldx ObjectOffset								; load original offset of first enemy
-		inc ShellChainCounter,x							; increment chain counter for additional enemies
 
 ExitProcessEColl:
 		rts												; leave!!!
@@ -13477,14 +13452,10 @@ ProcSecondEnemyColl:
 
 		ldy $01
 		lda ShellChainCounter,y							; get chain counter for shell
-		clc
-		adc #$04										; add four to get appropriate point offset
-
-		ldx ObjectOffset
-		jsr SetupFloateyNumber							; award appropriate number of points for first enemy
-
+		sta EnemyDefeatPitch
+		jsr SetupEnemyFloatey
+		sta ShellChainCounter,y
 		ldx $01											; load original offset of second enemy
-		inc ShellChainCounter,x							; increment chain counter for additional enemies
 		rts												; leave!!!
 
 MoveEOfs:
@@ -13733,10 +13704,15 @@ PositionPlayerOnVPlat:
 		sbc #$00										; subtract borrow and store as player's
 		sta Player_Y_HighPos							; new vertical high byte
 
+InitYSpeed:
 		lda #$00
 		sta Player_Y_Speed								; initialize vertical speed and high byte of force
 		sta Player_Y_MoveForce
-		sta StompChainCounter							; don't forget to clear the stomp chain counter
+		
+		lda StarInvincibleTimer							; branch if super star still active
+		bne ExPlPos
+		
+		sta StompChainCounter							; otherwise clear the stomp chain counter
 
 ExPlPos:
 		rts
@@ -13998,10 +13974,7 @@ LandPlyr:
 		
 		jsr HandlePipeEntry								; do sub to process potential pipe entry
 		
-		lda #$00
-		sta Player_Y_Speed								; initialize vertical speed and fractional
-		sta Player_Y_MoveForce							; movement force to stop player's vertical movement
-		sta StompChainCounter							; initialize enemy stomp counter
+		jsr InitYSpeed
 
 InitSteP:
 		lda #$00
@@ -14546,16 +14519,11 @@ HandleEToBGCollision:
 		cmp #Goomba										; if enemy object not goomba, branch ahead of this routine
 		beq KEAB
 
-		cmp #Spiny
-		beq KEAB
-		bne GiveOEPoints
+		cmp #Spiny										; bugfix: check for spiny too
+		bne ChkToStunEnemies							; branch if not
 
 KEAB:
-		jsr KillEnemyAboveBlock							; if enemy object is goomba or spiky, do this sub
-
-GiveOEPoints:
-		lda #$01										; award 100 points for hitting block beneath enemy
-		jsr SetupFloateyNumber
+		jsr KillEnemyAboveBlock							; if enemy object is goomba or spiny, do this sub
 
 ChkToStunEnemies:
 		lda Enemy_ID,x									; SMB2J bugfix: load enemy ID before proceeding (demotion fix)
@@ -14833,6 +14801,9 @@ HammerBroBGColl:
 		bne UnderHammerBro
 
 KillEnemyAboveBlock:
+		lda #$00										; award 200 points
+		jsr SetupEnemyFloatey
+		
 		jsr ShellOrBlockDefeat							; do this sub to kill enemy
 
 		lda #$fc										; alter vertical speed of enemy and leave

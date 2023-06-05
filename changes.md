@@ -10,6 +10,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The underwater section of 8-4 will now keep the castle music, in line with SMAS.
 
 ## Sound Changes
+- [x] Defeating consecutive enemies now increases the sound effect pitch with every enemy.
 + [x] Skidding now has a sound effect, in line with SMB2J and later entries.
 + [x] Springboards now make the block bump sound effect when bounced on, in line with SMM/SMM2.
 + [x] The unused notes at the beginning of the power-up sound have been restored, as originally intended.
@@ -99,9 +100,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Fireballs will now remain onscreen when Fire Mario has been hit. They will freeze during the hit animation, just like enemies do.
 - [x] Hidden 1-up blocks will now always spawn.
 - [x] Hitting the top of the flagpole now gives Mario a 1-up.
-- [ ] The scoring system has been adjusted to that of later entries.
-- [ ] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
-- [ ] Defeating consecutive enemies now increases the sound effect pitch with every enemy.
+- [x] The scoring system has been adjusted to that of later entries.
+- [x] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
 + [x] The timer countdown sequence will now be faster, in line with SMB3 and later entries.
 + [x] The timer countdown sequence will now also occur in castle levels, in line with SMB2J and later entries.
 + [x] Princess Peach will now give you bonus points for each remaining life, in line with SMB2J. Her text will pause to accomodate for this.

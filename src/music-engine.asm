@@ -288,7 +288,7 @@ Square1SfxHandler:
 		bcs PlaySmackEnemy								; smack enemy
 		
 		lsr
-		bcs PlayPipeDownInj								; pipedown/injury
+		bcs GoPlayPipeDownInj							; pipedown/injury
 		
 		lsr
 		bcs PlayFireballThrow							; fireball throw
@@ -314,7 +314,7 @@ CheckSfx1Buffer:
 		bcs ContinueSmackEnemy							; smack enemy
 		
 		lsr
-		bcs ContinuePipeDownInj							; pipedown/injury
+		bcs GoContinuePipeDownInj						; pipedown/injury
 		
 		lsr
 		bcs ContinueBumpThrow							; fireball throw
@@ -341,12 +341,29 @@ ContinueSwimStomp:
 
 		cpy #$06
 		bne BranchToDecLength1
-
-		lda #$9e										; when the length counts down to a certain point, put this
-		sta SND_SQUARE1_REG+2							; directly into the LSB of square 1's frequency divider
+		
+		lda #$13										; manipulate pitch of stomp sound  
+		sec
+		sbc EnemyDefeatPitch
+		asl
+		asl
+		asl
+		ora #%00000110									; set these bits to ensure pitch 0 matches the original
+		sta SND_SQUARE1_REG+2
 
 BranchToDecLength1:
 		bne DecrementSfx1Length							; [unconditional branch]
+
+; -------------------------------------------------------------------------------------
+; these branches are only here to work around the branch instruction limit
+
+GoPlayPipeDownInj:
+        bcs PlayPipeDownInj
+
+GoContinuePipeDownInj
+        bcs ContinuePipeDownInj
+
+; -------------------------------------------------------------------------------------
 
 PlaySmackEnemy:
 		lda #$0e										; store length of smack enemy sound
@@ -363,8 +380,13 @@ ContinueSmackEnemy:
 		cpy #$08
 		bne SmSpc
 
-		lda #$a0										; if we're at the about-halfway point, make the second tone
-		sta SND_SQUARE1_REG+2							; in the smack enemy sound
+		lda #$14										; manipulate pitch of smack enemy sound
+        sec
+        sbc EnemyDefeatPitch
+        asl
+        asl
+        asl
+        sta SND_SQUARE1_REG+2							; this sequence ensures that pitch 0 matches the original
 
 		lda #$9f
 		bne SmTick
@@ -382,6 +404,7 @@ DecrementSfx1Length:
 StopSquare1Sfx:
 		ldx #$00										; if end of sfx reached, clear buffer
 		stx $f1											; and stop making the sfx
+		stx EnemyDefeatPitch							; clear defeat pitch as well
 
 		ldx #$0e
 		stx SND_MASTERCTRL_REG

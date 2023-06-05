@@ -140,3 +140,6 @@ VictoryModeValue      = 2
 GameOverModeValue     = 3
 
 SpriteShufflerPreset = $28
+
+MaxFloateyValue      = $08
+
