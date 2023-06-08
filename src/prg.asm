@@ -7589,8 +7589,8 @@ GiveOneCoin:
 		jsr IncrementLives
 		
 CoinPoints:
-		lda #$02										; set digit modifier to award
-		sta DigitModifier+4								; 200 points to the player
+		lda #$01										; set digit modifier to award
+		sta DigitModifier+4								; 100 points to the player
 		jsr AddToScore
 
 GetSBNybbles:
@@ -15651,10 +15651,10 @@ NotRsNum:
 		sta Sprite_Attributes,y							; store attribute byte in both sprites
 		sta Sprite_Attributes+4,y
 
-		lda #$f7
+		lda #$f6
 		sta Sprite_Tilenumber,y							; put tile numbers into both sprites
 
-		lda #$fb										; that resemble "200"
+		lda #$fb										; that resemble "100"
 		sta Sprite_Tilenumber+4,y
 		rts												; then leave
 
