@@ -13263,12 +13263,13 @@ SetupEnemyFloatey:
 		bcs EnemyStompedPtsNormal
 		
 		lda Enemy_ID,x									; otherwise get enemy ID
-		cmp #HammerBro									; branch if not hammer bro
-		bne EnemyStompedPtsNormal
+		cmp #HammerBro									; branch ahead if hammer bro
+		beq EnemyStompedPtsSuper
 		
 		cmp #Lakitu										; branch if not lakitu
 		bne EnemyStompedPtsNormal
-		
+
+EnemyStompedPtsSuper:	
 		ldy #$04										; otherwise load stomp counter with value for 1000 points
 		
 EnemyStompedPtsNormal:
