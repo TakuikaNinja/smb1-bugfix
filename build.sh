@@ -3,6 +3,9 @@
 # sha256sum of original nointro ROM w/ NES2.0 header
 ORIG="0b3d9e1f01ed1668205bab34d6c82b0e281456e137352e4f36a9b2cfa3b66dea"
 
+# place original nointro ROM in bin folder for xdelta patch generation
+ORIG_PATH="bin/Super Mario Bros. (World).nes"
+
 
 compareHash() {
 	echo $1 $2 | sha256sum --check > /dev/null 2>&1
@@ -14,27 +17,21 @@ build() {
 
 
 
-if [ "$1" = "test" ] ; then
+if [ "$1" = "patch" ] ; then
 
-	buildErr=0
-
+	echo 'Assembling...'
 	build
 
 	if [ $? -ne 0 ] ; then
 		echo 'Failed building ROM!'
-		buildErr=1
-	
+		exit 1
 	elif ! compareHash $ORIG 'bin/smb2.nes' ; then
-		echo 'ROM build did not match original ROM!'
-		buildErr=1
-	fi
-
-	if [ $buildErr -ne 0 ] ; then
-		echo 'Test failed'
-		exit $buildErr
+		echo 'Did not match original ROM - Generating xdelta patch...'
+		xdelta3 -fs "$ORIG_PATH" bin/smb1.nes bin/smb1-bugfix.xdelta || echo 'Failed to generate xdelta patch'
+		exit $?
 	else
-		echo 'ROM built and matched original ROM'
-		exit $buildErr
+		echo 'Matched original ROM - No patches required'
+		exit 0
 	fi
 
 fi

@@ -10182,8 +10182,8 @@ RunSmallPlatform:
 		jsr SmallPlatformBoundBox
 		jsr SmallPlatformCollision
 		jsr RelativeEnemyPosition
-		jsr DrawSmallPlatform
-		jsr MoveSmallPlatform
+		jsr MoveSmallPlatform							; bugfix: move platform before drawing
+		jsr DrawSmallPlatform							; this eliminates visual inconsistencies
 		jmp OffscreenBoundsCheck
 
 ; --------------------------------

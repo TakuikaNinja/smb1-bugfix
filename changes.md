@@ -5,7 +5,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Updated the iNES header to NES2.0 and matched it with the nointro dump.
 + [x] Updated the ROM hash in build.sh with that of the nointro dump.
 + [x] Replaced CHR-ROM dump with a patch file for the graphical changes.
-+ [ ] Replaced the build script's "test" option to "patch", which produces an xdelta patch.
++ [x] Replaced the build script's "test" option with "patch", which produces an xdelta patch. This requires the nointro dump and xdelta3.
 
 ## Music Changes
 - [x] There is now music on the title screen: an alternate version of the underwater theme.
@@ -131,6 +131,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Piranha Plants are now able to collide with enemies, including kicked shells.
 + [x] Platforms moving downwards will now properly drop the player into pits.
 + [x] Moving Platforms now behave as semi-solid platforms, in line with SMM/SMM2.
++ [x] Small Moving Platforms are now moved before they are drawn, eliminating visual inconsistencies.
 + [x] Balance Platforms now have more checks in place to prevent collision oddities (notably 4-3).
 + [x] Balance Platforms will no longer move if the left platform has been unloaded, or has been replaced by another enemy. (prevents the 6-3 "Bullet on a string" glitch)
 + [x] Landing on Moving Platforms will now clear the stomp chain counter.
