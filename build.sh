@@ -1,6 +1,7 @@
 #!/bin/sh
 
-ORIG="f61548fdf1670cffefcc4f0b7bdcdd9eaba0c226e3b74f8666071496988248de"
+# sha256sum of original nointro ROM w/ NES2.0 header
+ORIG="0b3d9e1f01ed1668205bab34d6c82b0e281456e137352e4f36a9b2cfa3b66dea"
 
 
 compareHash() {

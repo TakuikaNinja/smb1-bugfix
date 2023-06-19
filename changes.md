@@ -1,6 +1,12 @@
 This file is based on the changes originally done by Ribiveer.
 Changes marked with '+' are new additions/contributions that were not part of Ribiveer's original set of changes.
 
+## Repository Changes
++ [x] Updated the iNES header to NES2.0 and matched it with the nointro dump.
++ [x] Updated the ROM hash in build.sh with that of the nointro dump.
++ [x] Replaced CHR-ROM dump with a patch file for the graphical changes.
++ [ ] Replaced the build script's "test" option to "patch", which produces an xdelta patch.
+
 ## Music Changes
 - [x] There is now music on the title screen: an alternate version of the underwater theme.
 - [x] The final victory song has been extended, with a B-section and an ending. (ported over from Vs.SMB; may need to adjust further)

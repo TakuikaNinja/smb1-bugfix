@@ -5,14 +5,15 @@
 ; ROM Structure
 
 ; ----------------------------------------------------------------------------------------------------------------------------------
-; Header data
+; Header data - match with nointro NES2.0 header
 	.db "NES", $1a										; identification of the iNES header
 
 	.db 2												; number of 16KB PRG-ROM pages
 	.db 1												; number of 8KB CHR-ROM pages
 
-	.db 1												; mapper/mirroring/whatever
-	.dsb 9, $00											; clear the remaining bytes
+	.db 1												; mapper 0, vertical mirroring
+	.db 8												; mapper 0, NES2.0 identifier, NES/FC/Dendy system
+	.db 0, 0, 0, 0, 2, 0, 0, 1							; NTSC/PAL, standard controllers, clear everything else
 
 ; ----------------------------------------------------------------------------------------------------------------------------------
 ; Definitions
