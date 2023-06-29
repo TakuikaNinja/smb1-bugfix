@@ -1,4 +1,5 @@
 *.nes
+*.fds
 *.lst
 .DS_Store
 Thumbs.db
