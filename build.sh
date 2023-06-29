@@ -1,10 +1,10 @@
 #!/bin/sh
 
-# sha256sum of original nointro ROM w/ NES2.0 header
-ORIG="0b3d9e1f01ed1668205bab34d6c82b0e281456e137352e4f36a9b2cfa3b66dea"
+# sha256sum of original nointro disk (will likely never match because the file structure differs)
+ORIG="56ba4c39fd7f9628bffac4c6ee0d5364f86de36d27c904ffc70f0abc97ae0d3a"
 
-# place original nointro ROM in bin folder for xdelta patch generation
-ORIG_PATH="bin/Super Mario Bros. (World).nes"
+# place original nointro disk in bin folder for xdelta patch generation
+ORIG_PATH="bin/Super Mario Bros. (Japan).fds"
 
 
 compareHash() {
@@ -12,7 +12,7 @@ compareHash() {
 }
 
 build() {
-	./asm6f smb1.asm -n -c -L bin/smb1.nes "$@" > bin/assembler.log
+	./asm6f smb1.asm -n -c -L bin/smb1.fds "$@" > bin/assembler.log
 }
 
 
@@ -23,14 +23,14 @@ if [ "$1" = "patch" ] ; then
 	build
 
 	if [ $? -ne 0 ] ; then
-		echo 'Failed building ROM!'
+		echo 'Failed building disk!'
 		exit 1
-	elif ! compareHash $ORIG 'bin/smb2.nes' ; then
-		echo 'Did not match original ROM - Generating xdelta patch...'
-		xdelta3 -fs "$ORIG_PATH" bin/smb1.nes bin/smb1-bugfix.xdelta || echo 'Failed to generate xdelta patch'
+	elif ! compareHash $ORIG 'bin/smb2.fds' ; then
+		echo 'Did not match original disk - Generating xdelta patch...'
+		xdelta3 -fs "$ORIG_PATH" bin/smb1.fds bin/smb1-bugfix-fds.xdelta || echo 'Failed to generate xdelta patch'
 		exit $?
 	else
-		echo 'Matched original ROM - No patches required'
+		echo 'Matched original disk - No patches required'
 		exit 0
 	fi
 
@@ -46,11 +46,11 @@ fi
 
 echo 'Build succeeded.'
 
-if compareHash $ORIG 'bin/smb1.nes' -eq 0 ; then
-	echo 'Matched original ROM'
+if compareHash $ORIG 'bin/smb1.fds' -eq 0 ; then
+	echo 'Matched original disk'
 	exit 0
 else
-	echo 'Did not match original ROM'
+	echo 'Did not match original disk'
 	exit -1
 fi
 

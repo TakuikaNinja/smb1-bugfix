@@ -2,19 +2,20 @@
 ; ----------------------------------------------------------------------------------------------------------------------------------
 ; Super Mario Bros. Bugfix Disassembly
 ; ----------------------------------------------------------------------------------------------------------------------------------
-; ROM Structure
-
+; Disk Structure
+	.org $0000
+	
 ; ----------------------------------------------------------------------------------------------------------------------------------
-; Header data - match with nointro NES2.0 header
-	.db "NES", $1a										; identification of the iNES header
-
-	.db 2												; number of 16KB PRG-ROM pages
-	.db 1												; number of 8KB CHR-ROM pages
-
-	.db 1												; mapper 0, vertical mirroring
-	.db 8												; mapper 0, NES2.0 identifier, NES/FC/Dendy system
-	.db 0, 0, 0, 0, 2, 0, 0, 1							; NTSC/PAL, standard controllers, clear everything else
-
+; Disk definitions taken from SMB2J's disassembly
+	DiskInfoBlock     = 1
+	FileAmountBlock   = 2
+	FileHeaderBlock   = 3
+	FileDataBlock     = 4
+	PRG = 0
+	CHR = 1
+	VRAM = 2
+	FILE_COUNT = 4 ; 1 more than actual file count to distract the FDS before NMI kicks in
+	
 ; ----------------------------------------------------------------------------------------------------------------------------------
 ; Definitions
 	.enum $0000
@@ -27,10 +28,66 @@
 	.ende
 
 ; ----------------------------------------------------------------------------------------------------------------------------------
-; PRG-ROM
-	.base $8000
-	.include "src/prg.asm"
+; Disk info + file amount blocks
+	.db DiskInfoBlock
+	.db "*NINTENDO-HVC*"
+	.db 0												; manufacturer
+	.db "SMA "											; game title + space for normal disk
+	.db 0, 0, 0, 0, 0									; game version, side, disk, disk type, unknown
+	.db FILE_COUNT										; boot file count
+	.db $ff, $ff, $ff, $ff, $ff
+	.db $61, $08, $28									; FDS version release date according to nointro dump (1986/08/28)
+	.db $49, $61, 0, 0, 2, 0, 0, 0, 0, 0				; region stuff
+	.db $98, $06, $29									; use disk write date as date of hack release for now
+	.db 0, $80, 0, 0, 7, 0, 0, 0, 0						; unknown data, disk writer serial no., actual disk side, price
+
+	.db FileAmountBlock
+	.db FILE_COUNT
 
 ; ----------------------------------------------------------------------------------------------------------------------------------
-; CHR-ROM
+; CHR
+	.db FileHeaderBlock
+	.db $00, $00
+	.db "SMB1CHAR"
+	.dw $0000
+	.dw chr_end - chr_start
+	.db CHR
+	
+	.db FileDataBlock
+	chr_start:
 	.incbin "smb1.chr"
+	chr_end:
+
+; ----------------------------------------------------------------------------------------------------------------------------------
+; PRG
+	.db FileHeaderBlock
+	.db $01, $01
+	.db "SMB1PRGM"
+	.dw $6000
+	.dw prg_length
+	.db PRG
+	
+	.db FileDataBlock
+	oldaddr = $
+	.base $6000
+	prg_start:
+	.include "src/prg.asm"
+	prg_end:
+	
+	prg_length = prg_end - prg_start
+	.base oldaddr + prg_length
+	
+; ----------------------------------------------------------------------------------------------------------------------------------
+; kyodaku file
+	.db FileHeaderBlock
+	.db $02, $02
+	.db "-BYPASS-"
+	.dw PPU_CTRL_REG1
+	.dw $0001
+	.db PRG
+
+	.db FileDataBlock
+	.db $90 ; enable NMI byte loaded into PPU control register - bypasses "KYODAKU-" file check
+	
+	.pad 65500
+

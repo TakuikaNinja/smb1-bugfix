@@ -26,6 +26,29 @@ JOYPAD_PORT1          = $4016
 JOYPAD_PORT2          = $4017
 
 ;-------------------------------------------------------------------------------------
+; FDS specific defines
+
+Mirror_FDS_CTRL_REG   = $fa
+
+FDS_IRQTIMER_LOW      = $4020
+FDS_IRQTIMER_HIGH     = $4021
+FDS_IRQTIMER_CTRL     = $4022
+FDS_CTRL_REG          = $4025
+FDS_STATUS            = $4030
+FDS_DRIVE_STATUS      = $4032
+
+FDSBIOS_NMI_Flag      = $0100
+FDSBIOS_IRQ_Flag      = $0101
+FDSBIOS_RST_Flag      = $0102
+FDSBIOS_RST_Type      = $0103
+
+FDS_NMI_VECTOR1       = $dff6
+FDS_NMI_VECTOR2       = $dff8
+FDS_NMI_VECTOR3       = $dffa
+FDS_RST_VECTOR        = $dffc
+FDS_IRQ_VECTOR        = $dffe
+
+;-------------------------------------------------------------------------------------
 ; CONSTANTS
 
 ;sound effects constants

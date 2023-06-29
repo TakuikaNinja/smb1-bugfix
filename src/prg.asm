@@ -11,26 +11,9 @@
 ; ----------------------------------------------------------------------------------------------------------------------------------
 
 Start:
-		sei												; ignore IRQs
-		cld												; disable decimal mode (for 6502 compatibility)
-		ldx #%01000000									; 4-step sequence mode, interrupt inhibit
-		stx JOYPAD_PORT2								; $4017 write = APU Frame Counter
-		lda #%00010000									; no NMI, 8x8 sprites, BG pattern table = $1000, 0 elsewhere
-		sta PPU_CTRL_REG1								; init PPU control register 1
-		
-		ldx #$ff										; reset stack pointer
-		txs
-		inx												; now X = 0
-		stx SND_DELTA_REG								; disable DMC IRQs
-		
-		lda #%00000110									; disable NMIs
-		sta PPU_CTRL_REG2								; and turn off clipping for OAM and background
-
-		bit PPU_STATUS									; clear vblank flag as it is unknown after reset
-
-VBlank1:
-		bit PPU_STATUS									; wait a frame
-		bpl VBlank1										; once this terminates, do warm boot check
+		lda Mirror_FDS_CTRL_REG							; get setting previously used by FDS BIOS
+		and #$f7										; and set for vertical mirroring
+		sta FDS_CTRL_REG
 
 		ldy #ColdBootOffset								; load default cold boot pointer
 		ldx #$05										; this is where we check for a warm boot
@@ -65,10 +48,6 @@ ColdBoot:
 		lda #%00001111
 		sta SND_MASTERCTRL_REG							; enable all sound channels except dmc
 
-VBlank2:
-		bit PPU_STATUS									; wait another frame until PPU registers are available
-		bpl VBlank2										; once this terminates, carry on with game init
-
 		jsr MoveAllSpritesOffscreen
 		jsr InitializeNameTables						; initialize both name tables
 		inc DisableScreenFlag							; set flag to disable screen output
@@ -92,7 +71,26 @@ NMIWait:
 		lda NMISyncFlag
 		bne NMIWait
 		beq GameLoop									; endless loop, need I say more?
+		
+; -------------------------------------------------------------------------------------
+; "NMI" routine which is entered to bypass the BIOS check
 
+Bypass:
+		lda #$00										; disable NMIs since we don't need them anymore
+		sta PPU_CTRL_REG1
+		
+		lda #<NonMaskableInterrupt						; put real NMI handler in NMI vector 3
+		sta FDS_NMI_VECTOR3
+		lda #>NonMaskableInterrupt
+		sta FDS_NMI_VECTOR3+1
+		
+		lda #$35										; tell the FDS that the BIOS "did its job"
+		sta FDSBIOS_RST_Flag
+		lda #$ac
+		sta FDSBIOS_RST_Type
+		
+		jmp ($fffc)										; jump to reset FDS
+		
 ; -------------------------------------------------------------------------------------
 ; $00 - vram buffer address table low, also used for pseudorandom bit
 ; $01 - vram buffer address table high
@@ -2923,6 +2921,9 @@ InitByteLoop:
 		
 		cpy #$60										; otherwise, check to see if we're at $0160-$01ff
 		bcs SkipByte									; if so, skip write
+		
+		cpy #$09										; otherwise, check to see if we're at $0100-$0108
+		bcc SkipByte									; if so, skip write to protect flags used by the BIOS
 
 InitByte:
 		sta ($06),y										; otherwise, initialize byte with current low byte in Y
@@ -2934,16 +2935,7 @@ SkipByte:
 		
 		dex												; go onto the next page
 		bpl InitPageLoop								; do this until all pages of memory have been erased
-
-		ldy #$1c										; init loop counter to length of BlockBuffer_X_Adder
 		
-TableFillLoop:
-		lda BlockBuffer_X_Adder,y						; fill unused portion of stack with contents of BlockBuffer_X_Adder
-		sta BlockBufferAdders,y
-		dey
-		bpl TableFillLoop								; loop until all bytes are filled
-		
-		lda #$00										; clear A as most callees use this value immediately
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -13865,12 +13857,12 @@ BlockBuffOGVal:
 		ldy #$03
 		
 StoreBlockBuffVal:
-		sta BlockBufferAdders+2							; SM store adder values into table
-		sta BlockBufferAdders+9							; (A -> left, Y -> right)
-		sta BlockBufferAdders+16						; (ordered big, swimming, small)
-		sty BlockBufferAdders+1
-		sty BlockBufferAdders+8
-		sty BlockBufferAdders+15
+		sta BlockBuffer_X_Adder+2						; SM store adder values into table
+		sta BlockBuffer_X_Adder+9						; (A -> left, Y -> right)
+		sta BlockBuffer_X_Adder+16						; (ordered big, swimming, small)
+		sty BlockBuffer_X_Adder+1
+		sty BlockBuffer_X_Adder+8
+		sty BlockBuffer_X_Adder+15
 		
 		ldy $eb											; get block buffer adder offset
 		
@@ -15203,7 +15195,7 @@ BlockBufferCollision:
 
 		sty $04											; save contents of Y here
 
-		lda BlockBufferAdders,y							; add horizontal coordinate
+		lda BlockBuffer_X_Adder,y							; add horizontal coordinate
 		clc												; of object to value obtained using Y as offset
 		adc SprObject_X_Position,x
 		sta $05											; store here
@@ -17728,8 +17720,8 @@ ExDivPD:
 
 ; -------------------------------------------------------------------------------------
 ; INTERRUPT VECTORS
-.org $fffa
-	.dw NonMaskableInterrupt
+.org FDS_NMI_VECTOR3
+	.dw Bypass
 	.dw Start
-	.dw Start										; IRQ vector is never used, but point here just in case
+	.dw Start											; IRQ vector is never used, but point here just in case
 
