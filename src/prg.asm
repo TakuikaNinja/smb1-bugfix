@@ -17731,5 +17731,5 @@ ExDivPD:
 .org $fffa
 	.dw NonMaskableInterrupt
 	.dw Start
-	.dw Start										; IRQ vector is never used, but point here just in case
+	.dw Start											; IRQ vector is never used, but point here just in case
 
