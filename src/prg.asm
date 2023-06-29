@@ -790,6 +790,15 @@ Retainer:
 ThankPlayer:
 		clc
 		adc #$07										; add 7 to get to victory messages
+		cmp #$09										; princess saved/world select messages?
+		bcc NotPrincess									; branch ahead if not
+		
+		ldy PrimaryHardMode								; branch if primary hard mode not set
+		beq NotPrincess
+		
+		adc #$03										; otherwise add 3 + unconditional carry to get to SMBDX's bonus messages
+
+NotPrincess:
 		jsr WriteGameText								; and write game text
 
 IncMsgCounter:
@@ -1497,6 +1506,7 @@ WorldSelectMessage2:
 	.db $0a, $24, $20, $18, $1b, $15, $0d
 	.db $ff
 
+; Second quest messages, ported from SMBDX
 SuperPlayer1:
 ; "WOW! YOU ARE A"
 	.db $25, $a9, $0e
@@ -1558,17 +1568,6 @@ WriteGameText:
 		cmp #$02										; top status bar or world/lives display?
 		bcc LdGameText									; if so, branch to use current offset as-is
 		
-		cmp #$09										; princess saved/world select messages?
-		bcc NotPrincess									; branch ahead if not
-		
-		ldx PrimaryHardMode								; branch if primary hard mode not set
-		beq LdGameText
-		
-		clc
-		adc #$04										; otherwise add 4
-		bne LdGameText									; [unconditional branch]
-		
-NotPrincess:
 		cmp #$06										; time-up or game over?
 		bcs LdGameText									; if not, branch to use current offset as-is
 
