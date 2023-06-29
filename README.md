@@ -9,6 +9,7 @@ so what's different?
 ========================================
 See [changes.md](changes.md) for details. 
 A separate branch has been created for the FDS port: https://github.com/TakuikaNinja/smb1-bugfix/tree/fds
+
 This incorporates the BIOS skip trick to bypass the need for the license message. ("KYODAKU-" file)
 
 what hasn't changed?
