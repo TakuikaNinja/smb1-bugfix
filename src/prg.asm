@@ -2922,7 +2922,7 @@ InitByteLoop:
 		cpy #$60										; otherwise, check to see if we're at $0160-$01ff
 		bcs SkipByte									; if so, skip write
 		
-		cpy #$09										; otherwise, check to see if we're at $0100-$0108
+		cpy #$04										; otherwise, check to see if we're at $0100-$0103
 		bcc SkipByte									; if so, skip write to protect flags used by the BIOS
 
 InitByte:
