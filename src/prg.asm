@@ -212,12 +212,15 @@ InitBuffer:
 
 DecTimers:
 		ldx #$14										; load end offset for end of frame timers
-		dec IntervalTimerControl						; decrement interval timer control,
-		bpl DecTimersLoop								; if not expired, only frame timers will decrement
+		lda IntervalTimerControl						; if interval timer control not expired,
+		bne DecIntervalTimer							; only frame timers will decrement
 		
-		stx IntervalTimerControl						; if control for interval timers expired,
-		
-		ldx #$23										; interval timers will decrement along with frame timers
+		stx IntervalTimerControl						; otherwise reset it,
+		ldx #$23										; and decrement the interval timers as well
+		bne DecTimersLoop								; [unconditional branch]
+
+DecIntervalTimer:
+		dec IntervalTimerControl						; decrement interval timer control if branched here
 
 DecTimersLoop:
 		lda Timers,x									; check current timer
@@ -635,7 +638,7 @@ DemoActionData:
 DemoTimingData:
 	.db $9b, $10, $18, $05, $1c, $20, $24
 	.db $1d, $2a, $10, $30, $28, $30, $30, $10
-	.db $50, $50, $50, $07, $07, $ff, $00
+	.db $50, $50, $50, $0a, $17, $ff, $00
 
 DemoEngine:
 		ldx DemoAction									; load current demo action
@@ -2934,16 +2937,7 @@ SkipByte:
 		
 		dex												; go onto the next page
 		bpl InitPageLoop								; do this until all pages of memory have been erased
-
-		ldy #$1c										; init loop counter to length of BlockBuffer_X_Adder
 		
-TableFillLoop:
-		lda BlockBuffer_X_Adder,y						; fill unused portion of stack with contents of BlockBuffer_X_Adder
-		sta BlockBufferAdders,y
-		dey
-		bpl TableFillLoop								; loop until all bytes are filled
-		
-		lda #$00										; clear A as most callees use this value immediately
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -5327,11 +5321,6 @@ KeepOnscr:
 		lda ScreenEdge_PageLoc,y						; get left or right page location based on offset
 		sbc #$00										; subtract borrow
 		sta Player_PageLoc								; save as player's page location
-
-		lda Left_Right_Buttons							; branch if left/right buttons pressed
-		bne ExitOnscr
-		
-		sta Player_X_Speed								; otherwise nullify horizontal speed of player
 
 ExitOnscr:
 		rts
@@ -13842,36 +13831,6 @@ NYSpd2:
 		sty Player_Y_Speed								; jump or swim
 
 DoFootCheck:
-		lda #$08										; SM load adder value to prevent left side clipping
-		ldy Player_OffscreenBits						; SM branch if any offscreen bits set
-		beq WJChk
-		
-		ldy SideCollisionTimer							; SM branch if side collision timer is set
-		bne BlockBuffWJFVal
-
-WJChk:	
-		ldy Player_Y_Speed								; SM if vertical speed negative or 0,
-		beq BlockBuffOGVal								; branch to use original adder values
-		bmi BlockBuffOGVal
-		
-		lda #$0a										; SM otherwise load alternate values
-
-BlockBuffWJFVal:
-		ldy #$05										; SM otherwise load alternate values
-		bne StoreBlockBuffVal							; [unconditional branch]
-		
-BlockBuffOGVal:
-		lda #$0c										; SM load original adder values
-		ldy #$03
-		
-StoreBlockBuffVal:
-		sta BlockBufferAdders+2							; SM store adder values into table
-		sta BlockBufferAdders+9							; (A -> left, Y -> right)
-		sta BlockBufferAdders+16						; (ordered big, swimming, small)
-		sty BlockBufferAdders+1
-		sty BlockBufferAdders+8
-		sty BlockBufferAdders+15
-		
 		ldy $eb											; get block buffer adder offset
 		
 		lda Player_Y_Position
@@ -14023,10 +13982,6 @@ ContSChk:
 ChkPBtm:
 		ldy Player_State								; check for player's state set to normal
 		bne StopPlayerMove								; if not, branch to impede player's movement
-
-		ldy PlayerFacingDir								; get player's facing direction
-		dey
-		bne StopPlayerMove								; if facing left, branch to impede movement
 
 		cmp #$6c										; otherwise check for pipe metatiles
 		beq PipeDwnS									; if collided with sideways pipe (bottom), branch
@@ -15173,19 +15128,19 @@ BlockBufferChk_Enemy:
 		rts
 
 BlockBufferAdderData:
-	.db $00, $07, $0e
+	.db $00, $07, $0e									; indexes into the following adder tables
 
 BlockBuffer_X_Adder:
-	.db $08, $03, $0c, $02, $02, $0d, $0d, $08
-	.db $03, $0c, $02, $02, $0d, $0d, $08, $03
-	.db $0c, $02, $02, $0d, $0d, $08, $00, $10
-	.db $04, $14, $04, $04
+	.db $08, $03, $0c, $00, $00, $0f, $0f				; big mario
+	.db $08, $03, $0c, $00, $00, $0f, $0f				; swimming
+	.db $08, $03, $0c, $00, $00, $0f, $0f				; small mario/crouching
+	.db $08, $00, $10, $04, $14, $04, $04				; other objects
 
 BlockBuffer_Y_Adder:
-	.db $04, $20, $20, $08, $18, $08, $18, $02
-	.db $20, $20, $08, $18, $08, $18, $12, $20
-	.db $20, $18, $18, $18, $18, $18, $14, $14
-	.db $06, $06, $08, $10
+	.db $04, $20, $20, $08, $18, $08, $18				; big mario
+	.db $02, $20, $20, $08, $18, $08, $18				; swimming
+	.db $12, $20, $20, $18, $18, $18, $18				; small mario/crouching
+	.db $18, $14, $14, $06, $06, $08, $10				; other objects
 
 BlockBufferColli_Feet:
 		iny												; if branched here, increment to next set of adders
@@ -15203,7 +15158,7 @@ BlockBufferCollision:
 
 		sty $04											; save contents of Y here
 
-		lda BlockBufferAdders,y							; add horizontal coordinate
+		lda BlockBuffer_X_Adder,y						; add horizontal coordinate
 		clc												; of object to value obtained using Y as offset
 		adc SprObject_X_Position,x
 		sta $05											; store here
