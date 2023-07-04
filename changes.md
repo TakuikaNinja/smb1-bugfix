@@ -49,6 +49,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Dying and touching the axe at the same time will no longer decrease the player's lives. (you can still do this, though)
 + [x] Running out of time as Fire Mario will now properly change the palette before killing Mario.
 + [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
++ [x] The interval timer control (primarily used for level completion framerules) now runs for 20 frames instead of 21.
 - [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.
 + [x] The offscreen bounds check will now check if the enemy is active first, to prevent enemies from being erased twice.
 + [x] The enemy's high Y coordinate is now checked instead of relying on addition overflow in SubtEnemyYPos. (e.g. enemies will no longer hover when stomped in pits)
@@ -85,7 +86,6 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Made floatey numbers (the score sprites) stay within the screen better. (less position under/overflows)
 + [x] Mario's sprite will no longer be cut off when he is pushed against the left screen edge by blocks or platforms.
 + [x] Momentarily "landing" in walls is now less likely, if not impossible for it to occur. (no more wall jump, sorry)
-+ [x] Similarly, landing inside walls by jumping into a small gap at the screen edges is no longer possible.
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
 + [x] Mario will now always fully slide down the flagpole. (no more advantage from grabbing it near the top)
 + [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
