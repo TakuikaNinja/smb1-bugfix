@@ -5322,6 +5322,13 @@ KeepOnscr:
 		sbc #$00										; subtract borrow
 		sta Player_PageLoc								; save as player's page location
 
+		iny												; increment Y for next check (originally indexed into OffscrJoypadBitsData)
+		cpy Left_Right_Buttons							; branch if left/right buttons match contents of Y
+		beq ExitOnscr
+
+		lda #$00
+		sta Player_X_Speed								; otherwise nullify horizontal speed of player
+
 ExitOnscr:
 		rts
 
