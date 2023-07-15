@@ -10312,7 +10312,7 @@ DecHT:
 		jmp MoveHammerBroXDir							; jump to move hammer bro
 
 HammerBroJumpLData:
-	.db $20, $37
+	.db $20, $30										; SM original had $37, which causes issues in SMB2J 8-1
 
 HammerBroJumpCode:
 		lda Enemy_State,x								; get hammer bro's enemy state
