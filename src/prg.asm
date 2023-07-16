@@ -13845,6 +13845,15 @@ DoFootCheck:
 		cmp #$cf										; check to see how low player is
 		bcs DoPlayerSideCheck							; if player is too far down on screen, skip all of this
 		
+		lda Player_OffscreenBits						; check offscreen bits...
+		beq NotAtScreenEdge
+
+		lda SideCollisionTimer							; and side collision timer...
+		beq NotAtScreenEdge								; to see if the player is between wall & screen edge
+		
+		ldy #$1b										; if so, use alternate block buffer adder offset
+		
+NotAtScreenEdge:
 		jsr BlockBufferColli_Feet						; do player-to-bg collision detection on bottom left of player
 		
 		jsr CheckForCoinMTiles							; check to see if player touched coin with their left foot
@@ -15143,12 +15152,14 @@ BlockBuffer_X_Adder:
 	.db $08, $03, $0c, $00, $00, $0f, $0f				; swimming
 	.db $08, $03, $0c, $00, $00, $0f, $0f				; small mario/crouching
 	.db $08, $00, $10, $04, $14, $04, $04				; other objects
+	.db $05, $08										; (SM special values to prevent getting stuck between wall & screen edge)
 
 BlockBuffer_Y_Adder:
 	.db $04, $20, $20, $08, $18, $08, $18				; big mario
 	.db $02, $20, $20, $08, $18, $08, $18				; swimming
 	.db $12, $20, $20, $18, $18, $18, $18				; small mario/crouching
 	.db $18, $14, $14, $06, $06, $08, $10				; other objects
+	.db $20, $20										; (more or less dummy values to correspond with the X adders)
 
 BlockBufferColli_Feet:
 		iny												; if branched here, increment to next set of adders
