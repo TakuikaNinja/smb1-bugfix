@@ -13846,9 +13846,7 @@ DoFootCheck:
 		bcs DoPlayerSideCheck							; if player is too far down on screen, skip all of this
 		
 		lda Player_OffscreenBits						; check offscreen bits...
-		beq NotAtScreenEdge
-
-		lda SideCollisionTimer							; and side collision timer...
+		ora SideCollisionTimer							; and side collision timer...
 		beq NotAtScreenEdge								; to see if the player is between wall & screen edge
 		
 		ldy #$1b										; if so, use alternate block buffer adder offset
