@@ -12868,10 +12868,6 @@ ExPHC:
 ; -------------------------------------------------------------------------------------
 
 HandlePowerUpCollision:
-		lda Enemy_State+5								; check power-up object's state
-		cmp #$08										; for if power-up has risen enough
-		bcc ExPHC
-		
 		lda #$04
 		jsr SetupFloateyNumber							; award 1000 points to player by default
 
