@@ -12,7 +12,7 @@ compareHash() {
 }
 
 build() {
-	./asm6f smb1.asm -n -c -L bin/smb1.fds "$@" > bin/assembler.log
+	./asm6f smb1.asm -n -c -L -m bin/smb1.fds "$@" > bin/assembler.log
 }
 
 

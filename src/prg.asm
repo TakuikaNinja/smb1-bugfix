@@ -12868,6 +12868,10 @@ ExPHC:
 ; -------------------------------------------------------------------------------------
 
 HandlePowerUpCollision:
+		lda Enemy_State+5								; check power-up object's state
+		cmp #$08										; for if power-up has risen enough
+		bcc ExPHC
+		
 		lda #$04
 		jsr SetupFloateyNumber							; award 1000 points to player by default
 
@@ -14302,7 +14306,20 @@ ExPipeE:
 		rts												; leave!!!
 
 ImpedePlayerMove:
-		lda #$00										; initialize value here
+		lda Player_X_Position							; SM get player's horizontal position
+		tay												; SM move value to Y
+		and #%11110000									; mask out lower nybble
+		sta Player_X_Position							; and save position to align to tile grid
+		
+		tya												; SM move player's horizontal position back to A
+		and #%00001111									; SM mask out upper nybble
+		cmp #$08										; check to see if the player is on the right side of the tile
+		bcc NoAddition									; branch if not
+		
+		lda #$10										; otherwise move player to the right by 1 tile to compensate
+		jsr AddToPlayerPosition
+		
+NoAddition:
 		ldy Player_X_Speed								; get player's horizontal speed
 
 		ldx $00											; check value set earlier for
@@ -14313,16 +14330,12 @@ ImpedePlayerMove:
 
 		cpy #$00										; if player moving to the left,
 		bmi ExIPM										; branch to invert bit and leave
-
-		lda #$ff										; otherwise load A with value to be used later
-		bne NXSpd										; and jump to affect movement [unconditional branch]
+		bpl NXSpd										; otherwise jump to affect movement [unconditional branch]
 
 RImpd:
-		ldx #$02										; return $02 to X
+		ldx #$02										; return $02 to X	
 		cpy #$01										; if player moving to the right,
 		bpl ExIPM										; branch to invert bit and leave
-		
-		lda #$01										; otherwise load A with value to be used here
 
 NXSpd:
 		ldy #$10										; set side collision timer
@@ -14331,8 +14344,6 @@ NXSpd:
 		ldy #$00
 		sty Player_X_Speed								; nullify player's horizontal speed
 		sty Player_X_MoveForce							; and low byte
-
-		jsr AddToPlayerPosition							; add contents of A to player position
 
 ExIPM:
 		txa												; invert contents of X
@@ -17151,7 +17162,7 @@ RenderPlayerSub:
 		sta $07											; store number of rows of sprites to draw
 
 		lda Player_Rel_XPos								; load player's relative horizontal position
-		cmp #$fd										; SM and check if it is beyond a certain point
+		cmp #$f8										; SM and check if it is beyond a certain point
 		bcc NoSpriteWrap								; SM branch if less than value
 
 		lda #$00										; SM otherwise clamp to 0 to prevent wraparound glitch
