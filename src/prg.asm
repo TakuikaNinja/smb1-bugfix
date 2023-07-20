@@ -13603,10 +13603,10 @@ ProcLPlatCollisions:
 		sec												; of the platform's bounding box from the bottom
 		sbc BoundingBox_UL_YPos,y						; of the player's bounding box
 		cmp #$06
-		bcs NoCollision									; if difference not close enough, skip all of this
+		bcs ExSPC										; if difference not close enough, skip all of this
 
 		lda Player_Y_Speed
-		bmi NoCollision									; if player's vertical speed moving upwards, skip this
+		bmi ExSPC										; if player's vertical speed moving upwards, skip this
 
 		lda $00											; get saved bounding box counter from earlier
 
@@ -13635,10 +13635,6 @@ SetCollisionFlag:
 
 		lda #$00
 		sta Player_State								; set player state to normal then leave
-		rts
-
-NoCollision:
-		ldx ObjectOffset								; return with enemy object buffer offset
 		rts
 
 ; -------------------------------------------------------------------------------------
