@@ -87,6 +87,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Mario's sprite will no longer be cut off when he is pushed against the left screen edge by blocks or platforms.
 + [x] Momentarily "landing" in walls is now less likely, if not impossible for it to occur. (no more wall jump, sorry)
 + [x] Similarly, landing inside walls by jumping into a small gap at the screen edges is no longer possible.
++ [x] The logic for ejecting Mario from walls has been improved. (no more quick power-up grab, walking through walls, etc)
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
 + [x] Mario will now always fully slide down the flagpole. (no more advantage from grabbing it near the top)
 + [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
@@ -95,7 +96,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Sprite 0 (used for the status bar scroll split) is better hidden, and the scroll split timing has been adjusted to account for this.
 + [x] RenderUnderPart now does the row check at the start of the loop to prevent out-of-bounds writes.
 + [x] Tiles with the coin palette will now always be overwritten in RenderUnderPart. (instead of only coin ? blocks)
-+ [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, and Vs.SMB.
++ [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, Vs.SMB, and SMBDX.
 + [x] Tweaked controller reading code to mask out left+right/up+down inputs. Additionally, the polling loop now uses the ring counter technique.
 + [x] Moved the main game loop out of NMI and made the NMI handler more robust. (no more glitched scanlines, HUD flickering, or music slowdown)
 + [x] The reset handler has been tweaked to better resemble the sample implementation on NESdev Wiki.

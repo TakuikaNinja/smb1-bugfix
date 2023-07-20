@@ -4,6 +4,7 @@
 .DS_Store
 Thumbs.db
 *.cdl
+*.mlb
 asm6f
 *.chr
 *.bat
