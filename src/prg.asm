@@ -6742,14 +6742,12 @@ WarpZoneObject:
 
 ProcessWhirlpools:
 		lda AreaType									; check for water type level
-		bne ExitWh										; branch to leave if not found
+		ora TimerControl								; and master timer control
+		bne ExitWh										; branch to leave if either is set
 		
 		sta Whirlpool_Flag								; otherwise initialize whirlpool flag
 		
-		lda TimerControl								; if master timer control set,
-		bne ExitWh										; branch to leave
-		
-		ldy #$04										; otherwise start with last whirlpool data
+		ldy #$04										; start with last whirlpool data
 
 WhLoop:
 		lda Whirlpool_LeftExtent,y						; get left extent of whirlpool
