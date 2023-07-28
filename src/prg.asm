@@ -13551,12 +13551,12 @@ ExLPC:
 
 SmallPlatformCollision:
 		lda TimerControl								; if master timer control set,
-		bne ExSPC										; branch to leave
+		bne ExLPC										; branch to leave
 
 		sta PlatformCollisionFlag,x						; otherwise initialize collision flag
 
 		jsr CheckPlayerVertical							; do a sub to see if player is below a certain point
-		bcs ExSPC										; or entirely offscreen, and branch to leave if true
+		bcs ExLPC										; or entirely offscreen, and branch to leave if true
 
 		lda #$02
 		sta $00											; load counter here for 2 bounding boxes
@@ -13566,7 +13566,7 @@ ChkSmallPlatLoop:
 
 		jsr GetEnemyBoundBoxOfs							; get bounding box offset in Y
 		and #%00000010									; if d1 of offscreen lower nybble bits was set
-		bne ExSPC										; then branch to leave
+		bne ExLPC										; then branch to leave
 
 		lda BoundingBox_UL_YPos,y						; check top of platform's bounding box for being
 		cmp #$20										; above a specific point
@@ -13588,10 +13588,7 @@ MoveBoundBox:
 
 		dec $00											; decrement counter we set earlier
 		bne ChkSmallPlatLoop							; loop back until both bounding boxes are checked
-
-ExSPC:
-		ldx ObjectOffset								; get enemy object buffer offset, then leave
-		rts
+		beq ExLPC										; [unconditional branch]
 
 ; --------------------------------
 
@@ -13603,10 +13600,10 @@ ProcLPlatCollisions:
 		sec												; of the platform's bounding box from the bottom
 		sbc BoundingBox_UL_YPos,y						; of the player's bounding box
 		cmp #$06
-		bcs ExSPC										; if difference not close enough, skip all of this
+		bcs ExPlPos										; if difference not close enough, skip all of this
 
 		lda Player_Y_Speed
-		bmi ExSPC										; if player's vertical speed moving upwards, skip this
+		bmi ExPlPos										; if player's vertical speed moving upwards, skip this
 
 		lda $00											; get saved bounding box counter from earlier
 
