@@ -8347,27 +8347,21 @@ ImposeGravitySprObj:
 ; --------------------------------
 
 MovePlatformDown:
-		lda #$00										; save value to stack
+		ldy #$00										; SM load value for later
 	.db $2c												; [skip 2 bytes]
 
 MovePlatformUp:
-		lda #$01										; save value to stack
-		pha
-
+		ldy #$01										; SM load value for later
 		inx												; increment offset for enemy object
 		lda #$05										; load default value here
-
-SetDplSpd:
 		sta $00											; save downward movement amount here
-
-		lda #$0a										; save upward movement amount here
+		asl												; SM multiply by 2 and save upward movement amount
 		sta $01
 
 		lda #$03										; save maximum vertical speed here
 		sta $02
 
-		pla												; get value from stack
-		tay												; use as Y, then move onto code shared by red koopa
+		tya												; SM retrieve the value from Y
 
 RedPTroopaGrav:
 		jsr ImposeGravity								; do a sub to move object gradually
