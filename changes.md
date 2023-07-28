@@ -47,7 +47,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Holding the jump button no longer makes Mario jump while entering an area.
 + [x] PlayerSize is now changed immediately when PlayerStatus is changed. (no more Small Fire Mario, sorry)
 + [x] Dying and touching the axe at the same time will no longer decrease the player's lives. (you can still do this, though)
-+ [x] Running out of time as Fire Mario will now properly change the palette before killing Mario.
++ [x] Mario's palette will now be reset when time runs out, even in Super Star and/or Fiery status.
 + [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
 + [x] The interval timer control (primarily used for level completion framerules) now runs for 20 frames instead of 21.
 - [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.

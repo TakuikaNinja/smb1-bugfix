@@ -6716,7 +6716,8 @@ ResGTCtrl:
 
 TimeUpOn:
 		sta PlayerStatus								; init player status (note A will always be zero here)
-		jsr GetPlayerColors								; update the colors (fiery palette fix)
+		sta StarInvincibleTimer							; SM clear star timer
+		jsr GetPlayerColors								; update the colors (palette fix)
 		inc GameTimerExpiredFlag						; set game timer expiration flag
 		jmp ForceInjury									; do sub to kill the player (note player is small here)
 
