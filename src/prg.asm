@@ -6768,9 +6768,16 @@ WhLoop:
 		lda Player_PageLoc								; get player's page location
 		sbc Whirlpool_PageLoc,y							; subtract borrow
 		bmi NextWh										; if player too far left, branch to get next data
-
+		
+		lda Player_Y_Position							; SM branch if player too high above whirlpool
+		cmp #$a0
+		bcc NextWh
+		
+		lda Player_CollisionBits						; SM branch if collision found
+		cmp #$ff
+		bcc NextWh
+		
 		lda $02											; otherwise get right extent
-		sec
 		sbc Player_X_Position							; subtract player's horizontal coordinate
 		lda $01											; get right extent's page location
 		sbc Player_PageLoc								; subtract borrow
@@ -14306,6 +14313,9 @@ ImpedePlayerMove:
 		jsr AddToPlayerPosition
 		
 NoAddition:
+		lda Player_State								; force speed reset if in grounded state
+		beq NXSpd										; (prevents running rightwards in walls)
+		
 		ldy Player_X_Speed								; get player's horizontal speed
 
 		ldx $00											; check value set earlier for

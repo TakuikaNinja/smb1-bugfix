@@ -68,6 +68,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The underwater section of 8-4 now uses the grey colour scheme for better continuity within the level.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Grey Cheep Cheeps now appear green underwater, in line with later entries.
+- [x] Underwater whirlpools are now only active at low hights.
+- [x] Underwater whirlpools are now less likely to pull Mario inside walls.
 + [x] Stomped Goombas can no longer be defeated again using a Super Star or shell.
 + [x] Mario can no longer stay inside enemies after the injury timer has expired.
 - [x] After entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch. (hides visible pixels)
