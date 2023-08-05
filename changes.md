@@ -22,6 +22,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The unused notes at the beginning of the power-up sound have been restored, as originally intended.
 + [x] The 1-up sound now has top priority in its queue, fixing a bug where one sound can be initialized and play for a single frame, but continued as a corrupted 1-up sound.
 + [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays. (unrelated to the aforementioned bug).
++ [x] The warp-pipe sound effect will now also play when exiting vertical warp-pipes, in line with later entries.
 + [x] The timer countdown sequence will now wait until the level clear fanfare has finished playing.
 + [x] Similarly, the fireworks bonus will now wait until the level clear fanfare has finished playing.
 
@@ -113,6 +114,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Hitting the top of the flagpole now gives Mario a 1-up.
 - [x] The scoring system has been adjusted to that of later entries.
 - [x] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
++ [x] Mario will now start at a higher position when exiting vertical warp-pipes, making transitions faster.
 + [x] The timer countdown sequence will now be faster, in line with SMB3 and later entries.
 + [x] The timer countdown sequence will now also occur in castle levels, in line with SMB2J and later entries.
 + [x] Princess Peach will now give you bonus points for each remaining life, in line with SMB2J. Her text will pause to accomodate for this.

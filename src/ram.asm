@@ -204,7 +204,7 @@ OffScr_WorldNumber    = $0766
 OffScr_AreaNumber     = $0767
 
 BalPlatformAlignment  = $03a0
-Platform_X_Scroll     = $03a1	; free
+InsidePipeFlag        = $03a1	; used for queuing the pipe sound when exiting pipes
 PlatformCollisionFlag = $03a2
 YPlatformTopYPos      = $0401
 YPlatformCenterYPos   = $58

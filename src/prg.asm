@@ -2996,7 +2996,7 @@ AltYPosOffset:
 
 PlayerStarting_Y_Pos:
 	.db $00, $20, $b0, $50, $00, $00, $b0, $b0
-	.db $f0
+	.db $b0
 
 PlayerBGPriorityData:
 	.db $00, $20, $00, $00, $00, $00, $00, $00
@@ -5377,10 +5377,13 @@ PlayerEntrance:
 		beq EntrMode2									; if found, branch to enter from pipe or with vine
 		
 		lda #$00
-		ldy Player_Y_Position							; if vertical position above a certain
-		cpy #$30										; point, nullify controller bits and continue
-		bcc AutoControlPlayer							; with player movement code, do not return
+		ldy Player_Y_Position							; if vertical position below a certain
+		cpy #$30										; point, branch to continue handling player entrance
+		bcs ContEntrance
 		
+		jmp AutoControlPlayer							; otherwise use A to nullify player controls
+		
+ContEntrance:
 		lda PlayerEntranceCtrl							; check player entry bits from header
 		cmp #$06
 		beq ChkBehPipe									; if set to 6 or 7, execute pipe intro code
@@ -5407,13 +5410,22 @@ EntrMode2:
 		lda JoypadOverride								; if controller override bits set here,
 		bne VineEntr									; branch to enter with vine
 		
-		lda #$ff										; otherwise...
-		sta TimerControl								; temporarily set timer control to halt gameplay
 		dec Player_Y_Position							; move player upwards by 1
 		lda Player_Y_Position							; if player risen to a certain point, branch
 		cmp #$91										; (requires pipes to be at specific height)
 		bcc PlayerRdy
 		
+		ldy InsidePipeFlag								; branch ahead if flag set for being inside pipe
+		bne NoPipeSound
+		
+		dey												; otherwise set master timer control
+		sty TimerControl
+		sty InsidePipeFlag								; and set flag for being inside pipe
+		
+		lda #Sfx_PipeDown_Injury						; queue pipe sound
+		sta Square1SoundQueue
+		
+NoPipeSound:
 		rts												; otherwise leave
 
 VineEntr:
@@ -5455,6 +5467,7 @@ PlayerRdy:
 		sta DisableCollisionDet							; init collision detection disable flag
 		sta JoypadOverride								; nullify controller override bits
 		sta TimerControl								; clear timer control to resume gameplay
+		sta InsidePipeFlag								; clear flag for being inside pipe
 		
 		lda #A_Button | #B_Button						; store A and B button presses in current A_B		 
 		sta A_B_Buttons									; and pretend they're pressed right now.
