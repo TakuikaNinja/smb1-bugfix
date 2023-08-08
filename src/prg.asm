@@ -2945,7 +2945,7 @@ SkipByte:
 MusicSelectData:
 	.db WaterMusic, GroundMusic, UndergroundMusic, CastleMusic
 	.db CloudMusic, PipeIntroMusic
-	.db CloudMusic | WaterMusic
+	.db CloudMusic | WaterMusic							; combine values to get a plucky version of the water music
 
 GetAreaMusic:
 		lda OperMode									; if not in title screen mode, branch ahead
@@ -2955,9 +2955,12 @@ GetAreaMusic:
 		bne StoreMusic									; [unconditional branch]
 		
 NotTitle:
-		lda AltEntranceControl							; check for specific alternate mode of entry
-		cmp #$02										; if found, branch without checking starting position
-		beq ChkAreaType									; from area object data header
+		lda AltEntranceControl							; check for specific alternate modes of entry
+		cmp #$02										; branch if pipe
+		beq ChkAreaType
+		
+		cmp #$03										; branch if vine
+		beq ChkAreaType
 		
 		ldy #$05										; select music for pipe intro scene by default
 		lda PlayerEntranceCtrl							; check value from level header for certain values
@@ -2968,19 +2971,19 @@ NotTitle:
 		beq StoreMusic
 
 ChkAreaType:
-		ldy #$04
-		lda BonusMusicFlag
+		ldy #$04										; select star/bonus music
+		lda BonusMusicFlag								; branch if bonus music flag set
 		bne StoreMusic
 		
-		dey
-		lda CastleMusicOverride
+		dey												; decrement Y for castle music
+		lda CastleMusicOverride							; branch if castle music override set
 		bne StoreMusic
 		
-		ldy AreaType
+		ldy AreaType									; otherwise use the current area type
 
 StoreMusic:
-		lda MusicSelectData,y							; otherwise select appropriate music for level type
-		sta AreaMusicQueue								; store in queue and leave
+		lda MusicSelectData,y							; index into table using Y
+		sta AreaMusicQueue								; store music in queue and leave
 
 ExitGetM:
 		rts
@@ -2988,20 +2991,20 @@ ExitGetM:
 ; -------------------------------------------------------------------------------------
 
 PlayerStarting_X_Pos:
-	.db $28, $18, $38, $28
+	.db $28, $18, $38, $38, $28
 
 AltYPosOffset:
-	.db $08, $00
+	.db $08, $09, $00
 
 PlayerStarting_Y_Pos:
 	.db $00, $20, $b0, $50, $00, $00, $b0, $b0
-	.db $b0
+	.db $b0, $f0
 
 PlayerBGPriorityData:
 	.db $00, $20, $00, $00, $00, $00, $00, $00
+	.db $20, $20
 
 GameTimerData:
-	.db $20												; dummy byte, used as part of bg priority data
 	.db $04, $03, $02
 
 Entrance_GameTimerSetup:
@@ -3054,7 +3057,7 @@ SetStPos:
 		lda FetchNewGameTimerFlag						; do we need to set the game timer? if not, use
 		beq ChkOverR									; old game timer setting
 		
-		lda GameTimerData,y								; if game timer is set and game timer flag is also set,
+		lda GameTimerData-1,y							; if game timer is set and game timer flag is also set,
 		sta GameTimerDisplay							; use value of game timer control for first digit of game timer
 		
 		lda #$01
@@ -5372,8 +5375,11 @@ GameRoutines:
 
 PlayerEntrance:
 		lda AltEntranceControl							; check for mode of alternate entry
-		cmp #$02
-		beq EntrMode2									; if found, branch to enter from pipe or with vine
+		cmp #$02										; branch if pipe
+		beq PipeEntr
+		
+		cmp #$03										; branch if vine (prevents "vine of the dead" bug)
+		beq VineEntr
 		
 		lda #$00
 		ldy Player_Y_Position							; if vertical position below a certain
@@ -5405,10 +5411,7 @@ IntroEntr:
 		inc DisableIntermediate							; set flag to skip world and lives display
 		jmp NextArea									; jump to increment to next area and set modes
 
-EntrMode2:
-		lda JoypadOverride								; if controller override bits set here,
-		bne VineEntr									; branch to enter with vine
-		
+PipeEntr:
 		dec Player_Y_Position							; move player upwards by 1
 		lda Player_Y_Position							; if player risen to a certain point, branch
 		cmp #$91										; (requires pipes to be at specific height)
@@ -5625,7 +5628,7 @@ CloudExit:
 		lda #$00
 		sta JoypadOverride								; clear controller override bits if any are set
 
-		lda #$03										; set starting position to override
+		lda #$04										; set starting position to override
 		bne SetCloudEntr								; [unconditional branch]
 
 ; -------------------------------------------------------------------------------------
@@ -5647,7 +5650,7 @@ AutoClimb:
 		jmp AutoControlPlayer
 
 SetEntr:
-		lda #$02										; set starting position to override
+		lda #$03										; set starting position to override
 		
 SetCloudEntr:
 		sta AltEntranceControl
@@ -15804,48 +15807,48 @@ PUpOfs:
 ; tiles arranged in top left, right, middle left, right, bottom left, right order
 EnemyGraphicsTable:
 	.db $fc, $fc, $aa, $ab, $ac, $ad					; buzzy beetle frame 1
-	.db $fc, $fc, $ae, $af, $b0, $b1					;              frame 2
+	.db $fc, $fc, $ae, $af, $b0, $b1					;			  frame 2
 	.db $fc, $a5, $a6, $a7, $a8, $a9					; koopa troopa frame 1
-	.db $fc, $a0, $a1, $a2, $a3, $a4					;              frame 2
+	.db $fc, $a0, $a1, $a2, $a3, $a4					;			  frame 2
 	.db $69, $a5, $6a, $a7, $a8, $a9					; koopa paratroopa frame 1
-	.db $6b, $a0, $6c, $a2, $a3, $a4					;                  frame 2
+	.db $6b, $a0, $6c, $a2, $a3, $a4					;				  frame 2
 	.db $fc, $fc, $96, $97, $98, $99					; spiny frame 1
-	.db $fc, $fc, $9a, $9b, $9c, $9d					;       frame 2
+	.db $fc, $fc, $9a, $9b, $9c, $9d					;	   frame 2
 	.db $fc, $fc, $8f, $8e, $8e, $8f					; spiny's egg frame 1
-	.db $fc, $fc, $95, $94, $94, $95					;             frame 2
+	.db $fc, $fc, $95, $94, $94, $95					;			 frame 2
 	.db $fc, $fc, $dc, $dc, $df, $df					; blooper frame 1
-	.db $dc, $dc, $dd, $dd, $de, $de					;         frame 2
+	.db $dc, $dc, $dd, $dd, $de, $de					;		 frame 2
 	.db $fc, $fc, $b2, $b3, $b4, $b5					; cheep-cheep frame 1
-	.db $fc, $fc, $b6, $b3, $b7, $b5					;             frame 2
+	.db $fc, $fc, $b6, $b3, $b7, $b5					;			 frame 2
 	.db $fc, $fc, $70, $70, $72, $73					; goomba (mirror top half to save a tile)
 	.db $fc, $fc, $6e, $6e, $6f, $6f					; koopa shell frame 1 (upside-down)
-	.db $fc, $fc, $6d, $6d, $6f, $6f					;             frame 2
+	.db $fc, $fc, $6d, $6d, $6f, $6f					;			 frame 2
 	.db $fc, $fc, $6f, $6f, $6e, $6e					; koopa shell frame 1 (rightsideup)
-	.db $fc, $fc, $6f, $6f, $6d, $6d					;             frame 2
+	.db $fc, $fc, $6f, $6f, $6d, $6d					;			 frame 2
 	.db $fc, $fc, $f4, $f4, $f5, $f5					; buzzy beetle shell frame 1 (rightsideup)
-	.db $fc, $fc, $f4, $f4, $f5, $f5					;                    frame 2
+	.db $fc, $fc, $f4, $f4, $f5, $f5					;					frame 2
 	.db $fc, $fc, $f5, $f5, $f4, $f4					; buzzy beetle shell frame 1 (upside-down)
-	.db $fc, $fc, $f5, $f5, $f4, $f4					;                    frame 2
+	.db $fc, $fc, $f5, $f5, $f4, $f4					;					frame 2
 	.db $fc, $fc, $fc, $fc, $ef, $ef					; defeated goomba
 	.db $b9, $b8, $bb, $ba, $bc, $bc					; lakitu frame 1
 	.db $fc, $fc, $bd, $bd, $bc, $bc					;		frame 2
 	.db $7a, $7b, $da, $db, $d8, $d8					; princess
 	.db $cd, $cd, $ce, $ce, $cf, $cf					; mushroom retainer
 	.db $7d, $7c, $d1, $8c, $d3, $d2					; hammer bro frame 1
-	.db $7d, $7c, $89, $88, $8b, $8a					;            frame 2
-	.db $d5, $d4, $e3, $e2, $d3, $d2					;            frame 3
-	.db $d5, $d4, $e3, $e2, $8b, $8a					;            frame 4
+	.db $7d, $7c, $89, $88, $8b, $8a					;			frame 2
+	.db $d5, $d4, $e3, $e2, $d3, $d2					;			frame 3
+	.db $d5, $d4, $e3, $e2, $8b, $8a					;			frame 4
 	.db $e5, $e5, $e6, $e6, $eb, $eb					; piranha plant frame 1
-	.db $ec, $ec, $ed, $ed, $ee, $ee					;               frame 2
+	.db $ec, $ec, $ed, $ed, $ee, $ee					;			   frame 2
 	.db $fc, $fc, $d0, $d0, $d7, $d7					; podoboo
 	.db $bf, $be, $c1, $c0, $c2, $fc					; bowser front frame 1
 	.db $c4, $c3, $c6, $c5, $c8, $c7					; bowser rear frame 1
-	.db $bf, $be, $ca, $c9, $c2, $fc					;       front frame 2
-	.db $c4, $c3, $c6, $c5, $cc, $cb					;       rear frame 2
+	.db $bf, $be, $ca, $c9, $c2, $fc					;	   front frame 2
+	.db $c4, $c3, $c6, $c5, $cc, $cb					;	   rear frame 2
 	.db $fc, $fc, $e8, $e7, $ea, $e9					; bullet bill
 	.db $f2, $f2, $f3, $f3, $f2, $f2					; jumpspring frame 1
-	.db $f1, $f1, $f1, $f1, $fc, $fc					;            frame 2
-	.db $f0, $f0, $fc, $fc, $fc, $fc					;            frame 3
+	.db $f1, $f1, $f1, $f1, $fc, $fc					;			frame 2
+	.db $f0, $f0, $fc, $fc, $fc, $fc					;			frame 3
 
 EnemyGfxTableOffsets:
 	.db $0c, $0c, $00, $0c, $0c, $a8, $54, $3c
@@ -16957,30 +16960,30 @@ PlayerGfxTblOffsets:
 PlayerGraphicsTable:
 ; big player table
 	.db $00, $01, $02, $03, $04, $05, $06, $07			; walking frame 1
-	.db $08, $09, $0a, $0b, $0c, $0d, $0e, $0f			;         frame 2
-	.db $10, $11, $12, $13, $14, $15, $16, $17			;         frame 3
+	.db $08, $09, $0a, $0b, $0c, $0d, $0e, $0f			;		 frame 2
+	.db $10, $11, $12, $13, $14, $15, $16, $17			;		 frame 3
 	.db $18, $19, $1a, $1b, $1c, $1d, $1e, $1f			; skidding
 	.db $20, $21, $22, $23, $24, $25, $26, $27			; jumping
 	.db $08, $09, $28, $29, $2a, $2b, $2c, $2d			; swimming frame 1
-	.db $08, $09, $0a, $0b, $0c, $30, $2c, $2d			;          frame 2
-	.db $08, $09, $0a, $0b, $2e, $2f, $2c, $2d			;          frame 3
+	.db $08, $09, $0a, $0b, $0c, $30, $2c, $2d			;		  frame 2
+	.db $08, $09, $0a, $0b, $2e, $2f, $2c, $2d			;		  frame 3
 	.db $08, $09, $28, $29, $2a, $2b, $5c, $5d			; climbing frame 1
-	.db $08, $09, $0a, $0b, $0c, $0d, $5e, $5f			;          frame 2
+	.db $08, $09, $0a, $0b, $0c, $0d, $5e, $5f			;		  frame 2
 	.db $fc, $fc, $08, $09, $58, $59, $5a, $5a			; crouching
 	.db $08, $09, $28, $29, $2a, $2b, $0e, $0f			; fireball throwing
 
 ; small player table
 	.db $fc, $fc, $fc, $fc, $32, $33, $34, $35			; walking frame 1
-	.db $fc, $fc, $fc, $fc, $3a, $37, $3b, $3c			;         frame 3
-	.db $fc, $fc, $fc, $fc, $36, $37, $38, $39			;         frame 2
+	.db $fc, $fc, $fc, $fc, $3a, $37, $3b, $3c			;		 frame 3
+	.db $fc, $fc, $fc, $fc, $36, $37, $38, $39			;		 frame 2
 ; animation order fix
 	.db $fc, $fc, $fc, $fc, $3d, $3e, $3f, $40			; skidding
 	.db $fc, $fc, $fc, $fc, $32, $41, $42, $43			; jumping
 	.db $fc, $fc, $fc, $fc, $32, $33, $44, $45			; swimming frame 1
-	.db $fc, $fc, $fc, $fc, $32, $33, $44, $47			;          frame 2
-	.db $fc, $fc, $fc, $fc, $32, $33, $48, $49			;          frame 3
+	.db $fc, $fc, $fc, $fc, $32, $33, $44, $47			;		  frame 2
+	.db $fc, $fc, $fc, $fc, $32, $33, $48, $49			;		  frame 3
 	.db $fc, $fc, $fc, $fc, $32, $33, $90, $91			; climbing frame 1
-	.db $fc, $fc, $fc, $fc, $3a, $37, $92, $93			;          frame 2
+	.db $fc, $fc, $fc, $fc, $3a, $37, $92, $93			;		  frame 2
 	.db $fc, $fc, $fc, $fc, $9e, $9e, $9f, $9f			; killed
 
 ; used by both player sizes
