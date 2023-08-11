@@ -14340,7 +14340,7 @@ RImpd:
 		bpl ExIPM										; branch to invert bit and leave
 
 NXSpd:
-		ldy #$10										; set side collision timer
+		ldy #$02										; set side collision timer
 		sty SideCollisionTimer
 		
 		ldy #$00
