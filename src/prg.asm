@@ -15591,8 +15591,9 @@ SetPlatformTilenum:
 
 		dex
 		ldy Enemy_SprDataOffset,x						; get OAM data offset
-		tya												; and save to stack
-		pha
+		cmp #$ff										; check if all offscreen bits are set
+		beq MoveSixSpritesOffscreen						; if so, branch to move all sprites offscreen
+		
 		ldx #$06										; prepare X for loops
 
 SChkLoop:
@@ -15607,15 +15608,7 @@ NotOffscreen:
 		dex												; decrement X
 		bne SChkLoop									; branch to loop if > 0
 
-		pla												; otherwise retrieve Y from stack
-		tay
-		ldx ObjectOffset								; get enemy object offset
-		lda Enemy_OffscreenBits							; get offscreen bits
-		bpl ExDLPl										; if d7 is not set, skip sub
-
-		jmp MoveSixSpritesOffscreen						; otherwise branch to move all sprites offscreen
-
-ExDLPl:
+		ldx ObjectOffset								; otherwise get enemy object offset and leave
 		rts
 
 ; -------------------------------------------------------------------------------------
