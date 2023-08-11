@@ -742,10 +742,13 @@ ExitVWalk:
 ; -------------------------------------------------------------------------------------
 
 PrintVictoryMessages:
-		lda SecondaryMsgCounter							; load secondary message counter
-		bne IncMsgCounter								; if set, branch to increment message counters
+		lda MessageIntervalTimer						; load message interval timer
+		bne ExitMsgs									; if set, branch to leave
+		
+		lda #$03										; otherwise set message interval timer
+		sta MessageIntervalTimer						; (closest to original timing)
 
-		lda PrimaryMsgCounter							; otherwise load primary message counter
+		lda MessageCounter								; load message counter
 		beq ThankPlayer									; if set to zero, branch to print first message
 
 		ldy EventMusicBuffer							; don't do anything until the music buffer is cleared
@@ -795,16 +798,10 @@ NotPrincess:
 		jsr WriteGameText								; and write game text
 
 IncMsgCounter:
-		lda SecondaryMsgCounter
-		clc
-		adc #$04										; add four to secondary message counter
-		sta SecondaryMsgCounter
-
-		lda PrimaryMsgCounter
-		adc #$00										; add carry to primary message counter
-		sta PrimaryMsgCounter
-
-		cmp #$06										; check primary counter one more time
+		inc MessageCounter								; increment message counter
+		
+		lda MessageCounter								; check message counter one more time
+		cmp #$06
 		bcc ExitMsgs									; if not reached value yet, branch to leave
 
 SetEndTimer:
