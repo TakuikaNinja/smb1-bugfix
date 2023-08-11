@@ -74,6 +74,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Stomped Goombas can no longer be defeated again using a Super Star or shell.
 + [x] Mario can no longer stay inside enemies after the injury timer has expired.
 - [x] After entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch. (hides visible pixels)
++ [x] The warp-pipe intro screens are now properly checked for when determining the area change timer. (i.e. transition timings will be consistent regardless of the camera's page location)
 + [x] When entering a vertical warp-pipe, Mario will now always stand still like in later entries.
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
 + [x] The locations of some warp destination change and loop command triggers have been tweaked. (no more wrong warps; notably 4-2, 8-4)

@@ -14015,14 +14015,16 @@ PlyrPipe:
 		and #%00001111									; get lower nybble of player's horizontal coordinate
 		beq ChkGERtn									; if at zero, branch ahead to skip this part
 
-		lda #$a0										; load area change timer value
-		ldy ScreenLeft_PageLoc							; check page location for left side of screen
-		beq SetCATmr									; if at page zero, use current value
+		ldy #$a0										; load area change timer value
+		lda AreaPointer									; check area pointer
+		and #%01111111									; mask out d7
+		cmp #$29										; pipe intro?
+		beq SetCATmr									; if so, branch to use current timer value
 
-		lda #$34										; otherwise change timer value
+		ldy #$34										; otherwise change timer value
 
 SetCATmr:
-		sta ChangeAreaTimer								; set timer for change of area as appropriate
+		sty ChangeAreaTimer								; set timer for change of area as appropriate
 
 ChkGERtn:
 		lda GameEngineSubroutine						; get number of game engine routine running
