@@ -740,12 +740,6 @@ ExitVWalk:
 ; -------------------------------------------------------------------------------------
 
 PrintVictoryMessages:
-		lda MessageIntervalTimer						; load message interval timer
-		bne ExitMsgs									; if set, branch to leave
-		
-		lda #$03										; otherwise set message interval timer
-		sta MessageIntervalTimer						; (closest to original timing)
-
 		lda MessageCounter								; load message counter
 		beq ThankPlayer									; if set to zero, branch to print first message
 
@@ -755,6 +749,12 @@ PrintVictoryMessages:
 		beq ExitMsgs
 
 FinishedMusic:
+		ldy MessageIntervalTimer						; load message interval timer
+		bne ExitMsgs									; if not expired, branch to leave
+		
+		ldy #$03										; otherwise set message interval timer
+		sty MessageIntervalTimer						; (closest to original timing)
+		
 		ldy WorldNumber
 		cpy #World8										; check world number
 		php
@@ -795,7 +795,7 @@ ThankPlayer:
 NotPrincess:
 		jsr WriteGameText								; and write game text
 
-IncMsgCounter:
+IncMsgCounter:	
 		inc MessageCounter								; increment message counter
 		
 		lda MessageCounter								; check message counter one more time
