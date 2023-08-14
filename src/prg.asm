@@ -14017,7 +14017,6 @@ PlyrPipe:
 
 		ldy #$a0										; load area change timer value
 		lda AreaPointer									; check area pointer
-		and #%01111111									; mask out d7
 		cmp #$29										; pipe intro?
 		beq SetCATmr									; if so, branch to use current timer value
 
