@@ -13,7 +13,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Level music now uses a smoother volume envelope from Vs.SMB (most noticable in castles). Other envelopes are left unchanged.
 + [x] Off-by-one errors in the initial envelope length counters have been corrected. (no more underwater pluck, sorry)
 + [x] Underground bonus areas will now use the Coin Heaven/Super Star music, following the same logic as SMAS.
-+ [x] The underwater section of 8-4 will now keep the castle music, in line with SMAS.
++ [x] The underwater section of 8-4 now keeps the castle music, in line with SMAS.
 
 ## Sound Changes
 - [x] Defeating consecutive enemies now increases the sound effect pitch with every enemy.
@@ -23,12 +23,15 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The 1-up sound now has top priority in its queue, fixing a bug where one sound can be initialized and play for a single frame, but continued as a corrupted 1-up sound.
 + [x] 1-up mushrooms no longer play the power-up sound for a single frame before the 1-up sound plays. (unrelated to the aforementioned bug).
 + [x] The warp-pipe sound effect will now also play when exiting vertical warp-pipes, in line with later entries.
-+ [x] The timer countdown sequence will now wait until the level clear fanfare has finished playing.
-+ [x] Similarly, the fireworks bonus will now wait until the level clear fanfare has finished playing.
++ [x] The timer countdown sequence and fireworks bonus will now wait until the level clear fanfare has finished playing.
 + [x] Sound effects will now play when hammers are thrown, in line with SMAS.
++ [x] Flying Cheep-Cheeps, Spinies, and Podoboos will now play sound effects when launched.
++ [x] Sound effects will now play when fireballs hit Buzzy Beetles or Bowser.
++ [x] Sound effects will now play when climbing vines.
++ [x] Sound effects will now play to indicate progress within castle maze levels, in line with SMBDX.
 
 ## Bug Fixes & Small Tweaks
-+ [x] Scroll unlock object in underground warp zone now works as intended. (no more minus world)
++ [x] The scroll unlock objects in underground warp zones now work as intended. (no more minus world)
 + [x] An erroneous increment of the warp zone value has been removed. (1-2 warpzone pipe destination stays at 1-2 exit until warp zone loads)
 + [x] Flagpoles will no longer set the scroll lock. Instead, extra scroll lock objects have been added to prevent the player from running past the flagpole.
 + [x] Scroll lock objects now explicitly set the scroll lock instead of toggling it.
@@ -70,8 +73,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The underwater section of 8-4 now uses the grey colour scheme for better continuity within the level.
 - [x] Fire Mario and Fire Luigi now have separate palettes. (Luigi uses the palettes from SMM2)
 - [x] Grey Cheep Cheeps now appear green underwater, in line with later entries.
-- [x] Underwater whirlpools are now only active at low hights.
-- [x] Underwater whirlpools are now less likely to pull Mario inside walls.
++ [x] Underwater whirlpools are now only active at low hights.
++ [x] Underwater whirlpools are now less likely to pull Mario inside walls.
 + [x] Stomped Goombas can no longer be defeated again using a Super Star or shell.
 + [x] Mario can no longer stay inside enemies after the injury timer has expired.
 - [x] After entering a horizontal warp-pipe, Small Mario will now always stand still and Big Mario will now always crouch. (hides visible pixels)
@@ -80,7 +83,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Both players can now always pause the game. Some other input checks will also check for both players when appropriate.
 + [x] The locations of some warp destination change and loop command triggers have been tweaked. (no more wrong warps; notably 4-2, 8-4)
 + [x] Hidden coin/1up blocks no longer mess with the tile directly to its right. (notably 2-1, 5-1)
-+ [x] The scroll handler has been overhauled and is now more robust. (e.g. getting stuck in a wall updates the scroll properly)
++ [x] The scroll handler has been overhauled and is now more robust. (e.g. getting ejected from a wall updates the scroll properly)
 + [x] Firebar blocks will no longer cause head injuries as big Mario.
 + [x] Firebar collision detection now checks the relative player position instead of querying the OAM buffer. (yes, really)
 + [x] Instances of recalculating the player's relative position have been replaced with variable reads when appropriate.
@@ -117,8 +120,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] The scoring system has been adjusted to that of later entries.
 - [x] Defeating consecutive enemies with a Super Star now gives you more points, eventually giving 1-ups!
 + [x] Mario will now start at a higher position when exiting vertical warp-pipes, making transitions faster.
-+ [x] The timer countdown sequence will now be faster, in line with SMB3 and later entries.
-+ [x] The timer countdown sequence will now also occur in castle levels, in line with SMB2J and later entries.
++ [x] The timer countdown sequence is faster, in line with SMB3 and later entries.
++ [x] The timer countdown sequence now also occurs in castle levels, in line with SMB2J and later entries.
 + [x] Princess Peach will now give you bonus points for each remaining life, in line with SMB2J. Her text will pause to accomodate for this.
 + [x] Princess Peach's message will now be different if you beat the second quest, in line with SMBDX.
 

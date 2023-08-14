@@ -8573,6 +8573,14 @@ FindLoop:
 		cmp #World7										; vertical position and on solid ground)
 		bne InitMLp										; if not, initialize flags used there, otherwise
 
+		lda MultiLoopCorrectCntr
+		cmp MultiLoopPassCntr
+		bne SkpCrtSFX
+		
+		lda #Sfx_CoinGrab								; SM queue sound for correct path
+		sta Square2SoundQueue
+		
+SkpCrtSFX:
 		inc MultiLoopCorrectCntr						; increment counter for correct progression
 
 IncMLoop:
@@ -8587,10 +8595,13 @@ IncMLoop:
 		bne DoLpBack									; [unconditional branch]
 
 WrongChk:
+		lda #Sfx_Bump									; SM queue sound for incorrect path
+		sta Square1SoundQueue
+		
 		lda WorldNumber									; are we in world 7? (check performed on
 		cmp #World7										; incorrect vertical position or not on solid ground)
 		beq IncMLoop
-
+		
 DoLpBack:
 		jsr ExecGameLoopback							; if player is not in right place, loop back
 		jsr KillAllEnemies
@@ -8919,7 +8930,7 @@ InitGoomba:
 
 ; --------------------------------
 
-InitPodoboo:
+InitPodoboo:	
 		lda #$02										; set enemy position to below
 		sta Enemy_Y_HighPos,x							; the bottom of the screen
 		sta Enemy_Y_Position,x
@@ -9144,7 +9155,10 @@ CreateSpiny:
 
 		lda Enemy_State,y								; if lakitu is not in normal state, branch to leave
 		bne ExLSHand
-
+				
+		lda #Sfx_BowserFall								; SM queue sound for spiny throw
+		sta Square2SoundQueue
+		
 		lda Enemy_PageLoc,y								; store horizontal coordinates (high and low) of lakitu
 		sta Enemy_PageLoc,x								; into the coordinates of the spiny we're going to create
 
@@ -9390,7 +9404,10 @@ FinCCSt:
 		sta Enemy_Y_HighPos,x							; set enemy's high vertical byte
 
 		lda #$f8
-		sta Enemy_Y_Position,x							; put enemy below the screen, and we are done
+		sta Enemy_Y_Position,x							; put enemy below the screen
+		
+		lda #Sfx_Blast									; SM queue sound
+		sta Square2SoundQueue
 		rts
 
 ; --------------------------------
@@ -10256,10 +10273,12 @@ SkipFloatey:
 
 ; -------------------------------------------------------------------------------------
 
-MovePodoboo:
+MovePodoboo:	
 		lda EnemyIntervalTimer,x						; check enemy timer
 		bne PdbM										; branch to move enemy if not expired
 		jsr InitPodoboo									; otherwise set up podoboo again
+		lda #Sfx_Fireball								; SM queue sound
+		sta Square1SoundQueue
 		lda PseudoRandomBitReg+1,x						; get part of LSFR
 		ora #%10000000									; set d7
 		sta Enemy_Y_MoveForce,x							; store as movement force
@@ -12722,6 +12741,9 @@ ExitFBallEnemy:
 		ldx ObjectOffset								; get original fireball offset and leave
 		rts
 
+ExitBump:
+		jmp BumpSnd										; jump to section of code which sets the bump sound
+
 BowserIdentities:
 	.db Goomba, GreenKoopa, BuzzyBeetle, Spiny, Lakitu, Blooper, HammerBro, Bowser
 
@@ -12743,14 +12765,14 @@ HandleEnemyFBallCol:
 ChkBuzzyBeetle:
 		lda Enemy_ID,x
 		cmp #BuzzyBeetle								; check for buzzy beetle
-		beq ExHCF										; branch if found to leave (buzzy beetles fireproof)
+		beq ExitBump									; branch if found (buzzy beetles fireproof)
 
 		cmp #Bowser										; check for bowser one more time (necessary if d7 of flag was clear)
 		bne ChkOtherEnemies								; if not found, branch to check other enemies
 
 HurtBowser:
 		dec BowserHitPoints								; decrement bowser's hit points
-		bne ExHCF										; if bowser still has hit points, branch to leave
+		bne ExitBump									; if bowser still has hit points, branch
 
 		jsr InitVStf									; otherwise init vertical speed and movement force
 		sta Enemy_X_Speed,x								; initialize horizontal speed
@@ -14841,6 +14863,7 @@ InitFireballExplode:
 		lda #$80
 		sta Fireball_State,x							; set exploding flag in fireball's state
 
+BumpSnd:
 		lda #Sfx_Bump
 		sta Square1SoundQueue							; load bump sound
 		rts												; leave
@@ -17278,6 +17301,17 @@ ActionClimbing:
 		lda Player_Y_Speed								; check player's vertical speed
 		beq NonAnimatedActs								; if no speed, branch, use offset as-is
 
+		lda PlayerAnimTimer								; SM branch if animation timer set
+		bne AnimateVineClimb
+		
+		lda Up_Down_Buttons								; SM branch if up not pressed
+		cmp #Up_Dir
+		bne AnimateVineClimb
+		
+		lda #Sfx_Skidding								; SM otherwise load skid sound for climbing vine
+		sta NoiseSoundQueue
+
+AnimateVineClimb:
 		jsr GetGfxOffsetAdder							; otherwise get offset for graphics table
 		jmp ThreeFrameExtent							; then skip ahead to more code
 
