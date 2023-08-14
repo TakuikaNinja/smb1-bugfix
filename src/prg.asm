@@ -15366,6 +15366,15 @@ DrawHammer:
 		bne ForceHPose									; if master timer control set, skip this part
 
 		lda Misc_State,x								; otherwise get hammer's state
+		pha												; SM push to stack
+		cmp #$88										; SM check for a specific value
+		bne NoHammerSFX									; SM branch if not
+		
+		lda #Sfx_Fireball								; SM otherwise load SFX
+		sta Square1SoundQueue							; (originally enemy smack but EnemyDefeatPitch would mess it up)
+		
+NoHammerSFX:
+		pla
 		and #%01111111									; mask out d7
 		cmp #$01										; check to see if set to 1 yet
 		beq GetHPose									; if so, branch

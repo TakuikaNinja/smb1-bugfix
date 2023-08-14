@@ -25,6 +25,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The warp-pipe sound effect will now also play when exiting vertical warp-pipes, in line with later entries.
 + [x] The timer countdown sequence will now wait until the level clear fanfare has finished playing.
 + [x] Similarly, the fireworks bonus will now wait until the level clear fanfare has finished playing.
++ [x] Sound effects will now play when hammers are thrown, in line with SMAS.
 
 ## Bug Fixes & Small Tweaks
 + [x] Scroll unlock object in underground warp zone now works as intended. (no more minus world)
