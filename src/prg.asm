@@ -8568,17 +8568,13 @@ FindLoop:
 
 		lda Player_State								; check to see if the player is grounded
 		bne WrongChk									; if not, player fails to pass loop, and loopback (jank)
-
-		lda WorldNumber									; are we in world 7? (check performed on correct
-		cmp #World7										; vertical position and on solid ground)
-		bne InitMLp										; if not, initialize flags used there, otherwise
-
-		lda MultiLoopCorrectCntr
-		cmp MultiLoopPassCntr
-		bne SkpCrtSFX
 		
 		lda #Sfx_CoinGrab								; SM queue sound for correct path
 		sta Square2SoundQueue
+		
+		lda WorldNumber									; are we in world 7? (check performed on correct
+		cmp #World7										; vertical position and on solid ground)
+		bne InitMLp										; if not, initialize flags used there
 		
 SkpCrtSFX:
 		inc MultiLoopCorrectCntr						; increment counter for correct progression
