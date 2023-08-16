@@ -14011,6 +14011,10 @@ ContSChk:
 ChkPBtm:
 		ldy Player_State								; check for player's state set to normal
 		bne StopPlayerMove								; if not, branch to impede player's movement
+		
+		ldy Left_Right_Buttons							; don't process pipe entry if right not pressed
+		cpy #Right_Dir
+		bne StopPlayerMove
 
 		cmp #$6c										; otherwise check for pipe metatiles
 		beq PipeDwnS									; if collided with sideways pipe (bottom), branch
@@ -14021,7 +14025,7 @@ ChkPBtm:
 PipeDwnS:
 		lda Player_SprAttrib							; check player's attributes
 		bne PlyrPipe									; if already set, branch, do not play sound again
-
+		
 		ldy #Sfx_PipeDown_Injury
 		sty Square1SoundQueue							; otherwise load pipedown/injury sound
 
