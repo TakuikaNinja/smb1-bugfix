@@ -7742,12 +7742,8 @@ ChkPUSte:
 		cmp #$06										; for if power-up has risen enough
 		bcc ExitPUp										; if not, don't even bother running these routines
 		
-		lda PowerUpType
-		cmp #$02										; check if this is a star
-		bne RunPUSubs									; if not, move along.
-		
-		lda #$fd
-		sta Enemy_Y_Speed,x								; otherwise, set y speed to force bounce
+		lda #$01										; SM otherwise init vertical speed
+		sta Enemy_Y_Speed,x
 
 RunPUSubs:
 		jsr RelativeEnemyPosition						; get coordinates relative to screen
@@ -10271,9 +10267,11 @@ SkipFloatey:
 MovePodoboo:	
 		lda EnemyIntervalTimer,x						; check enemy timer
 		bne PdbM										; branch to move enemy if not expired
-		jsr InitPodoboo									; otherwise set up podoboo again
+		
 		lda #Sfx_Fireball								; SM queue sound
 		sta Square1SoundQueue
+		jsr InitPodoboo									; set up podoboo again
+		
 		lda PseudoRandomBitReg+1,x						; get part of LSFR
 		ora #%10000000									; set d7
 		sta Enemy_Y_MoveForce,x							; store as movement force
