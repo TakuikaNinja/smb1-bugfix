@@ -143,3 +143,5 @@ SpriteShufflerPreset = $28
 
 MaxFloateyValue      = $08
 
+TOF                  = 'A'-10	; ASCII offset for A-Z
+
