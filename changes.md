@@ -64,6 +64,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
 + [x] An off-by-one error in the enemy ID has been fixed in 5-3 to properly end the Bullet Bill frenzy. The redundant level object has also been removed. (moving platforms will now load consistently)
 + [x] The "end frenzy" object will now check if Lakitus are defeated before setting their states. (prevents instances of Lakitu revival)
++ [x] The pipe intro and exit screens now use the snow theme in 7-2.
 + [x] The bridge railing no longer overshoots the first gap in 2-3/7-3.
 + [x] 2-3/7-3 now have the water backdrop for better continuity from the previous level.
 + [x] Coin Heavens (cloud levels accessed via vines) now have the cloud backdrop.
@@ -112,6 +113,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Optimized, tweaked, and trimmed code wherever possible. (ongoing effort)
 
 ## Modernised Quality of Life Mechanics
++ [x] Mario's physics have been tweaked to feel less stiff.
 - [x] Holding A now allows you to bounce on enemies higher, like in later entries.
 - [x] Getting a Fire Flower as Small Mario now turns Mario into Fire Mario, as opposed to Super Mario.
 - [x] Getting hit as Fire Mario now turns Mario into Super Mario, as opposed to Small Mario.
