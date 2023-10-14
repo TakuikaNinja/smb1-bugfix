@@ -79,7 +79,7 @@ ScreenRight_X_Pos     = $071d
 PlayerFacingDir       = $33
 DestinationPageLoc    = $34
 VictoryWalkControl    = $35
-ScrollFractional      = $0768	; free
+World7Override        = $0768
 MessageCounter        = $0719
 SecondaryMsgCounter   = $0749	; free
 
