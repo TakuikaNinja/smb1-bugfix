@@ -5014,8 +5014,26 @@ GetAreaDataAddrs:
 		ldy #$00										; load first byte of header
 		lda (AreaData),y
 		pha												; save it to the stack for now
-		
 		and #%00000111									; save 3 LSB for foreground scenery or bg color control
+		
+		ldx WorldNumber									; load world number
+		cpx #World7              
+		bcc StoreBGColor								; if before World 7, use old code
+		
+		ldx AreaPointer									; load area pointer
+		cpx #$25										; if value is 7-2 goal, override code
+		beq UpdateBGColor
+		
+		cpx #$29										; otherwise use old code if value is not pipe intro
+		bne StoreBGColor
+		
+		ldx #$00										; clear 7-2 override flag for pipe intro
+		
+UpdateBGColor:
+		lda #$05										; override color control with value for snow
+		stx World7Override								; and set 7-2 override flag accordingly for later
+		
+StoreBGColor:
 		cmp #$04
 		bcc StoreFore
 		
@@ -5047,9 +5065,18 @@ StoreFore:
 		and #%00001111									; mask out all but lower nybble
 		sta TerrainControl
 		
+		lda World7Override								; if world 7-2 override flag was set earlier...
+		beq +
+		
+		lda #%00000011									; override scenery with fences & trees
+		bne ++											; [unconditional branch]
+		
++
 		lda (AreaData),y								; reload byte (2/1 cycles faster than pla+pha)
 		and #%00110000									; save 2 MSB for background scenery type
 		jsr MathLSR4									; shift bits to LSBs
+		
+++
 		sta BackgroundScenery							; save as background scenery
 		
 		pla
@@ -5072,11 +5099,11 @@ StoreStyle:
 		clc
 		adc #$02
 		sta AreaDataLow
+		bcc +
 		
-		lda AreaDataHigh
-		adc #$00
-		sta AreaDataHigh
+		inc AreaDataHigh
 		
++
 		lda AreaPointer									; check area pointer
 		and #%01111111									; mask out next screen flag
 		cmp #$42										; underground bonus area?
