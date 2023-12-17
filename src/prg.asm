@@ -11785,10 +11785,10 @@ SetGfxF:
 		lda Enemy_State,x								; if bowser's flame not in normal state,
 		bne ExFl										; branch to leave
 
-		lda #$51										; otherwise, continue
+		lda #$53										; otherwise, continue (fix: start at other end)
 		sta $00											; write first tile number
 
-		ldy #$02										; load attributes without vertical flip by default
+		ldy #$42										; load attributes without vertical flip by default (fix: flip horizontally)
 		lda TimerControl								; if master timer control flag set,
 		bne FlmeAt										; branch to skip frame counter check
 		
@@ -11796,7 +11796,7 @@ SetGfxF:
 		and #%00000010									; invert vertical flip bit every 2 frames
 		beq FlmeAt										; if d1 not set, write default value
 
-		ldy #$82										; otherwise write value with vertical flip bit set
+		ldy #$c2										; otherwise write value with vertical flip bit set (fix: flip horizontally)
 
 FlmeAt:
 		sty $01											; set bowser's flame sprite attributes here
@@ -11812,7 +11812,7 @@ DrawFlameLoop:
 		lda $00
 		sta Sprite_Tilenumber,y							; write current tile number into OAM data
 
-		inc $00											; increment tile number to draw more bowser's flame
+		dec $00											; decrement tile number to draw more bowser's flame
 
 		lda $01
 		sta Sprite_Attributes,y							; write saved attributes into OAM data
