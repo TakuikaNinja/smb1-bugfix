@@ -25,7 +25,7 @@ if [ "$1" = "patch" ] ; then
 	if [ $? -ne 0 ] ; then
 		echo 'Failed building ROM!'
 		exit 1
-	elif ! compareHash $ORIG 'bin/smb2.nes' ; then
+	elif ! compareHash $ORIG 'bin/smb1.nes' ; then
 		echo 'Did not match original ROM - Generating xdelta patch...'
 		xdelta3 -fs "$ORIG_PATH" bin/smb1.nes bin/smb1-bugfix.xdelta || echo 'Failed to generate xdelta patch'
 		exit $?
