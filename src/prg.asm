@@ -431,7 +431,7 @@ MoveSpritesOffscreen:
 SprInitLoop:
 		sta Sprite_Y_Position,y							; write 248 into OAM data's Y coordinate
 		
-		jsr MathINY4									; which will move it off the screen
+		INY4											; which will move it off the screen
 		bne SprInitLoop
 		
 		rts
