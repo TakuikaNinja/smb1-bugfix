@@ -924,10 +924,10 @@ FloateyNumbersRoutine:
 		lda FloateyNum_Control,x						; load control for floatey number
 		beq EndExit										; if zero, branch to leave
 		
-		cmp #MaxFloateyValue										; if less than $0b, branch
+		cmp #MaxFloateyValue							; if less than $0b, branch
 		bcc ChkNumTimer
 		
-		lda #MaxFloateyValue										; otherwise set to $0b, thus keeping
+		lda #MaxFloateyValue							; otherwise set to $08, thus keeping
 		sta FloateyNum_Control,x						; it in range
 
 ChkNumTimer:
@@ -945,7 +945,7 @@ DecNumTimer:
 		cmp #$2b										; if not reached a certain point, branch
 		bne ChkTallEnemy
 		
-		cpy #MaxFloateyValue										; check offset for $0b
+		cpy #MaxFloateyValue							; check offset for $08
 		bne LoadNumTiles								; branch ahead if not found
 		
 		jsr IncrementLives
@@ -954,7 +954,7 @@ LoadNumTiles:
 		lda ScoreUpdateData-1,y							; load point value here
 		pha												; save for later
 
-		jsr MathLSR4									; move high nybble to low
+		LSR4											; move high nybble to low
 		tax												; use as X offset, essentially the digit
 		
 		pla												; load again and this time
@@ -1689,7 +1689,7 @@ WarpNumLoop:
 		sta VRAM_Buffer1+27,y							; placeholders from earlier
 
 		inx
-		jsr MathINY4									; put a number in every fourth space
+		INY4											; put a number in every fourth space
 		cpy #$0c
 		bcc WarpNumLoop
 
@@ -1900,7 +1900,7 @@ AttribLoop:
 		lsr
 		sta AttributeBuffer,x							; clear current byte in attribute buffer
 
-		jsr MathINY4									; increment buffer offset by 4 bytes
+		INY4											; increment buffer offset by 4 bytes
 		inx												; increment attribute offset and check to see
 		cpx #$07										; if we're at the end yet
 		bcc AttribLoop
@@ -2566,7 +2566,7 @@ PrintStatusBarNumbers:
 		jsr OutputNumbers								; use first nybble to print the coin display
 		
 		lda $00											; move high nybble to low
-		jsr MathLSR4									; and print to score display
+		LSR4											; and print to score display
 
 OutputNumbers:
 		clc												; add 1 to low nybble
@@ -2770,7 +2770,7 @@ SetInitNTHigh:
 		ldy #$80
 		sty CurrentNTAddr_Low
 
-		jsr MathASL4									; store LSB of page number in high nybble of block buffer column position
+		ASL4											; store LSB of page number in high nybble of block buffer column position
 		sta BlockBufferColumnPos
 
 		dec AreaObjectLength							; set area object lengths for all empty
@@ -3123,7 +3123,7 @@ GetHalfway:
 		tya												; if in area -2 or -4, use lower nybble
 		bcs MaskHPNyb
 		
-		jsr MathLSR4									; move higher nybble to lower if area number is -1 or -3
+		LSR4											; move higher nybble to lower if area number is -1 or -3
 
 MaskHPNyb:
 		and #%00001111									; mask out all but lower nybble
@@ -3434,7 +3434,7 @@ NormalScene:
 		bpl NormalScene									; [unconditional branch]
 
 RendBack:
-		jsr MathASL4									; move results to higher nybble
+		ASL4											; move results to higher nybble
 		adc BSceneDataOffsets-1,y						; get the offset for an overworld area background
 
 AddCurrColumn:
@@ -3456,7 +3456,7 @@ AddCurrColumn:
 		tax												; save as offset for background scenery metatile data
 
 		pla												; get high nybble from stack, move low
-		jsr MathLSR4
+		LSR4
 		tay												; use as second offset (used to determine height)
 
 		lda #$03										; use previously saved memory location for counter
@@ -3816,7 +3816,7 @@ SpecObj:
 		and #%01110000									; get next byte and mask out all but d6-d4
 
 MoveAOId:
-		jsr MathLSR4									; move d6-d4 to lower nybble
+		LSR4											; move d6-d4 to lower nybble
 
 NormObj:
 		sta $00											; store value here (branch for small objects and rows 13 and 14)
@@ -3856,7 +3856,7 @@ BackColC:
 		ldy AreaDataOffset								; get first byte again
 		lda (AreaData),y
 		and #%11110000									; mask out low nybble and move high to low
-		jsr MathLSR4
+		LSR4
 		cmp CurrentColumnPos							; is this where we're at?
 		bne LeavePar									; if not, branch to leave
 
@@ -3951,7 +3951,7 @@ AlterAreaAttributes:
 		
 		pla
 		and #%00110000									; pull and mask out all but d5 and d4
-		jsr MathLSR4									; move bits to lower nybble and store as new background scenery bits
+		LSR4											; move bits to lower nybble and store as new background scenery bits
 		sta BackgroundScenery							; then leave
 		rts
 
@@ -4183,7 +4183,7 @@ CRendLoop:
 		lda $06
 		beq ChkCFloor									; have we reached upper limit yet?
 		
-		jsr MathINY4									; if not, increment column-wise to byte in next row
+		INY4											; if not, increment column-wise to byte in next row
 		iny
 		dec $06											; move closer to upper limit
 
@@ -4337,7 +4337,7 @@ VerticalPipe:
 		lda $00											; check to see if value was nullified earlier
 		beq WarpPipe									; (if d3, the usage control bit of second byte, was set)
 
-		jsr MathINY4									; add four if usage control bit was not set
+		INY4											; add four if usage control bit was not set
 
 WarpPipe:
 		tya												; save value in stack
@@ -4808,7 +4808,7 @@ Hole_Empty:
 		iny												; increment length by 2
 		iny												; (whirlpool will always be two blocks bigger than actual size of hole...
 		tya												; and extend one block beyond each edge)
-		jsr MathASL4									; multiply by 16 to get size of whirlpool
+		ASL4											; multiply by 16 to get size of whirlpool
 		sta Whirlpool_Length,x							; save size of whirlpool here
 		
 		inx
@@ -4901,33 +4901,12 @@ GetLrgObjAttrib:
 
 GetAreaObjXPosition:
 		lda CurrentColumnPos							; multiply current offset where we're at by 16
-
-MathASL4:
-		asl												; to obtain horizontal pixel coordinate
-		asl
-		asl
-		asl
+		ASL4
 		rts
-
-MathLSR4:
-		lsr
-		lsr
-		lsr
-		lsr
-		rts
-
-MathINY4:												; INYx4 is so common that this actually saves bytes...
-		iny
-		iny
-		iny
-		iny
-		rts
-
-; --------------------------------
 
 GetAreaObjYPosition:
 		lda $07											; multiply value by 16
-		jsr MathASL4									; this will give us the proper vertical pixel coordinate
+		ASL4											; this will give us the proper vertical pixel coordinate
 		clc
 		adc #32											; add 32 pixels for the status bar
 		rts
@@ -4942,7 +4921,7 @@ BlockBufferAddr:
 GetBlockBufferAddr:
 		pha												; take value of A, save
 		
-		jsr MathLSR4									; move high nybble to low
+		LSR4											; move high nybble to low
 		tay												; use nybble as pointer to high byte
 		lda BlockBufferAddr+2,y							; of indirect here
 		sta $07
@@ -5075,7 +5054,7 @@ StoreFore:
 +
 		lda (AreaData),y								; reload byte (2/1 cycles faster than pla+pha)
 		and #%00110000									; save 2 MSB for background scenery type
-		jsr MathLSR4									; shift bits to LSBs
+		LSR4											; shift bits to LSBs
 		
 ++
 		sta BackgroundScenery							; save as background scenery
@@ -6453,9 +6432,7 @@ XSpdSign:
 		cmp #$00										; if player not moving or moving to the right,
 		bpl SetAbsSpd									; branch and leave horizontal speed value unmodified
 		
-		eor #$ff										; otherwise negate horizontal speed
-		sec
-		adc #$00
+		NEG_A											; otherwise negate horizontal speed
 
 SetAbsSpd:
 		sta Player_XSpeedAbsolute						; store walking/running speed here and leave
@@ -7455,7 +7432,7 @@ SetupJumpCoin:
 		sta Misc_PageLoc,y								; and save as page location for misc object
 
 		lda $06											; get low byte of block buffer offset
-		jsr MathASL4									; multiply by 16 to use lower nybble
+		ASL4											; multiply by 16 to use lower nybble
 		jsr CoinWrapChk									; SM check for wraparounds and set horizontal coordinate
 	
 		lda $02											; get vertical high nybble offset from earlier
@@ -7648,7 +7625,7 @@ UpdateScore:
 		sta ztemp
 		jsr AddToScore									; add to player score
 		lda CurrentPlayer								; get player on the screen
-		jsr MathASL4									; move low nybble to high
+		ASL4											; move low nybble to high
 		ora ztemp										; set lower nybble from ztemp
 		jmp UpdateNumber								; update the number and leave
 
@@ -8230,11 +8207,11 @@ MovePlayerHorizontally:
 
 MoveObjectHorizontally:									; equivalent to "Object_ApplyXVel" in the SMB3 disassembly
 		lda SprObject_X_Speed,x							; get currently saved value (horizontal
-		jsr MathASL4									; speed, secondary counter, whatever) and move low nybble to high
+		ASL4											; speed, secondary counter, whatever) and move low nybble to high
 		sta $01											; store result here
 
 		lda SprObject_X_Speed,x							; get saved value again
-		jsr MathLSR4									; move high nybble to low
+		LSR4											; move high nybble to low
 		cmp #$08										; if < 8, branch, do not change
 		bcc SaveXSpd
 
@@ -8449,9 +8426,7 @@ ChkUpM:
 		beq ExVMove										; if set to zero, branch to leave
 
 		lda $02											; otherwise negate max speed
-		eor #$ff
-		sec
-		adc #$00
+		NEG_A
 		sta $07											; and store here
 
 		lda SprObject_Y_MoveForce,x
@@ -8746,7 +8721,7 @@ CheckRightExtBounds:
 		sta Enemy_Y_HighPos,x
 
 		lda (EnemyData),y								; get first byte again
-		jsr MathASL4									; multiply by four to get the vertical coordinate
+		ASL4											; multiply by four to get the vertical coordinate
 		sta Enemy_Y_Position,x
 
 		cmp #$e0										; do one last check for special row $0e
@@ -8819,7 +8794,7 @@ ParseRow0e:
 		iny												; increment Y to load third byte of object
 		iny
 		lda (EnemyData),y
-		jsr MathLSR4									; move 3 MSB to the bottom, effectively
+		LSR4											; move 3 MSB to the bottom, effectively
 		lsr												; making %xxx00000 into %00000xxx
 		cmp WorldNumber									; is it the same world number as we're on?
 		bne Inc3B										; if not, do not use (this allows multiple uses
@@ -9195,7 +9170,7 @@ DifLoop:
 		lda PRDiffAdjustData,y							; get three values and save them
 		sta $01,x										; to $01-$03
 
-		jsr MathINY4									; increment Y four bytes for each value
+		INY4											; increment Y four bytes for each value
 		dex												; decrement X for each one
 		bpl DifLoop										; loop until all three are written
 
@@ -9378,9 +9353,7 @@ RSeed:
 		beq D2XPos1										; if d1 not set, branch
 
 		lda Enemy_X_Speed,x								; otherwise negate horizontal speed
-		eor #$ff
-		sec
-		adc #$00
+		NEG_A
 		sta Enemy_X_Speed,x
 
 		inc Enemy_MovingDir,x							; increment to move towards the left
@@ -9967,9 +9940,7 @@ InitVertPlatform:
 		lda Enemy_Y_Position,x							; check vertical position
 		bpl SetYO										; if above a certain point, skip this part
 		
-		eor #$ff										; otherwise negate vertical position
-		sec
-		adc #$00
+		NEG_A											; otherwise negate vertical position
 		
 		ldy #$c0										; get alternate value to add to vertical position
 
@@ -10605,9 +10576,7 @@ MoveWithXMCntrs:
 		bne XMRight										; set, branch ahead of this part here
 
 		lda XMoveSecondaryCounter,x						; otherwise negate secondary counter
-		eor #$ff
-		sec
-		adc #$00
+		NEG_A
 		sta XMoveSecondaryCounter,x
 
 		ldy #$02										; load alternate value here
@@ -10671,9 +10640,7 @@ SwimX:
 		dey
 		beq RightSwim									; if moving to the right, branch to second part
 
-		eor #$ff										; otherwise negate speed
-		sec
-		adc #$00
+		NEG_A											; otherwise negate speed
 
 RightSwim:
 		jmp AddToEnemyPosition
@@ -10800,9 +10767,7 @@ CCSwim:
 		ldy CheepCheepMoveMFlag,x						; check movement flag
 		bne CCSwimDownwards								; if not set, branch to move downwards
 
-		eor #$ff										; otherwise negate speed
-		sec
-		adc #$00
+		NEG_A											; otherwise negate speed
 		sta $02
 		
 		dec $03											; decrement state to $ff to subtract instead
@@ -10834,9 +10799,7 @@ NoCCYPosInc:
 		bpl YPDiff										; if result positive, skip to next part
 	
 		ldy #$10										; otherwise set movement speed to downwards
-		eor #$ff										; and negate subtraction result
-		sec
-		adc #$00
+		NEG_A											; and negate subtraction result
 
 YPDiff:
 		cmp #$0f										; if difference between original vs. current vertical
@@ -10984,9 +10947,7 @@ DrawFirebar_Collision:
 		lsr $05											; shift LSB of mirror data
 		bcs AddHA										; if carry was set, skip this part
 
-		eor #$ff										; otherwise negate horizontal adder
-		sec
-		adc #$00
+		NEG_A											; otherwise negate horizontal adder
 
 AddHA:
 		clc												; add horizontal coordinate relative to screen to
@@ -11022,9 +10983,7 @@ VAHandl:
 		lsr $05											; shift LSB of mirror data one more time
 		bcs AddVA										; if carry was set, skip this part
 
-		eor #$ff										; otherwise negate vertical adder
-		sec
-		adc #$00
+		NEG_A											; otherwise negate vertical adder
 
 AddVA:
 		clc												; add vertical coordinate relative to screen to
@@ -11077,9 +11036,7 @@ FBCLoop:
 		sbc $07											; from the vertical coordinate of the player
 		bpl ChkVFBD										; branch if result is positive
 
-		eor #$ff										; otherwise negate result
-		sec
-		adc #$00
+		NEG_A											; otherwise negate result
 
 ChkVFBD:
 		cmp #$08										; if difference => 8 pixels, skip ahead of this part
@@ -11098,9 +11055,7 @@ ChkVFBD:
 		sbc $06											; from the X coordinate of player's sprite 1
 		bpl ChkFBCl										; branch if result is positive
 
-		eor #$ff										; otherwise negate result
-		sec
-		adc #$00
+		NEG_A											; otherwise negate result
 
 ChkFBCl:
 		cmp #$08										; if difference < 8 pixels, collision, thus branch
@@ -11272,9 +11227,7 @@ SetLSpd:
 		bne SetLMov										; if set, branch to the end to use moving direction
 
 		lda LakituMoveSpeed,x							; negate moving speed
-		eor #$ff
-		sec
-		adc #$00
+		NEG_A
 		sta LakituMoveSpeed,x
 
 		iny												; increment moving direction to left
@@ -11291,9 +11244,7 @@ PlayerLakituDiff:
 
 		iny												; otherwise increment Y for left of player
 		lda $00											; and negate horizontal difference
-		eor #$ff
-		sec
-		adc #$00
+		NEG_A
 		sta $00
 
 ChkLakDif:
@@ -11577,9 +11528,7 @@ GetDToO:
 		sbc BowserOrigXPos								; horizontal position
 		bpl CompDToO									; if current position to the right of original, skip ahead
 
-		eor #$ff										; otherwise negate result
-		sec
-		adc #$00
+		NEG_A											; otherwise negate result
 
 		ldy #$01										; set alternate movement speed here (move right)
 
@@ -11825,7 +11774,7 @@ DrawFlameLoop:
 		adc #$08
 		sta Enemy_Rel_XPos								; then add eight to it and store
 
-		jsr MathINY4									; increment Y four times to move onto the next OAM
+		INY4											; increment Y four times to move onto the next OAM
 		inx												; move onto the next OAM, and branch if three
 		cpx #$03										; have not yet been done
 		bcc DrawFlameLoop
@@ -12034,7 +11983,7 @@ DSFLoop:
 		adc StarFlagXPosAdder,x							; add X coordinate adder data
 		sta Sprite_X_Position,y							; store as X coordinate
 
-		jsr MathINY4									; increment OAM data offset four bytes for next sprite
+		INY4											; increment OAM data offset four bytes for next sprite
 		dex												; move onto next sprite
 		bpl DSFLoop										; do this until all sprites are done
 
@@ -12079,9 +12028,7 @@ MovePiranhaPlant:
 		bpl ChkPlayerNearPipe							; piranha plant, and branch if enemy to right of player
 
 		lda $00											; otherwise negate horizontal difference
-		eor #$ff
-		sec
-		adc #$00
+		NEG_A
 		sta $00
 
 ChkPlayerNearPipe:
@@ -12091,9 +12038,7 @@ ChkPlayerNearPipe:
 
 ReversePlantSpeed:
 		lda PiranhaPlant_Y_Speed,x						; otherwise negate vertical speed
-		eor #$ff
-		sec
-		adc #$00
+		NEG_A
 		sta PiranhaPlant_Y_Speed,x
 
 		inc PiranhaPlant_MoveFlag,x						; increment to set movement flag
@@ -12962,7 +12907,7 @@ SetFor1Up:
 		lda #Sfx_ExtraLife
 		sta Square2SoundQueue							; queue up the 1-up sound instead (avoids awkward interruptions)
 
-		lda #$0b										; change 1000 points into 1-up instead
+		lda #$08										; change 1000 points into 1-up instead
 		sta FloateyNum_Control,x						; and then leave
 
 NoPUp:
@@ -13272,7 +13217,7 @@ SetupFloateyNumber:
 		jsr PlayerEnemyDiff								; get horizontal difference between player and enemy object
 		bmi LSV											; SM branch if enemy is to the left of the player
 		lda #$ec										; SM load default value (right edge)
-	.db $2c												; [unconditional branch]
+	.db $2c												; [skip 2 bytes]
 
 LSV:
 		lda #$04										; SM otherwise use 4 (left edge)
@@ -13525,9 +13470,7 @@ EnemyTurnAround:
 
 RXSpd:
 		lda Enemy_X_Speed,x								; negate horizontal speed
-		eor #$ff
-		sec
-		adc #$00
+		NEG_A
 		sta Enemy_X_Speed,x
 
 		lda Enemy_MovingDir,x
@@ -14213,7 +14156,7 @@ NoAutoClimb:
 
 DirectionsMatch:
 		lda $06											; get low byte of block buffer address
-		jsr MathASL4									; move low nybble to high
+		ASL4									; move low nybble to high
 		clc
 		adc ClimbXPosAdder-1,y							; add pixels depending on facing direction
 		sta Player_X_Position							; store as player's horizontal coordinate
@@ -15327,7 +15270,7 @@ VineTL:
 		lda #$e1										; set tile number for sprite
 		sta Sprite_Tilenumber,y
 
-		jsr MathINY4									; move offset to next sprite
+		INY4											; move offset to next sprite
 		dex												; move onto next sprite
 		bpl VineTL										; loop until all sprites are done
 
@@ -15352,7 +15295,7 @@ ChkFTop:
 		sta Sprite_Y_Position,y							; otherwise move sprite offscreen
 
 NextVSp:
-		jsr MathINY4									; move offset to next sprite
+		INY4											; move offset to next sprite
 		inx												; move onto next sprite
 		cpx #$06										; do this until all sprites are checked
 		bne ChkFTop
@@ -15369,7 +15312,7 @@ StkLp:
 		clc
 		adc #$08										; add eight pixels
 
-		jsr MathINY4									; move offset four bytes forward
+		INY4											; move offset four bytes forward
 		dex												; do another sprite
 		bne StkLp										; do this until all sprites are done
 
@@ -15642,7 +15585,7 @@ SChkLoop:
 		sta Sprite_Y_Position,y
 
 NotOffscreen:
-		jsr MathINY4									; increment Y 4 times
+		INY4											; increment Y 4 times
 		dex												; decrement X
 		bne SChkLoop									; branch to loop if > 0
 
@@ -16692,7 +16635,7 @@ DChunks:
 
 NotSet:
 		lda FrameCounter								; get frame counter
-		jsr MathASL4									; move low nybble to high
+		ASL4											; move low nybble to high
 		and #$c0										; get what was originally d3-d2 of low nybble
 		ora $00											; add palette bits
 
@@ -16943,7 +16886,7 @@ SOfsLoop:
 
 SkipSOfs:
 		asl ztemp										; shift current bits to the left
-		jsr MathINY4									; increment Y 4 times
+		INY4											; increment Y 4 times
 		dex												; decrement X
 		bne SOfsLoop									; branch to loop if > 0
 		
@@ -17062,7 +17005,7 @@ CntPl:
 		lsr
 		bcs SwimKT										; if player facing to the right, use current offset
 
-		jsr MathINY4									; otherwise move to next OAM data
+		INY4											; otherwise move to next OAM data
 
 SwimKT:
 		lda PlayerSize									; check player's size
@@ -17128,7 +17071,7 @@ SUpdR:
 
 PlayerOffscreenChk:
 		lda Player_OffscreenBits						; get player's offscreen bits
-		jsr MathLSR4									; move vertical bits to low nybble
+		LSR4											; move vertical bits to low nybble
 		sta $00											; store here
 
 		ldx #$03										; check all four rows of player sprites
@@ -17609,7 +17552,7 @@ GetOffScreenBitsSet:
 		pha
 
 		jsr RunOffscrBitsSubs
-		jsr MathASL4									; move low nybble to high nybble
+		ASL4											; move low nybble to high nybble
 		ora $00											; mask together with previously saved low nybble
 		sta $00											; store both here
 
@@ -17623,7 +17566,7 @@ GetOffScreenBitsSet:
 
 RunOffscrBitsSubs:
 		jsr GetXOffscreenBits							; do subroutine here
-		jsr MathLSR4									; move high nybble to low
+		LSR4											; move high nybble to low
 		sta $00											; store here
 		jmp GetYOffscreenBits
 
