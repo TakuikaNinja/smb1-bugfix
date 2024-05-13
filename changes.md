@@ -115,6 +115,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 
 ## Modernised Quality of Life Mechanics
 + [x] Mario's physics have been tweaked to feel less stiff.
++ [x] Mario can no longer uncrouch while underneath a solid block.
 - [x] Holding A now allows you to bounce on enemies higher, like in later entries.
 - [x] Getting a Fire Flower as Small Mario now turns Mario into Fire Mario, as opposed to Super Mario.
 - [x] Getting hit as Fire Mario now turns Mario into Super Mario, as opposed to Small Mario.
