@@ -7184,7 +7184,7 @@ FireCannon:
 
 		lda #BulletBill_CannonVar
 		sta Enemy_ID,x									; load identifier for bullet bill (cannon variant)
-		bne Next3Slt									; move onto next slot [unconditional branch]
+;		bne Next3Slt									; move onto next slot [unconditional branch]
 
 Chk_BB:
 		lda Enemy_ID,x									; check enemy identifier for bullet bill (cannon variant)
