@@ -5888,6 +5888,7 @@ PlayerMovementSubs:
 
 SetCrouch:
 		sta CrouchingFlag								; store value in crouch flag
+		jsr CheckBlockWhenCrouching
 
 ProcMove:
 		jsr PlayerPhysicsSub							; run sub related to jumping and swimming
@@ -5911,6 +5912,34 @@ MoveSubs:
 	.dw ClimbingSub-1
 
 NoMoveSub:
+		rts
+
+; based on the implementation in Super Ale Bros. Redux by AleFunky
+CheckBlockWhenCrouching:
+		lda GameEngineSubroutine
+		cmp #$08
+		bne ExitBlockHead								; exit if not in player control routine
+		
+		lda PlayerSize
+		ora Player_State
+		bne ExitBlockHead								; exit if not big or not grounded
+		
+		ldy Player_Y_HighPos
+		dey
+		bne ExitBlockHead								; exit if in vertical offscreen areas (no blocks there)
+		
+		jsr BlockBufferColli_Head						; do player-to-bg collision detection on top half of player (Y = 0)
+		beq ExitBlockHead								; exit if nothing found
+		
+		jsr CheckForCoinMTiles							; check to see if player touched coin with their head
+		bcs ExitBlockHead								; exit if detected
+
+		lda #Down_Dir									; force crouch
+		sta CrouchingFlag
+		sta Up_Down_Buttons
+		sty Left_Right_Buttons							; Y = 0, so clear left/right inputs
+
+ExitBlockHead:
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -15188,22 +15217,19 @@ BlockBufferCollision:
 
 		lda SprObject_Y_Position,x						; get vertical coordinate of object
 		cmp #$d0										; check if at or beyond bottom tile row
-		bcc NoTileOverflow								; branch if not
-		
-		lda #$c0										; otherwise use $c0 so the tile isn't moved past the bottom row
-		clc
+		bcs ClampTile									; branch if so
 
-NoTileOverflow:
 		adc BlockBuffer_Y_Adder,y						; add it to value obtained using Y as offset
 		and #%11110000									; mask out low nybble
 		sec
 		sbc #$20										; subtract 32 pixels for the status bar
-
 		sta $02											; store result here
+		bcc ClampTile									; branch is underflowed
 
 		tay												; use as offset for block buffer
 		lda ($06),y										; check current content of block buffer
 
+StoreTile:
 		sta $03											; and store here
 
 		ldy $04											; get old contents of Y again
@@ -15223,6 +15249,10 @@ RetYC:
 
 		lda $03											; get saved content of block buffer
 		rts												; and leave
+
+ClampTile:
+		lda #$00										; if an over/underflow occurs, just use the empty block
+		beq StoreTile									; [unconditional branch]
 
 ; -------------------------------------------------------------------------------------
 ; $00 - offset to vine Y coordinate adder
