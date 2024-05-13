@@ -136,6 +136,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Red Paratroopas will now be properly demoted to Red Koopas when stomped.
 + [x] Stomped Goombas will now stay in midair, like later entries.
 + [x] Bullet Bills fired from cannons and those spawned from frenzy objects now behave more similarly, including enemy collisions.
++ [x] Handling of Bullet Bills launched by cannons are no longer delayed by 1 frame. (no more Phantom Bullet Bills)
 + [x] Hammer Bros can now be defeated reliably using kicked shells.
 + [x] Jumping Green Paratroopas now move faster in Quest 2 and demote to the appropriate speed in Quest 2.
 + [x] Swimming Cheep Cheeps now move up and down farther after 5-3.
