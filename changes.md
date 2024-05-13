@@ -100,6 +100,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The logic for ejecting Mario from walls has been improved. (no more quick power-up grab, walking through walls, etc)
 + [x] Grabbing the flagpole while inside the base block will no longer skip the flag slide animation.
 + [x] Mario will now always fully slide down the flagpole. (no more advantage from grabbing it near the top)
++ [x] Fixed a case of the Y speed not being clamped when it should have been. (high byte > max Y speed && low byte < $80)
 + [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
 + [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.
 + [x] Status bar updates which only change the score will no longer include the coin display. (reduces risk of VRAM buffer overflow)
