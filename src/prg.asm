@@ -8410,10 +8410,12 @@ NoYSpdInc:
 		lda SprObject_Y_Speed,x							
 		cmp $02											; compare to maximum speed
 		bmi ChkUpM										; if less than preset value, skip this part
-
-		lda SprObject_Y_MoveForce,x						; if movement force positive, skip this part									
+		bne ClampYSpd									; if not equal to preset value, branch to clamp vertical speed (> max)
+		
+		lda SprObject_Y_MoveForce,x						; if movement force positive (< $80), skip this part									
 		bpl ChkUpM
 
+ClampYSpd:
 		lda $02
 		sta SprObject_Y_Speed,x							; keep vertical speed within maximum value
 
