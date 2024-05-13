@@ -58,7 +58,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Enemies & kicked shells now keep their momentum while going off a ledge. Some enemy placements were adjusted to compensate for this but oddities may still be visible.
 + [x] The offscreen bounds check will now check if the enemy is active first, to prevent enemies from being erased twice.
 + [x] The enemy's high Y coordinate is now checked instead of relying on addition overflow in SubtEnemyYPos. (e.g. enemies will no longer hover when stomped in pits)
-+ [x] BlockBufferCollision will now correctly clamp the Y tile coordinate to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
++ [x] BlockBufferCollision will now account for over/underflow to prevent reading garbage data. (SubtEnemyYPos seems to have been an attempt to work around it)
 + [x] When Mario enters/exits a warp-pipe or falls into a pit, the gameplay will now halt in the same manner as being killed by an enemy. (prevents getting hit)
 + [x] Power-ups, jumping coins/blocks, shattered brick chunks, Bowser's flames, fireballs/explosions, bubbles, springboards, and growing vines will now properly halt in the above situations.
 - [x] The fortress in 5-1 has been changed to a castle, for consistency.
