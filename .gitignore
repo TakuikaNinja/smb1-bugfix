@@ -6,7 +6,9 @@ Thumbs.db
 *.cdl
 *.mlb
 asm6f
+flips-linux
 *.chr
 *.bat
 *.exe
 *.xdelta
+*.bps

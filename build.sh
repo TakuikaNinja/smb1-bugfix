@@ -26,8 +26,8 @@ if [ "$1" = "patch" ] ; then
 		echo 'Failed building disk!'
 		exit 1
 	elif ! compareHash $ORIG 'bin/smb1.fds' ; then
-		echo 'Did not match original disk - Generating xdelta patch...'
-		xdelta3 -fs "$ORIG_PATH" bin/smb1.fds bin/smb1-bugfix-fds.xdelta || echo 'Failed to generate xdelta patch'
+		echo 'Did not match original disk - Generating BPS patch...'
+		flips-linux -c -b "$ORIG_PATH" bin/smb1.fds bin/smb1-bugfix-fds.bps || echo 'Failed to generate BPS patch'
 		exit $?
 	else
 		echo 'Matched original disk - No patches required'
