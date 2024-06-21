@@ -5,7 +5,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Updated the iNES header to NES2.0 and matched it with the nointro dump.
 + [x] Updated the ROM hash in build.sh with that of the nointro dump.
 + [x] Replaced CHR-ROM dump with a patch file for the graphical changes.
-+ [x] Replaced the build script's "test" option with "patch", which produces a BPS patch. This requires the nointro dump and flips-linux.
++ [x] Replaced the build script's "test" option with "patch", which produces a BPS patch. This requires the nointro dump and `flips`.
 
 ## Music Changes
 - [x] There is now music on the title screen: an alternate version of the underwater theme.

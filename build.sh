@@ -27,7 +27,7 @@ if [ "$1" = "patch" ] ; then
 		exit 1
 	elif ! compareHash $ORIG 'bin/smb1.nes' ; then
 		echo 'Did not match original ROM - Generating BPS patch...'
-		flips-linux -c -b "$ORIG_PATH" bin/smb1.nes bin/smb1-bugfix.bps || echo 'Failed to generate BPS patch'
+		flips -c -b "$ORIG_PATH" bin/smb1.nes bin/smb1-bugfix.bps || echo 'Failed to generate BPS patch'
 		exit $?
 	else
 		echo 'Matched original ROM - No patches required'
