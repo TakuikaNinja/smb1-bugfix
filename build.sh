@@ -27,7 +27,7 @@ if [ "$1" = "patch" ] ; then
 		exit 1
 	elif ! compareHash $ORIG 'bin/smb1.fds' ; then
 		echo 'Did not match original disk - Generating BPS patch...'
-		flips-linux -c -b "$ORIG_PATH" bin/smb1.fds bin/smb1-bugfix-fds.bps || echo 'Failed to generate BPS patch'
+		flips -c -b "$ORIG_PATH" bin/smb1.fds bin/smb1-bugfix-fds.bps || echo 'Failed to generate BPS patch'
 		exit $?
 	else
 		echo 'Matched original disk - No patches required'
