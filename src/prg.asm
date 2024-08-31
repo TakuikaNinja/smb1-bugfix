@@ -8948,12 +8948,12 @@ InitGoomba:
 
 ; --------------------------------
 
-InitPodoboo:	
-		lda #$02										; set enemy position to below
-		sta Enemy_Y_HighPos,x							; the bottom of the screen
-		sta Enemy_Y_Position,x
+InitPodoboo:
+		lda #$d0										; set enemy position to below
+		sta Enemy_Y_Position,x							; the bottom of the screen (SMAS diff)
 
-		lsr
+		lda #$01
+		sta Enemy_Y_HighPos,x
 		sta EnemyIntervalTimer,x						; set timer for enemy
 
 		lsr
