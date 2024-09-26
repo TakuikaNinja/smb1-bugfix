@@ -17737,7 +17737,7 @@ ExDivPD:
 
 ; -------------------------------------------------------------------------------------
 ; INTERRUPT VECTORS
-.org FDS_NMI_VECTOR3
+.pad FDS_NMI_VECTOR3
 	.dw Bypass
 	.dw Start
 	.dw Start											; IRQ vector is never used, but point here just in case

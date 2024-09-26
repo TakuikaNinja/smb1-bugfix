@@ -76,9 +76,7 @@
 	.base $6000
 	prg_start:
 	.include "src/prg.asm"
-	prg_end:
-	
-	prg_length = prg_end - prg_start
+	prg_length = $ - prg_start
 	.base oldaddr + prg_length
 	
 ; ----------------------------------------------------------------------------------------------------------------------------------
