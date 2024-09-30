@@ -73,25 +73,6 @@ NMIWait:
 		beq GameLoop									; endless loop, need I say more?
 		
 ; -------------------------------------------------------------------------------------
-; "NMI" routine which is entered to bypass the BIOS check
-
-Bypass:
-		lda #$00										; disable NMIs since we don't need them anymore
-		sta PPU_CTRL_REG1
-		
-		lda #<NonMaskableInterrupt						; put real NMI handler in NMI vector 3
-		sta FDS_NMI_VECTOR3
-		lda #>NonMaskableInterrupt
-		sta FDS_NMI_VECTOR3+1
-		
-		lda #$35										; tell the FDS that the BIOS "did its job"
-		sta FDSBIOS_RST_Flag
-		lda #$ac
-		sta FDSBIOS_RST_Type
-		
-		jmp ($fffc)										; jump to reset FDS
-		
-; -------------------------------------------------------------------------------------
 ; $00 - vram buffer address table low, also used for pseudorandom bit
 ; $01 - vram buffer address table high
 
@@ -17736,8 +17717,29 @@ ExDivPD:
 	.include "src/music-data.asm"
 
 ; -------------------------------------------------------------------------------------
+; "NMI" routine which is entered to bypass the BIOS check
+
+Bypass:
+		lda #$00										; disable NMIs since we don't need them anymore
+		sta PPU_CTRL_REG1
+		
+		lda #<NonMaskableInterrupt						; put real NMI handler in NMI vector 3
+		sta FDS_NMI_VECTOR3
+		lda #>NonMaskableInterrupt
+		sta FDS_NMI_VECTOR3+1
+		
+		lda #$35										; tell the FDS that the BIOS "did its job"
+		sta FDSBIOS_RST_Flag
+		lda #$ac
+		sta FDSBIOS_RST_Type
+		
+		jmp ($fffc)										; jump to reset FDS
+
+; -------------------------------------------------------------------------------------
 ; INTERRUPT VECTORS
-.pad FDS_NMI_VECTOR3
+.pad FDS_NMI_VECTOR1
+	.dw NonMaskableInterrupt
+	.dw NonMaskableInterrupt
 	.dw Bypass
 	.dw Start
 	.dw Start											; IRQ vector is never used, but point here just in case

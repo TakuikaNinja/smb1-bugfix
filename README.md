@@ -35,6 +35,8 @@ special thanks
 - Ribiveer - for originally doing some of the QoL improvements which got me interested in this project
 - NaotoNTP - for doing a massive formatting overhaul + moving the game logic out of NMI to improve lag frame handling
 - ShaneM, SMB2J-2Q, and other SMB1 hackers - for researching & providing some of the fixes
+- NESdev community - for all the documentation, guidance and discussions regarding the NES/FC
+- sour - for developing [Mesen](https://mesen.ca), the primary emulator used for testing/debugging
 
 wait, is that Rare rumour even true?
 ========================================

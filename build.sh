@@ -12,14 +12,13 @@ compareHash() {
 }
 
 build() {
-	./asm6f smb1.asm -n -c -L -m bin/smb1.fds "$@" > bin/assembler.log
+	echo 'Assembling...'
+	./asm6f smb1.asm -n -c -L -m bin/smb1.fds > bin/assembler.log
 }
 
 
 
 if [ "$1" = "patch" ] ; then
-
-	echo 'Assembling...'
 	build
 
 	if [ $? -ne 0 ] ; then
@@ -36,8 +35,7 @@ if [ "$1" = "patch" ] ; then
 
 fi
 
-echo 'Assembling...'
-build $@
+build
 
 if [ $? -ne 0 ] ; then
 	echo 'Build failed!'
