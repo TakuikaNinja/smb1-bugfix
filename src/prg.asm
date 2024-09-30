@@ -17735,6 +17735,15 @@ ExDivPD:
 	.include "src/music-data.asm"
 
 ; -------------------------------------------------------------------------------------
+; Nintendo header (for FamicomBox compatibility): https://www.nesdev.org/wiki/Nintendo_header
+; Since the PRG/CHR checksums don't match with those found in the FamicomBox's menu cart database,
+; a valid Nintendo header must be included. For simplicity, this is created during the build process. 
+.pad $ffe0
+.if $ > $ffe0
+	.error "No space left for Nintendo header + interrupt vectors"
+.endif
+
+; -------------------------------------------------------------------------------------
 ; INTERRUPT VECTORS
 .pad $fffa
 	.dw NonMaskableInterrupt

@@ -3,7 +3,7 @@
 # sha256sum of original nointro ROM w/ NES2.0 header
 ORIG="0b3d9e1f01ed1668205bab34d6c82b0e281456e137352e4f36a9b2cfa3b66dea"
 
-# place original nointro ROM in bin folder for xdelta patch generation
+# place original nointro ROM in bin folder for BPS patch generation
 ORIG_PATH="bin/Super Mario Bros. (World).nes"
 
 
@@ -12,14 +12,15 @@ compareHash() {
 }
 
 build() {
-	./asm6f smb1.asm -n -c -L -m bin/smb1.nes "$@" > bin/assembler.log
+	echo 'Assembling...'
+	./asm6f smb1.asm -n -c -L -m bin/smb1.nes > bin/assembler.log || return 1
+	echo 'Generating Nintendo header...'
+	./sssfix.py bin/smb1.nes -t "SUPER MARIO" -l 1
 }
 
 
 
 if [ "$1" = "patch" ] ; then
-
-	echo 'Assembling...'
 	build
 
 	if [ $? -ne 0 ] ; then
@@ -36,8 +37,7 @@ if [ "$1" = "patch" ] ; then
 
 fi
 
-echo 'Assembling...'
-build $@
+build
 
 if [ $? -ne 0 ] ; then
 	echo 'Build failed!'

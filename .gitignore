@@ -12,3 +12,4 @@ flips-linux
 *.exe
 *.xdelta
 *.bps
+sssfix.py

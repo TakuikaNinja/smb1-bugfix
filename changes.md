@@ -6,6 +6,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Updated the ROM hash in build.sh with that of the nointro dump.
 + [x] Replaced CHR-ROM dump with a patch file for the graphical changes.
 + [x] Replaced the build script's "test" option with "patch", which produces a BPS patch. This requires the nointro dump and `flips`.
++ [x] Use pinobach's `sssfix` script to generate the Nintendo header. (The script is required but not hosted here for now)
 
 ## Music Changes
 - [x] There is now music on the title screen: an alternate version of the underwater theme.
@@ -112,6 +113,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Moved the main game loop out of NMI and made the NMI handler more robust. (no more glitched scanlines, HUD flickering, or music slowdown)
 + [x] The reset handler has been tweaked to better resemble the sample implementation on NESdev Wiki.
 + [x] Optimized, tweaked, and trimmed code wherever possible. (ongoing effort)
++ [x] Added a (hopefully) valid Nintendo header to ensure FamicomBox compability.
 
 ## Modernised Quality of Life Mechanics
 + [x] Mario's physics have been tweaked to feel less stiff.
