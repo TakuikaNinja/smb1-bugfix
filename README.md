@@ -24,6 +24,10 @@ where's the CHR file?
 It has been purged from this repo to minimize copyright issues. An IPS patch file is provided in its place to apply the graphical changes. 
 Finding the CHR file and patching it is up to the user. 
 
+where to report/fix bugs?
+========================================
+Check the documented changes, [issues](https://github.com/TakuikaNinja/smb1-bugfix/issues), and [pull requests](https://github.com/TakuikaNinja/smb1-bugfix/pulls) (open, closed, and merged) first, to see if it has been addressed. Only after that should you open an issue or PR (if you can provide a good fix). 
+
 special thanks
 ========================================
 - Nintendo - for creating such a legendary yet broken game, plus their console line
