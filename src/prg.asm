@@ -885,15 +885,25 @@ EndChkBButton:
 
 ; data is used as tiles for numbers
 ; that appear when you defeat enemies
-FloateyNumTileData:
-	.db $f7, $fb										; "200"
-	.db $f8, $fb										; "400"
-	.db $fa, $fb										; "800"
-	.db $f6, $50										; "1000"
-	.db $f7, $50										; "2000"
-	.db $f8, $50										; "4000"
-	.db $fa, $50										; "8000"
-	.db $fd, $fe										; "1-UP"
+FloateyNumTileDataLo:
+	.db $fb												; "200"
+	.db $fb												; "400"
+	.db $fb												; "800"
+	.db $50												; "1000"
+	.db $50												; "2000"
+	.db $50												; "4000"
+	.db $50												; "8000"
+	.db $fe												; "1-UP"
+
+FloateyNumTileDataHi:
+	.db $f7												; "200"
+	.db $f8												; "400"
+	.db $fa												; "800"
+	.db $f6												; "1000"
+	.db $f7												; "2000"
+	.db $f8												; "4000"
+	.db $fa												; "8000"
+	.db $fd												; "1-UP"
 
 ; high nybble is digit number, low nybble is number to
 ; add to the digit of the player's score
@@ -1000,14 +1010,13 @@ SetupNumSpr:
 		sta Sprite_Attributes,y							; set palette control in attribute bytes
 		sta Sprite_Attributes+4,y						; of left and right sprites
 		
-		lda FloateyNum_Control,x
-		asl												; multiply our floatey number control by 2
-		tax												; and use as offset for look-up table
+		lda FloateyNum_Control,x						; use floatey number control
+		tax												; as offset for look-up table
 		
-		lda FloateyNumTileData-2,x
+		lda FloateyNumTileDataHi-1,x
 		sta Sprite_Tilenumber,y							; display first half of number of points
 		
-		lda FloateyNumTileData-1,x
+		lda FloateyNumTileDataLo-1,x
 		sta Sprite_Tilenumber+4,y						; display the second half
 		
 		ldx ObjectOffset								; get enemy object offset and leave
@@ -4287,8 +4296,8 @@ RenderSidewaysPipe:
 		
 		ldx $05											; get vertical length plus one, use as buffer offset
 		inx
+		sec												; set carry flag to be used by IntroPipe
 		lda SidePipeShaftData,y							; check for value $00 based on horizontal offset
-		cmp #$00
 		beq DrawSidePart								; if found, do not draw the vertical pipe shaft
 		
 		ldx #$00
@@ -4897,14 +4906,13 @@ GetAreaObjYPosition:
 
 BlockBufferAddr:
 	.db <Block_Buffer_1, <Block_Buffer_2
-	.db >Block_Buffer_1, >Block_Buffer_2				; high byte is the same
 
 GetBlockBufferAddr:
 		pha												; take value of A, save
 		
 		LSR4											; move high nybble to low
-		tay												; use nybble as pointer to high byte
-		lda BlockBufferAddr+2,y							; of indirect here
+		tay												; use nybble as pointer to low byte
+		lda #>Block_Buffer_1							; (high byte is the same)
 		sta $07
 		
 		pla
@@ -15585,9 +15593,13 @@ SetPlatformTilenum:
 
 		dex
 		ldy Enemy_SprDataOffset,x						; get OAM data offset
-		cmp #$ff										; check if all offscreen bits are set
-		beq MoveSixSpritesOffscreen						; if so, branch to move all sprites offscreen
+		lda Enemy_OffscreenBits							; get offscreen bits
+		bpl PlatformOnscreen							; if d7 clear, branch to check each sprite tile
 		
+		jsr MoveSixSpritesOffscreen						; otherwise call the subroutine to clear all of them
+		bne ExitPlatformTileNum							; [unconditional branch]
+
+PlatformOnscreen:
 		ldx #$06										; prepare X for loops
 
 SChkLoop:
@@ -15602,6 +15614,7 @@ NotOffscreen:
 		dex												; decrement X
 		bne SChkLoop									; branch to loop if > 0
 
+ExitPlatformTileNum:
 		ldx ObjectOffset								; otherwise get enemy object offset and leave
 		rts
 
@@ -17001,8 +17014,7 @@ CntPl:
 		ldy SwimmingFlag								; if swimming flag set, branch to
 		beq FindPlayerAction							; different part, do not return
 
-		lda Player_State
-		cmp #$00										; if player status normal,
+		lda Player_State								; if player status normal,
 		beq FindPlayerAction							; branch and do not return
 
 		jsr FindPlayerAction							; otherwise jump and return
@@ -17452,28 +17464,26 @@ ExPlyrAt:
 RelativePlayerPosition:
 		ldx #$00										; set offsets for relative cooordinates
 		ldy #$00										; routine to correspond to player object
-		beq RelWOfs										; get the coordinates [unconditional branch]
+		beq GetObjRelativePosition						; get the coordinates [unconditional branch]
 
 RelativeBubblePosition:
 		ldy #$01										; set for air bubble offsets
 		jsr GetProperObjOffset							; modify X to get proper air bubble offset
 		ldy #$03
-		bne RelWOfs										; get the coordinates [unconditional branch]
+		bne GetObjRelativePosition						; get the coordinates [unconditional branch]
 
 RelativeFireballPosition:
 		ldy #$00										; set for fireball offsets
 		jsr GetProperObjOffset							; modify X to get proper fireball offset
 		ldy #$02
-
-RelWOfs:
-		jmp GetObjRelativePosition						; get the coordinates
+		bne GetObjRelativePosition						; get the coordinates [unconditional]
 		
 RelativeMiscPosition:
 		ldy #$02										; set for misc object offsets
 		jsr GetProperObjOffset							; modify X to get proper misc object offset
 
 		ldy #$06
-		bne RelWOfs										; get the coordinates [unconditional branch]
+		bne GetObjRelativePosition						; get the coordinates [unconditional branch]
 
 RelativeEnemyPosition:
 		lda #$01										; get coordinates of enemy object
@@ -17564,7 +17574,10 @@ GetOffScreenBitsSet:
 		tya												; save offscreen bits offset to stack for now
 		pha
 
-		jsr RunOffscrBitsSubs
+		jsr GetXOffscreenBits							; do subroutine here
+		LSR4											; move high nybble to low
+		sta $00											; store here
+		jsr GetYOffscreenBits							; do subroutine here
 		ASL4											; move low nybble to high nybble
 		ora $00											; mask together with previously saved low nybble
 		sta $00											; store both here
@@ -17577,11 +17590,6 @@ GetOffScreenBitsSet:
 		ldx ObjectOffset
 		rts
 
-RunOffscrBitsSubs:
-		jsr GetXOffscreenBits							; do subroutine here
-		LSR4											; move high nybble to low
-		sta $00											; store here
-		jmp GetYOffscreenBits
 
 ; --------------------------------
 ; (these apply to these three subsections)
