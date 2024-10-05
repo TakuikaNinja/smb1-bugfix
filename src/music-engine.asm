@@ -25,8 +25,9 @@ SoundEngine:
 		lda PauseModeFlag								; is sound already in pause mode?
 		bne InPause
 		
-		lda PauseSoundQueue								; if not, check pause sfx queue
-		beq RunSoundSubroutines							; if queue is empty, skip pause mode routine
+		ldx PauseSoundQueue								; if not, check pause sfx queue
+		dex
+		bne RunSoundSubroutines							; if queue is empty, skip pause mode routine
 
 ; ==================================================================================================================================
 ; ----------------------------------------------------------------------------------------------------------------------------------
@@ -88,8 +89,8 @@ DecPauC:
 		sta SND_MASTERCTRL_REG							; not currently playing the pause sfx
 		
 		lda PauseSoundBuffer							; if no longer playing pause sfx, check to see
-		cmp #$02										; if we need to be playing sound again
-		bne SkipPIn
+		lsr												; if we need to be playing sound again
+		beq SkipPIn
 		
 		lda #$00										; clear pause mode to allow game sounds again
 		sta PauseModeFlag
