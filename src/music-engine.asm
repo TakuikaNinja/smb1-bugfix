@@ -17,7 +17,7 @@
 
 SoundEngine:
 		lda #$ff
-		sta JOYPAD_PORT2								; disable irqs and set frame counter mode???
+		sta JOYPAD_PORT2								; manually tick APU frame counter to maintain sync
 		
 		lda #$0f
 		sta SND_MASTERCTRL_REG							; enable first four channels
@@ -26,8 +26,7 @@ SoundEngine:
 		bne InPause
 		
 		lda PauseSoundQueue								; if not, check pause sfx queue
-		cmp #$01
-		bne RunSoundSubroutines							; if queue is empty, skip pause mode routine
+		beq RunSoundSubroutines							; if queue is empty, skip pause mode routine
 
 ; ==================================================================================================================================
 ; ----------------------------------------------------------------------------------------------------------------------------------
@@ -127,7 +126,7 @@ SkipSoundSubroutines:
 		sta NoiseSoundQueue
 		sta PauseSoundQueue
 		
-		ldy DAC_Counter									; load some sort of counter
+		ldy DAC_Counter									; load DAC counter
 		lda AreaMusicBuffer
 		and #%00000011									; check for specific music
 		beq NoIncDAC
@@ -203,7 +202,7 @@ PlayFlagpoleSlide:
 
 PlaySmallJump:
 		lda #$26										; branch here for small mario jumping sound
-		bne JumpRegContents
+	.db $2c												; [skip 2 bytes]
 
 PlayBigJump:
 		lda #$18										; branch here for big mario jumping sound
@@ -360,7 +359,7 @@ BranchToDecLength1:
 GoPlayPipeDownInj:
         bcs PlayPipeDownInj
 
-GoContinuePipeDownInj
+GoContinuePipeDownInj:
         bcs ContinuePipeDownInj
 
 ; -------------------------------------------------------------------------------------
@@ -403,7 +402,7 @@ DecrementSfx1Length:
 
 StopSquare1Sfx:
 		ldx #$00										; if end of sfx reached, clear buffer
-		stx $f1											; and stop making the sfx
+		stx Square1SoundBuffer							; and stop making the sfx
 		stx EnemyDefeatPitch							; clear defeat pitch as well
 
 		ldx #$0e
@@ -669,12 +668,11 @@ StopGrowItems:
 ; ----------------------------------------------------------------------------------------------------------------------------------
 
 PlaySkidSfx:
-		lda #$06										; load length of skid sound
+		lda #$06
 		sta Noise_SfxLenCounter
 
 ContinueSkidSfx:
-		lda Noise_SfxLenCounter
-		tay 											; divide by 2 and check for bit set to use offset
+		ldy Noise_SfxLenCounter							; use length counter as offset
 		lda SkidSfxFreqData-1,y
 		sta SND_TRIANGLE_REG+2							; write reg contents to triangle channel
 
