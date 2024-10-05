@@ -51,6 +51,10 @@ WBootCheck:
 		cmp #World8+1									; check against max world value + 1 (world 9)
 		bcs ColdBoot									; cold boot if greater than or equal
 
+		lda WorldSelectEnableFlag						; also check if the world select flag is <= 1 
+		cmp #$02
+		bcs ColdBoot
+		
 		ldy #WarmBootOffset								; if passed, load warm boot pointer
 
 ColdBoot:
@@ -80,130 +84,18 @@ VBlank2:
 GameLoop:
 		lda GamePauseStatus								; if in pause mode, do not perform operation mode stuff
 		lsr
-		bcs SkipMainOper
+		bcs PauseRoutine
 
 		jsr OperModeExecutionTree						; otherwise do one of many, many possible subroutines
-		jsr UpdateTopScore
 
-SkipMainOper:
-		inc NMISyncFlag
+UpdateTopScores:
+		ldx #$05										; start with mario's score
+		jsr TopScoreCheck
+		
+		ldx #$0b										; now do luigi's score
+		jsr TopScoreCheck
 
-NMIWait:
-		lda NMISyncFlag
-		bne NMIWait
-		beq GameLoop									; endless loop, need I say more?
-
-; -------------------------------------------------------------------------------------
-; $00 - vram buffer address table low, also used for pseudorandom bit
-; $01 - vram buffer address table high
-
-VRAM_AddrTable_Low:
-	.db <VRAM_Buffer1, <WaterPaletteData, <GroundPaletteData
-	.db <UndergroundPaletteData, <CastlePaletteData, <VRAM_Buffer1_Offset
-	.db <VRAM_Buffer2, <VRAM_Buffer2, <BowserPaletteData
-	.db <DaySnowPaletteData, <NightSnowPaletteData, <MushroomPaletteData
-
-VRAM_AddrTable_High:
-	.db >VRAM_Buffer1, >WaterPaletteData, >GroundPaletteData
-	.db >UndergroundPaletteData, >CastlePaletteData, >VRAM_Buffer1_Offset
-	.db >VRAM_Buffer2, >VRAM_Buffer2, >BowserPaletteData
-	.db >DaySnowPaletteData, >NightSnowPaletteData, >MushroomPaletteData
-
-VRAM_Buffer_Offset:
-	.db <VRAM_Buffer1_Offset, <VRAM_Buffer2_Offset
-
-NonMaskableInterrupt:
-		pha												; backup A
-		lda NMIInProgressFlag							; is the NMI handler already running?
-		beq ProceedWithNMI								; if not, branch to proceed with NMI handler
-		
-		pla												; otherwise restore A
-		rti												; and leave
-
-ProceedWithNMI:
-		inc NMIInProgressFlag							; set flag for NMI in progress
-		
-		txa
-		pha												; backup X
-		
-		tya
-		pha												; backup Y
-		
-		lda $00
-		pha
-		
-		lda $01
-		pha												; backup zpg vars used by nmi
-
-		lda Mirror_PPU_CTRL_REG1						; get mirror reg
-		and #%11111110									; alter name table address to be $2800
-		sta PPU_CTRL_REG1								; (essentially $2000) but save other bits
-		
-		lda NMISyncFlag									; is the NMI sync flag set?
-		bne UpdatePPU									; if so, branch to update PPU
-
-		jsr InitScroll									; otherwise just init the scroll
-		sec												; set carry
-		jmp LagFrameSpr0								; and jump to sprite #0 hit (lag frame)
-
-UpdatePPU:
-		dec NMISyncFlag									; clear NMI sync flag
-		
-		lda Mirror_PPU_CTRL_REG2						; disable OAM and background display by default
-		and #%11100110
-		
-		ldy DisableScreenFlag							; get screen disable flag
-		bne ScreenOff									; if set, used bits as-is
-		
-		lda Mirror_PPU_CTRL_REG2						; otherwise reenable bits and save them
-		ora #%00011110
-
-ScreenOff:
-		sta Mirror_PPU_CTRL_REG2						; save bits for later but not in register at the moment
-		and #%11100111									; disable screen for now
-		sta PPU_CTRL_REG2
-		
-		bit PPU_STATUS									; reset flip-flop and reset scroll registers to zero
-		lda #$00
-		jsr InitScroll
-		sta PPU_SPR_ADDR								; reset spr-ram address register
-		
-		lda #$02										; perform spr-ram DMA access on $0200-$02ff
-		sta SPR_DMA
-		
-		ldx VRAM_Buffer_AddrCtrl						; load control for pointer to buffer contents
-		lda VRAM_AddrTable_Low,x						; set indirect at $00 to pointer
-		sta $00
-		lda VRAM_AddrTable_High,x
-		sta $01
-		
-		jsr UpdateScreen								; update screen with buffer contents
-		
-		ldy #$00
-		ldx VRAM_Buffer_AddrCtrl						; check for usage of $0341
-		cpx #$06
-		bne InitBuffer
-		
-		iny												; get offset based on usage
-
-InitBuffer:
-		ldx VRAM_Buffer_Offset,y
-		
-		lda #$00										; clear buffer header at last location
-		sta VRAM_Buffer1_Offset,x
-		sta VRAM_Buffer1,x
-		sta VRAM_Buffer_AddrCtrl						; reinit address control to $0301
-		
-		lda Mirror_PPU_CTRL_REG2						; copy mirror of $2001 to register
-		sta PPU_CTRL_REG2
-		
-		jsr ReadJoypads									; read joypads
-		jsr PauseRoutine								; handle pause
-		
-		lda GamePauseStatus								; check for pause status
-		lsr
-		bcs PauseSkip
-		
+HandleTimers:
 		lda TimerControl								; if master timer control not set, decrement
 		beq DecTimers									; all frame and interval timers
 		
@@ -235,95 +127,24 @@ SkipExpTimer:
 NoDecTimers:
 		inc FrameCounter								; increment frame counter
 
-PauseSkip:
-		ldx #$00
-		ldy #$07
-		lda PseudoRandomBitReg							; get first memory location of LSFR bytes
-		eor PseudoRandomBitReg+1						; xor with second memory location
-		lsr												; shift d1 into carry
-		lsr
-
-RotPRandomBit:
-		ror PseudoRandomBitReg,x						; rotate carry into d7, and rotate last bit into carry
-		inx												; increment to next byte
-		dey												; decrement for loop
-		bne RotPRandomBit
-		clc												; clear carry before proceeding
-
-LagFrameSpr0:
-		ldy Sprite0HitDetectFlag						; check for flag here
-		beq HUDSkip
-
-Sprite0Clr:
-		bit PPU_STATUS									; wait for sprite #0 flag to clear, which will
-		bvs Sprite0Clr									; not happen until vblank has ended
-		bcs Sprite0Hit									; if carry set due to lag frame, skip to sprite #0 hit
-
-		lda GamePauseStatus								; if in pause mode,
-		lsr												; (put d0 in carry)
-		bcs Sprite0Hit									; do not bother with sprites at all
-		
-		jsr MoveSpritesOffscreen
-		jsr SpriteShuffler
-
-Sprite0Hit:
-		bit PPU_STATUS									; do sprite #0 hit detection
-		bvc Sprite0Hit
-		
-		ldy #$2a										; small delay, to wait for about 2 scanlines
-
-HBlankDelay:
-		dey
-		bne HBlankDelay									; decrement until it hits 0
-
-HUDSkip:
-		lda HorizontalScroll							; get scroll value now
-		ldx Mirror_PPU_CTRL_REG1						; same with nametable
-		bit PPU_STATUS									; reset flip-flop
-		sta PPU_SCROLL_REG								; set horizontal scroll
-		sty PPU_SCROLL_REG								; Y is already 0
-		stx PPU_CTRL_REG1								; set nametable
-		
-		jsr SoundEngine									; play sound
-
-		pla
-		sta $01
-		
-		pla
-		sta $00											; restore zpg vars
-		
-		pla										 
-		tay												; restore Y
-		
-		pla										 
-		tax												; restore X
-		
-		dec NMIInProgressFlag							; clear flag for NMI in progress
-		
-		pla												; restore A
-		rti												; we are done until the next frame!
-; -------------------------------------------------------------------------------------
-
 PauseRoutine:
 		lda OperMode									; are we in victory mode?
 		cmp #VictoryModeValue							; if so, go ahead
 		beq ChkPauseTimer
 		
 		cmp #GameModeValue								; are we in game mode?
-		bne ExitPause									; if not, leave
+		bne TickPRNG									; if not, leave
 		
 		lda OperMode_Task								; if we are in game mode, are we running game engine?
 		cmp #$03
-		bne ExitPause									; if not, leave
+		bne TickPRNG									; if not, leave
 
 ChkPauseTimer:
 		lda GamePauseTimer								; check if pause timer is still counting down
 		beq ChkStart
 		
 		dec GamePauseTimer								; if so, decrement and leave
-
-ExitPause:
-		rts
+		jmp TickPRNG
 
 ChkStart:
 		lda SavedJoypad1Bits							; check to see if start is pressed
@@ -349,7 +170,250 @@ ClrPauseTimer:
 
 SetPause:
 		sta GamePauseStatus
+
+TickPRNG:
+		ldx #$00
+		ldy #$07
+		lda PseudoRandomBitReg							; get first memory location of LSFR bytes
+		eor PseudoRandomBitReg+1						; xor with second memory location
+		lsr												; shift d1 into carry
+		lsr
+
+RotPRandomBit:
+		ror PseudoRandomBitReg,x						; rotate carry into d7, and rotate last bit into carry
+		inx												; increment to next byte
+		dey												; decrement for loop
+		bne RotPRandomBit
+		
+		inc NMISyncFlag
+
+NMIWait:
+		lda NMISyncFlag
+		bne NMIWait
+		jmp GameLoop									; endless loop, need I say more?
+
+; -------------------------------------------------------------------------------------
+
+TopScoreCheck:
+		ldy #$05										; start with the lowest digit
+		sec
+
+GetScoreDiff:
+		lda PlayerScoreDisplay,x						; subtract each player digit from each high score digit
+		sbc TopScoreDisplay,y							; from lowest to highest, if any top score digit exceeds
+		dex												; any player digit, borrow will be set until a subsequent
+		dey												; subtraction clears it (player digit is higher than top)
+		bpl GetScoreDiff
+		bcc NoTopSc										; check to see if borrow is still set, if so, no new high score
+
+		inx												; increment X and Y once to the start of the score
+		iny
+
+CopyScore:
+		lda PlayerScoreDisplay,x						; store player's score digits into high score memory area
+		sta TopScoreDisplay,y
+		inx
+		iny
+		cpy #$06										; do this until we have stored them all
+		bcc CopyScore
+
+NoTopSc:
 		rts
+
+; -------------------------------------------------------------------------------------
+; $00 - vram buffer address table low, also used for pseudorandom bit
+; $01 - vram buffer address table high
+
+VRAM_AddrTable_Low:
+	.db <VRAM_Buffer1, <WaterPaletteData, <GroundPaletteData
+	.db <UndergroundPaletteData, <CastlePaletteData, <VRAM_Buffer1_Offset
+	.db <VRAM_Buffer2, <VRAM_Buffer2, <BowserPaletteData
+	.db <DaySnowPaletteData, <NightSnowPaletteData, <MushroomPaletteData
+
+VRAM_AddrTable_High:
+	.db >VRAM_Buffer1, >WaterPaletteData, >GroundPaletteData
+	.db >UndergroundPaletteData, >CastlePaletteData, >VRAM_Buffer1_Offset
+	.db >VRAM_Buffer2, >VRAM_Buffer2, >BowserPaletteData
+	.db >DaySnowPaletteData, >NightSnowPaletteData, >MushroomPaletteData
+
+VRAM_Buffer_Offset:
+	.db <VRAM_Buffer1_Offset, <VRAM_Buffer2_Offset
+
+; -------------------------------------------------------------------------------------
+; if NMI was re-entered, then sprite #0 detection likely failed for one of two reasons:
+; A) sprite #0's OAM data was corrupted
+; B) the coin graphic in the HUD/status bar was corrupted to a blank tile
+; attempt to fix these things and return from the NMI
+
+Sprite0Miss:
+		pha												; backup A/Y
+		tya
+		pha
+		
+		ldy #$03										; fix sprite #0
+-
+		lda Sprite0Data,y
+		sta Sprite_Data,y
+		dey
+		bpl -
+		
+		iny												; Y = 0
+		sty PPU_SPR_ADDR
+		lda #$02										; perform spr-ram DMA access on $0200-$02ff
+		sta SPR_DMA
+		
+		bit PPU_STATUS
+		lda #$20										; fix coin tile in HUD
+		sta PPU_ADDRESS
+		lda #$6b
+		sta PPU_ADDRESS
+		lda #$2e
+		sta PPU_DATA
+		
+		tya												; reset scroll
+		jsr InitScroll
+		
+		pla												; restore Y/A & exit
+		tay
+		pla
+		rti
+
+; -------------------------------------------------------------------------------------
+
+NonMaskableInterrupt:
+		bit NMIInProgressFlag							; is the NMI handler already running?
+		bmi Sprite0Miss									; if so, branch
+
+		sec
+		ror NMIInProgressFlag							; otherwise set flag for NMI in progress
+		
+		pha												; backup A
+		
+		txa
+		pha												; backup X
+		
+		tya
+		pha												; backup Y
+		
+		lda $00
+		pha
+		
+		lda $01
+		pha												; backup zpg vars used by nmi
+
+		lda Mirror_PPU_CTRL_REG1						; get mirror reg
+		and #%11111110									; alter name table address to be $2800
+		sta PPU_CTRL_REG1								; (essentially $2000) but save other bits
+		
+		lda NMISyncFlag									; is the NMI sync flag set?
+		lsr												; lag frames will clear the carry
+		bcc LagFrameSpr0								; and skip to the sprite #0 hit
+
+UpdatePPU:
+		dec NMISyncFlag									; clear NMI sync flag
+		
+		lda Mirror_PPU_CTRL_REG2						; disable OAM and background display by default
+		and #%11100110
+		
+		ldy DisableScreenFlag							; get screen disable flag
+		bne ScreenOff									; if set, used bits as-is
+		
+		lda Mirror_PPU_CTRL_REG2						; otherwise reenable bits and save them
+		ora #%00011110
+
+ScreenOff:
+		sta Mirror_PPU_CTRL_REG2						; save bits for later but not in register at the moment
+		and #%11100111									; disable screen for now
+		sta PPU_CTRL_REG2
+		
+		lda #$00
+		sta PPU_SPR_ADDR								; reset spr-ram address register
+		lda #$02										; perform spr-ram DMA access on $0200-$02ff
+		sta SPR_DMA
+		
+		ldx VRAM_Buffer_AddrCtrl						; load control for pointer to buffer contents
+		lda VRAM_AddrTable_Low,x						; set indirect at $00 to pointer
+		sta $00
+		lda VRAM_AddrTable_High,x
+		sta $01
+		
+		jsr UpdateScreen								; update screen with buffer contents
+		
+		ldy #$00
+		ldx VRAM_Buffer_AddrCtrl						; check for usage of $0341
+		cpx #$06
+		bne InitBuffer
+		
+		iny												; get offset based on usage
+
+InitBuffer:
+		ldx VRAM_Buffer_Offset,y
+		
+		lda #$00										; clear buffer header at last location
+		sta VRAM_Buffer1_Offset,x
+		sta VRAM_Buffer1,x
+		sta VRAM_Buffer_AddrCtrl						; reinit address control to $0301
+		
+		lda Mirror_PPU_CTRL_REG2						; copy mirror of $2001 to register
+		sta PPU_CTRL_REG2
+		
+		jsr ReadJoypads									; read joypads
+		sec												; set carry before proceeding
+
+LagFrameSpr0:
+		bit PPU_STATUS
+		lda #$00										; reset scroll
+		jsr InitScroll
+		ldy Sprite0HitDetectFlag						; check for flag here
+		beq HUDSkip
+
+Sprite0Clr:
+		bit PPU_STATUS									; wait for sprite #0 flag to clear, which will
+		bvs Sprite0Clr									; not happen until vblank has ended
+		bcc Sprite0Hit									; if carry clear (lag frame), skip to sprite #0 hit
+
+		lda GamePauseStatus								; if in pause mode,
+		lsr												; (put d0 in carry)
+		bcs Sprite0Hit									; do not bother with sprites at all
+		
+		jsr MoveSpritesOffscreen
+		jsr SpriteShuffler
+
+Sprite0Hit:
+		bit PPU_STATUS									; do sprite #0 hit detection
+		bvc Sprite0Hit
+		
+		ldy #$2a										; small delay, to wait for about 2 scanlines
+
+HBlankDelay:
+		dey
+		bne HBlankDelay									; decrement until it hits 0
+
+HUDSkip:
+		lda HorizontalScroll							; get scroll value now
+		ldx Mirror_PPU_CTRL_REG1						; same with nametable
+		sta PPU_SCROLL_REG								; set horizontal scroll
+		sty PPU_SCROLL_REG								; Y is already 0
+		stx PPU_CTRL_REG1								; set nametable
+		
+		jsr SoundEngine									; play sound
+
+		pla
+		sta $01
+		
+		pla
+		sta $00											; restore zpg vars
+		
+		pla										 
+		tay												; restore Y
+		
+		pla										 
+		tax												; restore X
+		
+		pla												; restore A
+		
+		asl NMIInProgressFlag							; clear flag for NMI in progress
+		rti												; we are done until the next frame!
 
 ; -------------------------------------------------------------------------------------
 ; $00 - used for preset value
@@ -701,8 +765,7 @@ SetupVictoryMode:
 
 		lda #EndOfCastleMusic
 		sta EventMusicQueue								; play win castle music
-		lda #$00
-		sta ScrollLock
+		lsr ScrollLock									; clear scroll lock
 		jmp IncModeTask_A								; jump to set next major task in victory mode
 
 ; -------------------------------------------------------------------------------------
@@ -1267,13 +1330,7 @@ DisplayIntermediate:
 		beq GameOverInter								; if so, proceed to display game over screen
 		
 		lda AltEntranceControl							; otherwise check for mode of alternate entry
-		bne NoInter										; and branch if found
-
-;		ldy AreaType									; check if we are on castle level
-;		cpy #$03										; and if so, branch (possibly residual)
-;		beq PlayerInter
-
-		lda DisableIntermediate							; if this flag is set, skip intermediate lives display
+		ora DisableIntermediate							; and the disable flag
 		bne NoInter										; and jump to specific task, otherwise
 
 PlayerInter:
@@ -2682,40 +2739,6 @@ CarryOne:
 		sbc #10											; proper BCD number, then increment the digit
 		inc DigitModifier-1,x							; preceding current digit to "carry the one" properly
 		jmp StoreNewD									; go back to just after we branched here
-
-; -------------------------------------------------------------------------------------
-
-UpdateTopScore:
-		ldx #$05										; start with mario's score
-		jsr TopScoreCheck
-		
-		ldx #$0b										; now do luigi's score
-
-TopScoreCheck:
-		ldy #$05										; start with the lowest digit
-		sec
-
-GetScoreDiff:
-		lda PlayerScoreDisplay,x						; subtract each player digit from each high score digit
-		sbc TopScoreDisplay,y							; from lowest to highest, if any top score digit exceeds
-		dex												; any player digit, borrow will be set until a subsequent
-		dey												; subtraction clears it (player digit is higher than top)
-		bpl GetScoreDiff
-		bcc NoTopSc										; check to see if borrow is still set, if so, no new high score
-
-		inx												; increment X and Y once to the start of the score
-		iny
-
-CopyScore:
-		lda PlayerScoreDisplay,x						; store player's score digits into high score memory area
-		sta TopScoreDisplay,y
-		inx
-		iny
-		cpy #$06										; do this until we have stored them all
-		bcc CopyScore
-
-NoTopSc:
-		rts
 
 ; -------------------------------------------------------------------------------------
 
@@ -12962,7 +12985,7 @@ PlayerEnemyCollision:
 		bcs NoPUp										; if set, branch to leave
 
 		jsr CheckPlayerVertical							; if player object is completely offscreen or
-		bcs NoPECol										; if down past 224th pixel row, branch to leave
+		bne NoPECol										; if down past 224th pixel row, branch to leave
 
 		lda EnemyOffscrBitsMasked,x						; if current enemy is offscreen by any amount,
 		bne NoPECol										; go ahead and branch to leave
@@ -13545,7 +13568,7 @@ ChkForPlayerC_LargeP:
 		bne ExLPC										; branch to leave if so (collision bugfix)
 		
 		jsr CheckPlayerVertical							; figure out if player is below a certain point
-		bcs ExLPC										; or offscreen, branch to leave if true
+		bne ExLPC										; or offscreen, branch to leave if true
 
 		txa
 		jsr GetEnemyBoundBoxOfsArg						; get bounding box offset in Y
@@ -13578,7 +13601,7 @@ SmallPlatformCollision:
 		sta PlatformCollisionFlag,x						; otherwise initialize collision flag
 
 		jsr CheckPlayerVertical							; do a sub to see if player is below a certain point
-		bcs ExLPC										; or entirely offscreen, and branch to leave if true
+		bne ExLPC										; or entirely offscreen, and branch to leave if true
 
 		lda #$02
 		sta $00											; load counter here for 2 bounding boxes
@@ -13699,14 +13722,8 @@ ExPlPos:
 ; -------------------------------------------------------------------------------------
 
 CheckPlayerVertical:
-		lda Player_OffscreenBits						; if player object is not offscreen
-		and #$f0										; then branch with clear carry flag
-		clc
-		beq ExCPV										; otherwise fall through and set carry flag
-
-		sec												; to indicate that player is offscreen
-
-ExCPV:
+		lda Player_OffscreenBits						; if player object is offscreen, 
+		and #$f0										; set the zero flag
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -15612,27 +15629,23 @@ SetPlatformTilenum:
 		dex
 		ldy Enemy_SprDataOffset,x						; get OAM data offset
 		lda Enemy_OffscreenBits							; get offscreen bits
-		bpl PlatformOnscreen							; if d7 clear, branch to check each sprite tile
-		
-		jsr MoveSixSpritesOffscreen						; otherwise call the subroutine to clear all of them
-		bne ExitPlatformTileNum							; [unconditional branch]
+		bmi MoveSixSpritesOffscreen						; if d7 set, call the subroutine to clear all of them
 
 PlatformOnscreen:
+		lda #$f8										; otherwise prepare A for placing tiles offscreen
 		ldx #$06										; prepare X for loops
 
 SChkLoop:
 		asl	ztemp										; rotate d7 into carry
 		bcc NotOffscreen
 
-		lda #$f8										; if d7 was set, move sprite offscreen
-		sta Sprite_Y_Position,y
+		sta Sprite_Y_Position,y							; if d7 was set, move sprite offscreen
 
 NotOffscreen:
 		INY4											; increment Y 4 times
 		dex												; decrement X
 		bne SChkLoop									; branch to loop if > 0
 
-ExitPlatformTileNum:
 		ldx ObjectOffset								; otherwise get enemy object offset and leave
 		rts
 
@@ -17328,8 +17341,7 @@ ActionSwimming:
 		bne FourFrameExtent								; if any one of these set, branch ahead
 
 		lda A_B_Buttons
-		asl												; check for A button pressed
-		bcs FourFrameExtent								; branch to same place if A button pressed
+		bmi FourFrameExtent								; branch to same place if A button pressed
 
 GetCurrentAnimOffset:
 		lda PlayerAnimCtrl								; get animation frame control

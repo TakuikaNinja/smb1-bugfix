@@ -38,7 +38,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Scroll lock objects now explicitly set the scroll lock instead of toggling it.
 - [x] Lakitus now throw their spinies as originally intended.
 + [x] The initial number of lives is now set to 5 like in later entries, to compensate for the difficulty change.
-+ [x] Warm start detection & continue functions now check ContinueWorld for a valid value. (no more glitch worlds)
++ [x] Warm start detection & continue functions now check ContinueWorld & WorldSelectEnableFlag for valid values. (no more glitch worlds)
 - [x] Falling while crouching now keeps your sprite crouched. Additionally, the down input now nullifies left/right inputs while crouching on the ground.
 - [x] While underwater, crouching no longer messes up the hitbox.
 - [x] Small Mario's walking animation now flows better.
@@ -106,6 +106,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.
 + [x] Status bar updates which only change the score will no longer include the coin display. (reduces risk of VRAM buffer overflow)
 + [x] Sprite 0 (used for the status bar scroll split) is better hidden, and the scroll split timing has been adjusted to account for this.
++ [x] There is now a failsafe/recovery mechanism for NMI re-entries caused by sprite 0 detection misses. (1-frame glitches at worst, hopefully)
 + [x] RenderUnderPart now does the row check at the start of the loop to prevent out-of-bounds writes.
 + [x] Tiles with the coin palette will now always be overwritten in RenderUnderPart. (instead of only coin ? blocks)
 + [x] Ported a few miscellaneous tweaks, bug fixes, and optimizations from SMB2J, SMAS, Vs.SMB, and SMBDX.
