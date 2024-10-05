@@ -2,6 +2,7 @@ This file is based on the changes originally done by Ribiveer.
 Changes marked with '+' are new additions/contributions that were not part of Ribiveer's original set of changes.
 
 ## Repository Changes
++ [x] Added a Makefile equivilant of the build script.
 + [x] Updated the iNES header to NES2.0 and matched it with the nointro dump.
 + [x] Updated the ROM hash in build.sh with that of the nointro dump.
 + [x] Replaced CHR-ROM dump with a patch file for the graphical changes.
