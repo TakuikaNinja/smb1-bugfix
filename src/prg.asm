@@ -2882,8 +2882,7 @@ ClearVRLoop:
 		
 		lda ScreenLeft_PageLoc							; get left side page location
 		lsr Mirror_PPU_CTRL_REG1						; shift LSB of ppu register #1 mirror out
-		and #$01										; mask out all but LSB of page location
-		ror												; rotate LSB of page location into carry then onto mirror
+		lsr												; shift LSB of page location into carry then onto mirror
 		rol Mirror_PPU_CTRL_REG1						; this is to set the proper PPU name table
 		
 		jsr GetAreaMusic								; load proper music into queue
@@ -5304,13 +5303,9 @@ ScrollScreen:
 		adc #$00										; add carry to page location for left
 		sta ScreenLeft_PageLoc							; side of the screen
 		
-		and #$01										; get LSB of page location
-		sta $00											; save as temp variable for PPU register 1 mirror
-		
-		lda Mirror_PPU_CTRL_REG1						; get PPU register 1 mirror
-		and #%11111110									; save all bits except d0
-		ora $00											; get saved bit here and save in PPU register 1
-		sta Mirror_PPU_CTRL_REG1						; mirror to be used to set name table later
+		lsr Mirror_PPU_CTRL_REG1						; remove bit 0 from PPU_CTRL mirror
+		lsr												; get saved bit 0 from A and shift into
+		rol Mirror_PPU_CTRL_REG1						; mirror to be used to set name table later
 		
 		jsr GetScreenPosition							; figure out where the right side is
 		jmp ChkPOffscr									; and skip this part
@@ -14040,9 +14035,13 @@ ChkPBtm:
 		bne StopPlayerMove								; otherwise branch to impede player's movement
 
 PipeDwnS:
+		ldy StarInvincibleTimer							; SM load invincibility timer
+		bne PlayPipeDwnS								; SM branch if set to play SFX (fixes SFX not playing on underground levels)
+		
 		lda Player_SprAttrib							; check player's attributes
 		bne PlyrPipe									; if already set, branch, do not play sound again
-		
+
+PlayPipeDwnS:
 		ldy #Sfx_PipeDown_Injury
 		sty Square1SoundQueue							; otherwise load pipedown/injury sound
 
