@@ -52,8 +52,8 @@ WBootCheck:
 		bcs ColdBoot									; cold boot if greater than or equal
 
 		lda WorldSelectEnableFlag						; also check if the world select flag is <= 1 
-		cmp #$02
-		bcs ColdBoot
+		lsr
+		bne ColdBoot
 		
 		ldy #WarmBootOffset								; if passed, load warm boot pointer
 
@@ -1061,8 +1061,8 @@ ChkTallEnemy:
 		bcs GetAltOffset								; branch elsewhere if enemy object => $09
 		
 		lda Enemy_State,x
-		cmp #$02										; if enemy state defeated or otherwise
-		bcs FloateyPart									; $02 or greater, branch beyond this part
+		lsr												; if enemy state defeated or otherwise
+		bne FloateyPart									; $02 or greater, branch beyond this part
 
 GetAltOffset:
 		ldx SprDataOffset_Ctrl							; load some kind of control bit
@@ -1247,8 +1247,8 @@ SetVRAMOffset:
 ; -------------------------------------------------------------------------------------
 
 GetAlternatePalette1:
-		lda AreaStyle									; check for mushroom level style
-		cmp #$01
+		ldy AreaStyle									; check for mushroom level style
+		dey
 		bne NoAltPal
 		
 		lda #$0b										; if found, load appropriate palette
@@ -4227,18 +4227,18 @@ ChkCFloor:
 		lda CurrentPageLoc
 		beq ExitCastle									; if we're at page 0, we do not need to do anything else
 		
-		lda AreaObjectLength,x							; check length
-		cmp #$01										; if length almost about to expire, put brick at floor
+		ldy AreaObjectLength,x							; check length
+		dey												; if length almost about to expire, put brick at floor
 		beq PlayerStop
 		
-		ldy $07											; check starting row for tall castle ($00)
+		lda $07											; check starting row for tall castle ($00)
 		bne NotTall
 		
-		cmp #$03										; if found, then check to see if we're at the second column
+		cpy #$02										; if found, then check to see if we're at the second column
 		beq PlayerStop
 
 NotTall:
-		cmp #$02										; if not tall castle, check to see if we're at the third column
+		dey												; if not tall castle, check to see if we're at the third column
 		bne ExitCastle									; if we aren't and the castle is tall, don't create flag yet
 		
 		jsr GetAreaObjXPosition							; otherwise, obtain and save horizontal pixel coordinate
@@ -6280,7 +6280,6 @@ ProcJumping:
 		bne InitJS
 		
 		lda Player_Y_Speed								; check player's vertical speed
-		bpl InitJS										; if player's vertical speed motionless or down, branch
 		bmi X_Physics									; if timer at zero and player still rising, do not swim
 
 InitJS:
@@ -6506,8 +6505,8 @@ ProcFireball_Bubble:
 		bne ProcFireballs								; if button pressed in previous frame, branch
 		
 		lda PlayerStatus								; check player's status
-		cmp #$02
-		bcc ProcAirBubbles								; if not fiery, branch
+		lsr
+		beq ProcAirBubbles								; if not fiery, branch
 		
 		lda FireballCounter								; load fireball counter
 		and #%00000001									; get LSB and use as offset for buffer
@@ -7447,11 +7446,11 @@ RunHSubs:
 CoinWrapChk:
 		sta ztemp										; save A in ztemp
 		lda Player_Pos_ForScroll						; SM get Player_Pos_ForScroll
-		cmp #$02										; SM check if at a certain point
-		php												; save flag for later
+		lsr												; SM check if at a certain point
+		php												; save zero flag for later
 		lda #$05										; load default value to add
 		plp												; get flag back
-		bcs NoWrap										; branch if carry set
+		bne NoWrap										; branch if zero clear
 
 		lda #$07										; SM otherwise change value to 7
 
@@ -7711,8 +7710,8 @@ SetupPowerUp:
 		sta Enemy_BoundBoxCtrl+5						; set bounding box size control for power-up object
 
 		lda PowerUpType
-		cmp #$02										; check currently loaded power-up type
-		bcs PutBehind									; if star or 1-up, branch ahead
+		lsr												; check currently loaded power-up type
+		bne PutBehind									; if star or 1-up, branch ahead
 
 		lda PlayerStatus								; otherwise check player's current status
 		cmp #$02
@@ -7744,14 +7743,14 @@ PowerUpObjHandler:
 		lda TimerControl								; check master timer control
 		bne RunPUSubs									; if set, branch to run other power-up subroutines
 
-		lda PowerUpType									; check power-up type
+		ldy PowerUpType									; check power-up type
 		beq ShroomM										; if normal mushroom, branch ahead to move it
-
-		cmp #$03
-		beq ShroomM										; if 1-up mushroom, branch ahead to move it
-
-		cmp #$02
-		bne RunPUSubs									; if not star, branch elsewhere to skip movement
+		
+		dey
+		beq RunPUSubs									; if fire flower, branch elsewhere to skip movement
+		
+		dey
+		bne ShroomM										; if 1-up mushroom, branch ahead to move it
 
 		jsr MoveJumpingEnemy							; otherwise impose gravity on star power-up and make it jump
 		jsr EnemyJump									; note that green paratroopa shares the same code here
@@ -8820,6 +8819,7 @@ StrID:
 		lda Enemy_Flag,x								; check to see if flag is set
 		bne Inc2B										; if not, leave, otherwise branch
 
+ExEPar:
 		rts
 
 CheckFrenzyBuffer:
@@ -8839,9 +8839,6 @@ InitEnemyObject:
 		lda #$00										; initialize enemy state
 		sta Enemy_State,x
 		jmp CheckpointEnemyID							; jump ahead to run jump engine and subroutines
-
-ExEPar:
-		rts												; then leave
 
 DoGroup:
 		jmp HandleGroupEnemies							; handle enemy group objects
@@ -11266,7 +11263,7 @@ Fr12S:
 
 LdLDa:
 		lda LakituDiffAdj,y								; load values
-		sta $0001,y										; store in zero page
+		sta $01,y										; store in zero page
 
 		dey
 		bpl LdLDa										; do this until all values are stored
@@ -11350,8 +11347,8 @@ ChkPSpeed:
 		bcc ChkSpinyO
 
 		lda ScrollAmount
-		cmp #$02										; if scroll speed below a certain amount, branch
-		bcc ChkSpinyO									; to same place
+		lsr												; if scroll speed below a certain amount, branch
+		beq ChkSpinyO									; to same place
 
 		iny												; otherwise increment once more
 
@@ -11370,7 +11367,7 @@ ChkEmySpd:
 		ldy #$00										; otherwise reinit offset
 
 SubDifAdj:
-		lda $0001,y										; get one of three saved values from earlier
+		lda $01,y										; get one of three saved values from earlier
 		ldy $00											; get saved horizontal difference
 
 SPixelLak:
@@ -11595,7 +11592,7 @@ CompDToO:
 		sty BowserMovementSpeed							; otherwise change bowser's movement speed
 
 HammerChk:
-		lda EnemyFrameTimer,x							; if timer set here not expired yet, skip ahead to
+		ldy EnemyFrameTimer,x							; if timer set here not expired yet, skip ahead to
 		bne MakeBJump									; some other section of code
 
 		jsr MoveEnemySlowVert							; otherwise start by moving bowser downwards
@@ -11625,7 +11622,7 @@ SkipToFB:
 		jmp ChkFireB									; jump to execute flames code
 
 MakeBJump:
-		cmp #$01										; if timer not yet about to expire,
+		dey												; if timer not yet about to expire,
 		bne ChkFireB									; skip ahead to next part
 
 		dec Enemy_Y_Position,x							; otherwise decrement vertical coordinate
@@ -12720,8 +12717,8 @@ GoombaDie:
 		bne NotGoomba									; if not found, continue with code
 
 		lda Enemy_State,x								; otherwise check for defeated state
-		cmp #$02										; if stomped or otherwise defeated,
-		bcs NoFToECol									; skip to next enemy slot
+		lsr												; if stomped or otherwise defeated,
+		bne NoFToECol									; skip to next enemy slot
 
 NotGoomba:
 		lda EnemyOffscrBitsMasked,x						; if any masked offscreen bits set,
@@ -12840,8 +12837,8 @@ ShellOrBlockDefeat:
 		bne StnE										; branch away if not
 		
 		lda Enemy_State,x
-		cmp #$02										; check for defeated state
-		bcc StnE										; branch away if not defeated
+		lsr												; check for defeated state
+		beq StnE										; branch away if not defeated
 		
 		rts												; otherwise leave (prevents double goomba kill)
 
@@ -12918,11 +12915,9 @@ HandlePowerUpCollision:
 		sta Square2SoundQueue							; play the power-up sound
 
 		lda PowerUpType									; check power-up type
-		cmp #$02
-		bcc Shroom_Flower_PUp							; if mushroom or fire flower, branch
-
-		cmp #$03
-		beq SetFor1Up									; if 1-up mushroom, branch
+		lsr
+		beq Shroom_Flower_PUp							; if mushroom or fire flower, branch
+		bcs SetFor1Up									; if 1-up mushroom, branch
 
 		lda #$23										; otherwise set star mario invincibility
 		sta StarInvincibleTimer							; timer, and load the star mario music
@@ -12932,9 +12927,9 @@ HandlePowerUpCollision:
 		rts
 
 Shroom_Flower_PUp:
-		lda PlayerStatus								; if player status = fire, branch
-		cmp #$02
-		beq NoPUp
+		lda PlayerStatus								; if player status >= fire, branch
+		lsr
+		bne NoPUp
 
 		lda PowerUpType									; get power-up type
 		asl												; shift it left (puts fire flower bit into d1)
@@ -13055,8 +13050,8 @@ HandlePECollisions:
 		
 		lda Enemy_State,x								; mask out all but 3 LSB of enemy state
 		and #%00000111
-		cmp #$02										; branch if enemy is in normal or falling state
-		bcc ChkForPlayerInjury
+		lsr												; branch if enemy is in normal or falling state
+		beq ChkForPlayerInjury
 
 		lda Enemy_ID,x									; branch to leave if goomba in defeated state
 		cmp #Goomba
@@ -13351,8 +13346,8 @@ EnemiesCollision:
 		bne SkipChecks1
 		
 		lda Enemy_State,x								; if in defeated state,
-		cmp #$02
-		bcs ExitECRoutine								; branch to leave
+		lsr
+		bne ExitECRoutine								; branch to leave
 
 SkipChecks1:
 		lda EnemyOffscrBitsMasked,x						; if masked offscreen bits nonzero, branch to leave
@@ -13386,8 +13381,8 @@ ECLoop:
 		bne SkipChecks2
 		
 		lda Enemy_State,x								; if in defeated state,
-		cmp #$02
-		bcs ReadyNextEnemy								; branch to leave
+		lsr
+		bne ReadyNextEnemy								; branch to leave
 
 SkipChecks2:
 		lda EnemyOffscrBitsMasked,x
@@ -13774,12 +13769,12 @@ SetPSte:
 		sta Player_State								; set whatever player state is appropriate
 
 ChkOnScr:
-		lda Player_Y_HighPos
-		cmp #$01										; check player's vertical high byte for still on the screen
+		ldy Player_Y_HighPos
+		dey												; check player's vertical high byte for still on the screen
 		bne ExPBGCol									; branch to leave if not
 
-		lda #$ff
-		sta Player_CollisionBits						; initialize player's collision flag
+		dey
+		sty Player_CollisionBits						; initialize player's collision flag
 
 		lda Player_Y_Position
 		cmp #$cf										; check player's vertical coordinate
@@ -14035,13 +14030,14 @@ ChkPBtm:
 		bne StopPlayerMove								; otherwise branch to impede player's movement
 
 PipeDwnS:
-		ldy StarInvincibleTimer							; SM load invincibility timer
-		bne PlayPipeDwnS								; SM branch if set to play SFX (fixes SFX not playing on underground levels)
-		
 		lda Player_SprAttrib							; check player's attributes
+		ldy StarInvincibleTimer							; SM load invincibility timer
+		bne PlayPDwnS									; SM branch if set to play SFX (fixes SFX not playing on underground levels)
+		
+		cmp #$00										; SM check to see if any sprite attributes are set
 		bne PlyrPipe									; if already set, branch, do not play sound again
 
-PlayPipeDwnS:
+PlayPDwnS:
 		ldy #Sfx_PipeDown_Injury
 		sty Square1SoundQueue							; otherwise load pipedown/injury sound
 
@@ -15683,8 +15679,8 @@ JCoinGfxHandler:
 		ldy Misc_SprDataOffset,x						; get coin/floatey number's OAM data offset
 
 		lda Misc_State,x								; get state of misc object
-		cmp #$02										; if 2 or greater,
-		bcs DrawFloateyNumber_Coin						; branch to draw floatey number
+		lsr												; if 2 or greater,
+		bne DrawFloateyNumber_Coin						; branch to draw floatey number
 
 		lda Misc_Y_Position,x							; store vertical coordinate as
 		sta Sprite_Y_Position,y							; Y coordinate for first sprite
