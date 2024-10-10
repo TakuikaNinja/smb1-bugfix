@@ -49,6 +49,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] The lives screen now properly reflects Mario's power-up state.
 - [x] Player status is now correctly maintained while collecting a power-up or getting injured. (no more item jump)
 - [x] Getting the flagpole stops the Super Star invincibility, to prevent audio glitches.
++ [x] Super Star invincibility will no longer interfere with sideways warp-pipe sound effects. (primarily 4-2)
 - [x] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
 - [x] Holding the jump button no longer makes Mario jump while entering an area.
 + [x] PlayerSize is now changed immediately when PlayerStatus is changed. (no more Small Fire Mario, sorry)
