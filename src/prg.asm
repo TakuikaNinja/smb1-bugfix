@@ -764,7 +764,9 @@ SetupVictoryMode:
 
 		lda #EndOfCastleMusic
 		sta EventMusicQueue								; play win castle music
-		lsr ScrollLock									; clear scroll lock
+		lda #$00
+		sta ScrollLock									; clear scroll lock
+		sta TimerControl								; and timer control (ensures scrolling will happen after damage is taken)
 		jmp IncModeTask_A								; jump to set next major task in victory mode
 
 ; -------------------------------------------------------------------------------------
@@ -5260,11 +5262,9 @@ ExitEng:
 ; -------------------------------------------------------------------------------------
 
 ScrollHandler:
-		lda TimerControl								; is the timer control set?
-		bne InitScrlAmt									; branch to init scroll if so
-		
-		lda ScrollLock									; check scroll lock flag
-		bne InitScrlAmt									; skip a bunch of code here if set
+		lda TimerControl								; check timer control
+		ora ScrollLock									; and scroll lock flag
+		bne InitScrlAmt									; skip a bunch of code here if either is set
 		
 		lda Player_Pos_ForScroll						; check player's horizontal screen position
 		bmi SpeedUp										; if on right side, branch ahead
@@ -5321,8 +5321,8 @@ ChkPOffscr:
 		bcs KeepOnscr									; branch with default offset
 		
 		iny												; otherwise use different offset (right side)
-		and #%01000000									; check if d6 is set in A (i.e. d5 in offscreen bits)
-		beq ExitOnscr									; if not set, branch to leave
+		asl												; check if d6 is set in A (i.e. d5 in offscreen bits)
+		bpl ExitOnscr									; if not set, branch to leave
 
 KeepOnscr:
 		lda ScreenEdge_X_Pos,y							; get left or right side coordinate based on offset
