@@ -645,7 +645,6 @@ StartWorld1:
 		sta DemoTimer
 		
 		ldx #$17
-;		lda #$00
 
 InitScores:
 		sta ScoreAndCoinDisplay,x						; clear player scores and coin displays
@@ -2399,10 +2398,8 @@ BowserPaletteData:
 	.db $00
 
 ; -------------------------------------------------------------------------------------
-; $04 - address low to jump address
-; $05 - address high to jump address
-; $06 - jump address low
-; $07 - jump address high
+; $04 - address low to jump table
+; $05 - address high to jump table
 
 JumpEngine:
 		asl												; shift bit from contents of A
@@ -3005,7 +3002,7 @@ PlayerStarting_X_Pos:
 	.db $28, $18, $38, $38, $28
 
 AltYPosOffset:
-	.db $08, $09, $00
+	.db $08, $09										; next byte is shared
 
 PlayerStarting_Y_Pos:
 	.db $00, $20, $b0, $50, $00, $00, $b0, $b0
@@ -15401,15 +15398,13 @@ DrawHammer:
 		bne ForceHPose									; if master timer control set, skip this part
 
 		lda Misc_State,x								; otherwise get hammer's state
-		pha												; SM push to stack
 		cmp #$88										; SM check for a specific value
 		bne NoHammerSFX									; SM branch if not
 		
-		lda #Sfx_Fireball								; SM otherwise load SFX
-		sta Square1SoundQueue							; (originally enemy smack but EnemyDefeatPitch would mess it up)
+		ldx #Sfx_Fireball								; SM otherwise load SFX
+		stx Square1SoundQueue							; (originally enemy smack but EnemyDefeatPitch would mess it up)
 		
 NoHammerSFX:
-		pla
 		and #%01111111									; mask out d7
 		cmp #$01										; check to see if set to 1 yet
 		beq GetHPose									; if so, branch
@@ -15476,12 +15471,11 @@ NoHOffscr:
 ; $04 - attribute byte for floatey number
 ; $05 - used as X coordinate for floatey number
 
-FlagpoleScoreNumTiles:
-	.db $fd, $fe
-	.db $f7, $50
-	.db $fa, $fb
-	.db $f8, $fb
-	.db $f6, $fb
+FlagpoleScoreNumTilesHi:
+	.db $fd, $f7, $fa, $f8, $f6
+
+FlagpoleScoreNumTilesLo:
+	.db $fe, $50, $fb, $fb, $fb
 
 FlagpoleGfxHandler:
 		ldy Enemy_SprDataOffset,x						; get sprite data offset for flagpole flag
@@ -15529,14 +15523,10 @@ FlagpoleGfxHandler:
 		adc #$0c
 		tay												; put back in Y
 
-		lda FlagpoleScore								; get offset used to award points for touching flagpole
-		asl												; multiply by 2 to get proper offset here
-		tax
-
-		lda FlagpoleScoreNumTiles,x						; get appropriate tile data
+		ldx FlagpoleScore								; get offset used to award points for touching flagpole
+		lda FlagpoleScoreNumTilesHi,x					; get appropriate tile data
 		sta $00
-
-		lda FlagpoleScoreNumTiles+1,x
+		lda FlagpoleScoreNumTilesLo,x
 		jsr DrawOneSpriteRow							; use it to render floatey number
 
 ChkFlagOffscreen:
@@ -17340,7 +17330,13 @@ ActionSwimming:
 
 GetCurrentAnimOffset:
 		lda PlayerAnimCtrl								; get animation frame control
-		jmp GetOffsetFromAnimCtrl						; jump to get proper offset to graphics table
+		
+GetOffsetFromAnimCtrl:									; (now inlined)
+		asl												; multiply animation frame control
+		asl												; by eight to get proper amount
+		asl												; to add to our offset
+		adc PlayerGfxTblOffsets,y						; add to offset to graphics table
+		rts												; and return with result in A
 
 FourFrameExtent:
 		lda #$03										; load upper extent for frame control
@@ -17388,9 +17384,14 @@ GetGfxOffsetAdder:
 SzOfs:
 		rts												; go back
 
+; optimised logic no longer requires second half for shrinking
+; pre-multiply values by 8 for further optimisation
 ChangeSizeOffsetAdder:
-	.db $00, $01, $00, $01, $00, $01, $02, $00, $01, $02
-	.db $02, $00, $02, $00, $02, $00, $02, $00, $02, $00
+	.db $00, $01*8, $00, $01*8, $00, $01*8, $02*8, $00, $01*8, $02*8
+
+; this thing apparently uses two of the swimming frames to draw the player shrinking
+ShrinkOffset:
+	.db $09, $01
 
 HandleChangeSize:
 		ldy PlayerAnimCtrl								; get animation frame control
@@ -17414,30 +17415,16 @@ GorSLog:
 		bne ShrinkPlayer								; if player small, skip ahead to next part
 
 		lda ChangeSizeOffsetAdder,y						; get offset adder based on frame control as offset
-		ldy #$0f										; load offset for player growing
-
-GetOffsetFromAnimCtrl:
-		asl												; multiply animation frame control
-		asl												; by eight to get proper amount
-		asl												; to add to our offset
-		adc PlayerGfxTblOffsets,y						; add to offset to graphics table
+		clc
+		adc PlayerGfxTblOffsets+$0f						; add to fixed offset from graphics table
 		rts												; and return with result in A
 
 ShrinkPlayer:
-		tya												; add ten bytes to frame control as offset
-		clc
-		adc #$0a										; this thing apparently uses two of the swimming frames
-		tax												; to draw the player shrinking
-
-		ldy #$09										; load offset for small player swimming
-
-		lda ChangeSizeOffsetAdder,x						; get what would normally be offset adder
-		bne ShrPlF										; and branch to use offset if nonzero
-
-		ldy #$01										; otherwise load offset for big player swimming
-
-ShrPlF:
-		lda PlayerGfxTblOffsets,y						; get offset to graphics table based on offset loaded
+		tya												; put frame control in A
+		and #$01										; isolate bit 0
+		tax												; use as offset
+		ldy ShrinkOffset,x								; to grab another offset
+		lda PlayerGfxTblOffsets,y						; to index into the graphics table
 		rts												; and leave
 
 ChkForPlayerAttrib:
