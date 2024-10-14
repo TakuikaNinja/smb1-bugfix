@@ -11569,10 +11569,10 @@ GetDToO:
 		sta Enemy_X_Position,x
 
 		ldy Enemy_MovingDir,x
-		cpy #$01										; if bowser moving and facing to the right, skip ahead
+		dey												; if bowser moving and facing to the right, skip ahead
 		beq HammerChk
 
-		ldy #$ff										; set default movement speed here (move left)
+		dey												; set default movement speed here (move left)
 
 		sec												; get difference of current vs. original
 		sbc BowserOrigXPos								; horizontal position
@@ -12801,7 +12801,9 @@ HurtBowser:
 		ora #$03										; otherwise add 3 to enemy state
 
 SetDBSte:
+		ldy DuplicateObj_Offset
 		sta Enemy_State,x								; set defeated enemy state
+		sta Enemy_State,y								; (don't forget the rear object's state, too...)
 
 		lda #Sfx_BowserFall
 		sta Square2SoundQueue							; load bowser defeat sound
@@ -15819,6 +15821,7 @@ PUpOfs:
 ; $eb - used to hold sprite data offset
 ; $ec - used to hold either altered enemy state or special value used in gfx handler as condition
 ; $ed - used to hold enemy state from buffer
+; $ee - used to hold enemy offscreen bits as part of a loop
 ; $ef - used to hold enemy code used in gfx handler (may or may not resemble Enemy_ID values)
 
 ; tiles arranged in top left, right, middle left, right, bottom left, right order
@@ -16430,13 +16433,13 @@ SprObjectOffscrChk:
 		
 		lda Enemy_OffscreenBits							; get offscreen information
 		and #%11101100									; mask out d0,d1,d4 as these are not required
-		sta ztemp2										; save in ztemp2
+		sta $ee											; save offscreen bits
 		
 		lda #$00										; init ztemp as counter
 		sta ztemp
 
 OffscrChkLoop:
-		lsr ztemp2										; shift ztemp2 right to put d0 into carry
+		lsr $ee											; shift offscreen bits right to put d0 into carry
 		bcs Offscreen									; branch to put sprites offscreen if carry set
 		beq ExEGHandler									; branch to leave if value is now 0
 		bcc NotOffscr									; otherwise skip to end of loop [unconditional]
