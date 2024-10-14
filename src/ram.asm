@@ -18,9 +18,8 @@ Left_Right_Buttons    = $0c
 
 GameEngineSubroutine  = $0e
 
-ztemp                 = $15		; free zeropage variables
-ztemp2                = $1c
-
+ztemp                 = $15
+ztemp2                = $1c		; free
 
 Mirror_PPU_CTRL_REG1  = $0778
 Mirror_PPU_CTRL_REG2  = $0779

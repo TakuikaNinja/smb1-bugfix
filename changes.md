@@ -95,6 +95,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Tweaked brick-shattering behavior to consistently bump the player downwards when hitting an enemy from below or shattering from the corner with high momentum.
 + [x] The shattered brick sprites will now appear even when the brick block is partially offscreen.
 + [x] Hitting enemies from under blocks near the left edge of the screen will no longer cause Koopas to appear.
++ [x] Bowser will no longer leave a lingering hitbox (which fireballs could hit) after being defeated with fireballs.
 + [x] Made floatey numbers (the score sprites) stay within the screen better. (less position under/overflows)
 + [x] Mario's sprite will no longer be cut off when he is pushed against the left screen edge by blocks or platforms.
 + [x] Momentarily "landing" in walls is now less likely, if not impossible for it to occur. (no more wall jump, sorry)
