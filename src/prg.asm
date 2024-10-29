@@ -5445,7 +5445,7 @@ OffVine:
 		jsr AutoControlPlayer							; use contents of A to move player up or right, execute sub
 		
 		lda Player_X_Position
-		cmp #$48										; check player's horizontal position
+		cmp #$49										; check player's horizontal position
 		bcc ExitEntr									; if not far enough to the right, branch to leave
 
 PlayerRdy:
@@ -5935,10 +5935,14 @@ CheckBlockWhenCrouching:
 		jsr BlockBufferColli_Head						; do player-to-bg collision detection on top half of player (Y = 0)
 		beq ExitBlockHead								; exit if nothing found
 		
-		jsr CheckForCoinMTiles							; check to see if player touched coin with their head
-		bcs ExitBlockHead								; exit if detected
+		jsr ChkForNonSolids								; check for non-solid tiles
+		beq ExitBlockHead								; exit if detected
+		
+		lda $02
+		cmp #$d0
+		bcs ExitBlockHead								; exit if row over/underflow detected
 
-		lda #Down_Dir									; force crouch
+		lda #Down_Dir									; otherwise force crouch
 		sta CrouchingFlag
 		sta Up_Down_Buttons
 		sty Left_Right_Buttons							; Y = 0, so clear left/right inputs
@@ -6038,7 +6042,7 @@ ExitMov1:
 ; --------------------------------
 
 ClimbAdder:
-	.db $0e, $04, $fc, $f2
+	.db $0e, $04, $fc, $f0
 
 ClimbingSub:
 		lda Player_YMF_Low
@@ -6111,9 +6115,6 @@ InitCSTimer:
 		
 ExitCSub:
 		rts
-		
-
-		
 
 ; -------------------------------------------------------------------------------------
 ; $00 - used to store offset to friction data
@@ -7046,6 +7047,9 @@ Setup_Vine:
 		lda Block_X_Position,y
 		sta Enemy_X_Position,x							; copy horizontal coordinate from previous object
 
+		lda #$01
+		jsr AddToEnemyPosition							; add 1 to X position to properly align it
+
 		lda Block_Y_Position,y
 		sta Enemy_Y_Position,x							; copy vertical coordinate from previous object
 
@@ -7073,7 +7077,7 @@ VineHeightData:
 
 VineObjectHandler:
 		cpx #$05										; check enemy offset for special use slot
-		bne ExitVH										; if not in last slot, branch to leave
+		bne ExJSpring									; if not in last slot, branch to leave
 
 		ldy VineFlagOffset
 		dey												; decrement vine flag in Y, use as offset
@@ -7089,10 +7093,7 @@ VineObjectHandler:
 		lsr
 		bcc RunVSubs									; if d1 not set (2 frames every 4) skip this part
 
-		lda Enemy_Y_Position+5
-		sbc #$01										; subtract vertical position of vine
-		sta Enemy_Y_Position+5							; one pixel every frame it's time
-
+		dec Enemy_Y_Position+5							; decrement vertical position of vine
 		inc VineHeight									; increment vine height
 
 RunVSubs:
@@ -7117,13 +7118,38 @@ VDrawLoop:
 		beq WrCMTile									; if none of the saved offscreen bits set, skip ahead
 
 		dey												; otherwise decrement Y to get proper offset again
+		sty ztemp										; save for later
+
+		ldx #$06										; set offset in X to last enemy slot
+		lda #$01										; set A to obtain horizontal in $04, but we don't care
+		ldy #$1b										; set Y to offset to get block at ($04, $10) of coordinates
+		jsr BlockBufferCollision						; do a sub to get block buffer address set, return contents
+		ldy $02
+		
+ClCMTiles:
+		cpy #$d0										; if at or beyond bottom row, 
+		bcs +											; skip the metatile check for this loop
+		
+		lda ($06),y										; keep checking block buffer
+		cmp #$26
+		bne KillVine									; until no more climbing metatiles can be found
+		
+		lda #$00										; clear climbing metatile
+		sta ($06),y
++
+		tya
+		adc #$0f										; add 16 tiles to go down 1 row (carry already set)
+		tay
+		jmp ClCMTiles
 
 KillVine:
+		ldy ztemp
+-
 		ldx VineObjOffset,y								; get enemy object offset for this vine object
 		jsr EraseEnemyObject							; kill this vine object
 
 		dey												; decrement Y
-		bpl KillVine									; if any vine objects left, loop back to kill it
+		bpl -											; if any vine objects left, loop back to kill it
 
 		sta VineFlagOffset								; initialize vine flag/offset
 		sta VineHeight									; initialize vine height
@@ -14088,7 +14114,7 @@ ErACM:
 ; $06-$07 - block buffer address
 
 ClimbXPosAdder:
-	.db $f9, $07
+	.db $f8, $08
 
 ClimbPLocAdder:
 	.db $ff, $00
@@ -14160,11 +14186,7 @@ RunFR:
 		jmp NoAutoClimb									; jump to end of climbing code
 
 VineCollision:
-		lda Player_Rel_XPos								; get player's relative horizontal coordinate
-		cmp #$10
-		bcc ExPVne										; if less than 16 pixels, branch to leave
-		
-		lda Player_Y_Position							; branch ahead if vertical coordinate is not within status bar
+		lda Player_Y_Position							; branch ahead if vertical coordinate is within status bar areaS
 		cmp #$20
 		bcs NoAutoClimb
 
@@ -14179,21 +14201,25 @@ NoAutoClimb:
 		sta Player_X_Speed								; and fractional horizontal movement force
 		sta Player_X_MoveForce
 
-		ldy Player_MovingDir							; use moving direction as offset
-		cpy PlayerFacingDir								; branch ahead if it matches the facing direction
-		beq DirectionsMatch
+;		ldy Player_MovingDir
+		lda Player_Rel_XPos
+		cmp #$10
+		bcs SetVXPl										; branch if relative X position >= 16
 		
-		sty PlayerFacingDir								; otherwise match facing direction with moving direction
+		lda #$02										; otherwise force left facing direction
+		sta PlayerFacingDir
 
-DirectionsMatch:
+SetVXPl:
+		ldy PlayerFacingDir								; match facing direction with moving direction
 		lda $06											; get low byte of block buffer address
-		ASL4									; move low nybble to high
+		ASL4											; move low nybble to high
 		clc
 		adc ClimbXPosAdder-1,y							; add pixels depending on facing direction
 		sta Player_X_Position							; store as player's horizontal coordinate
 
 		lda $06											; get low byte of block buffer address again
 		bne ExPVne										; if not zero, branch
+
 		lda ScreenRight_PageLoc							; load page location of right side of screen
 		clc
 		adc ClimbPLocAdder-1,y							; add depending on facing location
@@ -15159,9 +15185,14 @@ BlockBufferChk_FBall:
 BlockBufferChk_Enemy:
 		inx												; add 1 to X to run sub with enemy offset in mind (skipped for FBall)
 		jsr BlockBufferCollision						; do collision detection subroutine for sprite object
+		ldx $02
+		cpx #$d0
+		bcc NoClamp
 
+		lda #$00										; use blank tile if over/underflow detected
+
+NoClamp:
 		ldx ObjectOffset								; get object offset
-
 		cmp #$00										; check to see if object bumped into anything
 		rts
 
@@ -15214,17 +15245,13 @@ BlockBufferCollision:
 		jsr GetBlockBufferAddr							; get address of block buffer into $06, $07
 
 		ldy $04											; get old contents of Y
-
 		lda SprObject_Y_Position,x						; get vertical coordinate of object
-		cmp #$d0										; check if at or beyond bottom tile row
-		bcs ClampTile									; branch if so
-
+		clc
 		adc BlockBuffer_Y_Adder,y						; add it to value obtained using Y as offset
 		and #%11110000									; mask out low nybble
 		sec
 		sbc #$20										; subtract 32 pixels for the status bar
 		sta $02											; store result here
-		bcc ClampTile									; branch is underflowed
 
 		tay												; use as offset for block buffer
 		lda ($06),y										; check current content of block buffer
@@ -15249,10 +15276,6 @@ RetYC:
 
 		lda $03											; get saved content of block buffer
 		rts												; and leave
-
-ClampTile:
-		lda #$00										; if an over/underflow occurs, just use the empty block
-		beq StoreTile									; [unconditional branch]
 
 ; -------------------------------------------------------------------------------------
 ; $00 - offset to vine Y coordinate adder
