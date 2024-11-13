@@ -27,6 +27,8 @@ endif
 patch:
 	flips -c -b $(ORIG_PATH) $(OUTPUT) $(PATCH)
 
+.PHONY: clean
+
 clean:
 	rm -f *.lst $(OUTPUT) $(PATCH) $(DIR)/*.log $(DIR)/*.nl $(DIR)/*.mlb
 
