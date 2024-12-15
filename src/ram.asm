@@ -21,6 +21,7 @@ GameEngineSubroutine  = $0e
 ztemp                 = $15
 ztemp2                = $1c		; free
 
+Mirror_PPU_SCROLL_REG = $0749
 Mirror_PPU_CTRL_REG1  = $0778
 Mirror_PPU_CTRL_REG2  = $0779
 
@@ -80,7 +81,6 @@ DestinationPageLoc    = $34
 VictoryWalkControl    = $35
 World7Override        = $0768
 MessageCounter        = $0719
-SecondaryMsgCounter   = $0749	; free
 
 HorizontalScroll      = $073f
 ScrollLock            = $0723

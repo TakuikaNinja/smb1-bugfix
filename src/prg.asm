@@ -185,6 +185,9 @@ RotPRandomBit:
 		dey												; decrement for loop
 		bne RotPRandomBit
 		
+		lda HorizontalScroll							; set scroll mirror
+		sta Mirror_PPU_SCROLL_REG
+		
 		inc NMISyncFlag
 
 NMIWait:
@@ -310,7 +313,7 @@ NonMaskableInterrupt:
 		bcc LagFrameSpr0								; and skip to the sprite #0 hit
 
 UpdatePPU:
-		dec NMISyncFlag									; clear NMI sync flag
+		sta NMISyncFlag									; clear NMI sync flag
 		
 		lda Mirror_PPU_CTRL_REG2						; disable OAM and background display by default
 		and #%11100110
@@ -390,7 +393,7 @@ HBlankDelay:
 		bne HBlankDelay									; decrement until it hits 0
 
 HUDSkip:
-		lda HorizontalScroll							; get scroll value now
+		lda Mirror_PPU_SCROLL_REG						; get scroll mirror now
 		ldx Mirror_PPU_CTRL_REG1						; same with nametable
 		sta PPU_SCROLL_REG								; set horizontal scroll
 		sty PPU_SCROLL_REG								; Y is already 0
@@ -1990,14 +1993,14 @@ ColorRotatePalette:
 	.db $27, $27, $27, $17, $07, $17
 
 BlankPalette:
-	.db $3f, $0c, $04, $ff, $ff, $ff, $ff, $00
+	.db $3f, $0c, $04, $0f, $07, $ff, $ff, $00
 
 ; used based on area type
-Palette3Data:
-	.db $0f, $07, $12, $0f
-	.db $0f, $07, $17, $0f
-	.db $0f, $07, $17, $1c
-	.db $0f, $07, $17, $00
+Palette3Data0:
+	.db $12, $17, $17, $17
+
+Palette3Data1:
+	.db $0f, $0f, $1c, $00
 
 ColorRotation:
 		lda FrameCounter								; get frame counter
@@ -2008,7 +2011,7 @@ ColorRotation:
 		cpx #$31
 		bcs ExitColorRot								; if offset over 48 bytes, branch to leave
 		
-		tay												; otherwise use frame counter's 3 LSB as offset here
+		tay												; otherwise init Y with 0
 
 GetBlankPal:
 		lda BlankPalette,y								; get blank palette for palette 3
@@ -2020,25 +2023,12 @@ GetBlankPal:
 		bcc GetBlankPal									; do this until all bytes are copied
 		
 		ldx VRAM_Buffer1_Offset							; get current vram buffer offset
+		ldy AreaType									; use area type as index
+		lda Palette3Data0,y								; fetch palette entries to be written
+		sta VRAM_Buffer1+5,x							; store it to overwrite blank entries in vram buffer
+		lda Palette3Data1,y
+		sta VRAM_Buffer1+6,x
 		
-		lda #$03
-		sta $00											; set counter here
-		
-		lda AreaType									; get area type
-		asl												; multiply by 4 to get proper offset
-		asl
-		tay												; save as offset here
-
-GetAreaPal:
-		lda Palette3Data,y								; fetch palette to be written based on area type
-		sta VRAM_Buffer1+3,x							; store it to overwrite blank palette in vram buffer
-		
-		iny
-		inx
-		dec $00											; decrement counter
-		bpl GetAreaPal									; do this until the palette is all copied
-		
-		ldx VRAM_Buffer1_Offset							; get current vram buffer offset
 		ldy ColorRotateOffset							; get color cycling offset
 		lda ColorRotatePalette,y
 		sta VRAM_Buffer1+4,x							; get and store current color in second slot of palette
@@ -4061,7 +4051,7 @@ FreCompLoop:
 		dex												; check regular slots of enemy object buffer
 		bmi ExitAFrenzy									; if all slots checked and enemy object not found, branch to store
 		
-		cmp Enemy_ID,X									; check for enemy object in buffer versus frenzy object
+		cmp Enemy_ID,x									; check for enemy object in buffer versus frenzy object
 		bne FreCompLoop
 		
 		lda #$00										; if enemy object already present, nullify queue and leave
