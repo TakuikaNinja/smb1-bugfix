@@ -185,9 +185,6 @@ RotPRandomBit:
 		dey												; decrement for loop
 		bne RotPRandomBit
 		
-		lda HorizontalScroll							; set scroll mirror
-		sta Mirror_PPU_SCROLL_REG
-		
 		inc NMISyncFlag
 
 NMIWait:
@@ -393,7 +390,7 @@ HBlankDelay:
 		bne HBlankDelay									; decrement until it hits 0
 
 HUDSkip:
-		lda Mirror_PPU_SCROLL_REG						; get scroll mirror now
+		lda HorizontalScroll							; get scroll value now
 		ldx Mirror_PPU_CTRL_REG1						; same with nametable
 		sta PPU_SCROLL_REG								; set horizontal scroll
 		sty PPU_SCROLL_REG								; Y is already 0
@@ -10248,8 +10245,16 @@ RunSmallPlatform:
 		jsr SmallPlatformBoundBox
 		jsr SmallPlatformCollision
 		jsr RelativeEnemyPosition
-		jsr MoveSmallPlatform							; bugfix: move platform before drawing
-		jsr DrawSmallPlatform							; this eliminates visual inconsistencies
+		jsr MoveLiftPlatforms							; bugfix: move platform before drawing
+
+;ChkSmallPlatCollision:									; (this lone call is inline now)
+		lda PlatformCollisionFlag,x						; get bounding box counter saved in collision flag
+		beq NoSmallPlatCollision						; if none found, leave player position alone
+
+		jsr PositionPlayerOnS_Plat						; otherwise position player correctly	
+		
+NoSmallPlatCollision:
+		jsr DrawSmallPlatform
 		jmp OffscreenBoundsCheck
 
 ; --------------------------------
@@ -12216,7 +12221,7 @@ CheckBalPlatform:
 		jmp PlatformFall								; if set, jump here
 
 ChkForFall:
-		lda #$2d										; check if platform is above a certain point
+		lda #$2e										; check if platform is above a certain point (SM original value=#$2d)
 		cmp Enemy_Y_Position,x
 		bcc ChkOtherForFall								; if not, branch elsewhere
 
@@ -12509,11 +12514,9 @@ YMovingPlatform:
 
 		lda FrameCounter
 		and #%00000111									; check for every eighth frame
-		bne SkipIY
+		bne ChkYPCollision
 
 		inc Enemy_Y_Position,x							; increase vertical position every eighth frame
-
-SkipIY:
 		jmp ChkYPCollision								; skip ahead to last part
 
 ChkYCenterPos:
@@ -12581,10 +12584,6 @@ MoveLargeLiftPlat:
 		jsr MoveLiftPlatforms							; execute common to all large and small lift platforms
 		jmp ChkYPCollision								; branch to position player correctly
 
-MoveSmallPlatform:
-		jsr MoveLiftPlatforms							; execute common to all large and small lift platforms
-		jmp ChkSmallPlatCollision						; branch to position player correctly
-
 MoveLiftPlatforms:
 		lda TimerControl								; if master timer control set, skip all of this
 		bne ExLiftP										; and branch to leave
@@ -12600,12 +12599,6 @@ MoveLiftPlatforms:
 
 ExLiftP:
 		rts
-
-ChkSmallPlatCollision:
-		lda PlatformCollisionFlag,x						; get bounding box counter saved in collision flag
-		beq ExLiftP										; if none found, leave player position alone
-
-		jmp PositionPlayerOnS_Plat						; use to position player correctly
 
 
 ; -------------------------------------------------------------------------------------

@@ -21,7 +21,7 @@ GameEngineSubroutine  = $0e
 ztemp                 = $15
 ztemp2                = $1c		; free
 
-Mirror_PPU_SCROLL_REG = $0749
+Mirror_PPU_SCROLL_REG = $0749	; free
 Mirror_PPU_CTRL_REG1  = $0778
 Mirror_PPU_CTRL_REG2  = $0779
 
