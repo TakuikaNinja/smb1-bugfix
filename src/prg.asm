@@ -4994,7 +4994,7 @@ GetAreaDataAddrs:
 		and #%00000111									; save 3 LSB for foreground scenery or bg color control
 		
 		ldx WorldNumber									; load world number
-		cpx #World7              
+		cpx #World7
 		bcc StoreBGColor								; if before World 7, use old code
 		
 		ldx AreaPointer									; load area pointer
@@ -10233,7 +10233,12 @@ RunSmallPlatform:
 		lda PlatformCollisionFlag,x						; get bounding box counter saved in collision flag
 		beq NoSmallPlatCollision						; if none found, leave player position alone
 
-		jsr PositionPlayerOnS_Plat						; otherwise position player correctly	
+PositionPlayerOnS_Plat:
+		tay												; use bounding box counter saved in collision flag
+		lda Enemy_Y_Position,x							; for offset
+		clc												; add positioning data using offset to the vertical
+		adc PlayerPosSPlatData-1,y						; coordinate
+		jsr PositionPlayerOnVPlat+2						; position player accordingly
 		
 NoSmallPlatCollision:
 		jsr DrawSmallPlatform
@@ -11911,9 +11916,6 @@ FireworksSoundScore:
 StarFlagYPosAdder:
 	.db $00, $00, $08, $08
 
-StarFlagXPosAdder:
-	.db $00, $08, $00, $08
-
 RunStarFlagObj:
 		lda #$00										; initialize enemy frenzy buffer
 		sta EnemyFrenzyBuffer
@@ -12537,15 +12539,6 @@ PositionPlayerOnHPlat:
 		lda $00
 		jsr AddToPlayerPosition
 		jmp PositionPlayerOnVPlat						; position player vertically and appropriately
-
-; --------------------------------
-
-DropPlatform:
-		lda PlatformCollisionFlag,x						; if no collision between platform and player
-		bmi ExDPl										; occurred, just leave without moving anything
-
-		jsr MoveDropPlatform							; otherwise do a sub to move platform down very quickly
-		jmp PositionPlayerOnVPlat						; do a sub to position player appropriately
 
 ; --------------------------------
 ; $00 - residual value from sub
@@ -13661,12 +13654,11 @@ SetCollisionFlag:
 
 ; -------------------------------------------------------------------------------------
 
-PositionPlayerOnS_Plat:
-		tay												; use bounding box counter saved in collision flag
-		lda Enemy_Y_Position,x							; for offset
-		clc												; add positioning data using offset to the vertical
-		adc PlayerPosSPlatData-1,y						; coordinate
-	.db $2c												; [skip 2 bytes]
+DropPlatform:
+		lda PlatformCollisionFlag,x						; if no collision between platform and player
+		bmi ExPlPos										; occurred, just leave without moving anything
+
+		jsr MoveDropPlatform							; otherwise do a sub to move platform down very quickly
 
 PositionPlayerOnVPlat:
 		lda Enemy_Y_Position,x							; get vertical coordinate
@@ -15179,9 +15171,6 @@ NoClamp:
 		cmp #$00										; check to see if object bumped into anything
 		rts
 
-BlockBufferAdderData:
-	.db $00, $07, $0e									; indexes into the following adder tables
-
 BlockBuffer_X_Adder:
 	.db $08, $03, $0c, $00, $00, $0f, $0f				; big mario
 	.db $08, $03, $0c, $00, $00, $0f, $0f				; swimming
@@ -15358,25 +15347,6 @@ StkLp:
 		rts
 
 ; -------------------------------------------------------------------------------------
-
-DefaultYOnscreenOfs:									; this uses the next 3 bytes
-FirstSprXPos:
-	.db $04												; next 3 bytes are shared
-
-FirstSprYPos:
-	.db $00, $04, $00, $04
-
-SecondSprXPos:
-	.db $00												; next 3 bytes are shared
-
-SecondSprYPos:
-	.db $08, $00, $08, $00
-
-FirstSprTilenum:
-	.db $80, $82										; next 2 bytes are shared
-
-SecondSprTilenum:
-	.db $81, $83, $80, $82
 
 HammerSprAttrib:
 	.db $03, $03, $c3, $c3
@@ -17647,12 +17617,29 @@ ExXOfsBS:
 
 ; --------------------------------
 DefaultXOnscreenOfs:
-	.db $07												; next 2 bytes are shared
-
-YOffscreenBitsData:
+	.db $07
+YOffscreenBitsData:										; shares the last two bytes of "DefaultXOnscreenOfs:"
 	.db $0f, $07, $03, $01
 	.db $00, $08, $0c, $0e
+FirstSprYPos:											; 4 bytes
+	.db $00												; last byte of "YOffscreenBitsData:"
+DefaultYOnscreenOfs:	 
+FirstSprXPos:											; 4 bytes	 
+	.db $04, $00, $04
+
+StarFlagXPosAdder:										; 4 bytes
+SecondSprXPos:											; 4 bytes
 	.db $00
+SecondSprYPos:
+	.db $08, $00, $08
+
+BlockBufferAdderData:									; uses last byte of "SecondSprYPos:"
+	.db $00, $07, $0e
+
+FirstSprTilenum:
+	.db $80, $82
+SecondSprTilenum:										; "FirstSprTilenum:" shares first two bytes
+	.db $81, $83, $80, $82
 
 GetYOffscreenBits:
 		stx $04											; save position in buffer to here
