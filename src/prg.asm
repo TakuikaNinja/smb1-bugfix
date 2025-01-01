@@ -12161,6 +12161,7 @@ SpinCounterClockwise:
 		
 		lda FirebarSpinState_High,x						; add carry to what would normally be the vertical speed
 		sbc #$00
+ExBlP:
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -12169,64 +12170,102 @@ SpinCounterClockwise:
 ; $02 - used to hold page location of rope
 
 BalancePlatform:
-		ldy Enemy_State,x								; get object's state into Y for later (set to $ff or other platform offset)
-		php												; save negative flag to stack
+		ldy Enemy_State,x								; get object's state into Y for later (either #$ff or other platform offset)
+		php												; push the processor status to save N flag
+		lda Enemy_Y_HighPos,x							; get high byte of vertical position
+		cmp #$03										; check if far enough below screen
+		bne DoBPl										; branch if not
 		
-		lda Enemy_Y_HighPos,x							; check high byte of vertical position
-		cmp #$03										; is it 3?
-		beq ErasePlatforms								; if so, branch away from here
-		
-		plp												; otherwise get negative flag back from stack
-		bpl CheckBalPlatform							; if not set (positive), branch ahead
-
-ExBalP:
-		rts												; otherwise leave
-		
-ErasePlatforms:
-		plp												; get negative flag back from stack
-		bmi ExBalP										; if set, branch to leave
+DoBPl2:
+		plp												; pull processor status to current platform's state
+		bmi ExBlP										; if on the current platform, branch to leave
 		
 		jsr EraseEnemyObject							; SM if far below screen, kill the first object
+		lda Enemy_ID,y									; SM (this check prevents the wrong enemy from erasing if the other platform is already offscreen)
+		cmp #$24										; SM check to see if other object is balance platform
+		bne ExBlP										; SM if not, branch to leave
+		
 		tya												; SM transfer other platform to accumulator
 		tax												; SM and move it to X to erase it
-		jmp EraseEnemyObject							; SM kill the second platform object and leave
+		jmp EraseEnemyObject							; SM kill the second platform object
+		
+DoBPl:
+		plp												; pull processor status to current platform's state
+		bmi ExBlP										; if on the current platform, branch to leave
 
 CheckBalPlatform:
-		lda Enemy_ID,y									; check ID of other object
-		cmp #$24										; is it a balance platform?
-		bne ExBalP										; branch to leave if not (SMB2J Fix for Bullet Lift bug?)
-
 		lda PlatformCollisionFlag,x						; get collision flag of platform
 		sta $00											; store here
-
 		lda Enemy_MovingDir,x							; get moving direction
 		beq ChkForFall
 
-		jmp PlatformFall								; if set, jump here
+PlatformFall:
+		lda Enemy_ID,y									; SM (this check prevents the wrong enemy's data from being used)
+		cmp #$24										; SM check to see if other object is balance platform
+		bne MPF											; SM if not, branch to leave
+		
+		tya												; save offset for other platform to stack
+		pha
+		jsr MoveFallingPlatform							; make current platform fall
+		pla
+		tax												; pull offset from stack and save to X
+		lda Enemy_State,x								; SMAS get enemy state for balance platform
+		bpl OtrPF										; SMAS ignore platform if not valid
+		
+MPF:
+		jsr MoveFallingPlatform							; make current/other platform fall
+		
+OtrPF:
+		ldx ObjectOffset
+		lda PlatformCollisionFlag,x						; if player not standing on either platform,
+		bmi ExPF										; skip this part
+		
+		tax												; transfer collision flag offset as offset to X
+		jsr PositionPlayerOnVPlat						; and position player appropriately
+		
+ExPF:
+		ldx ObjectOffset								; get enemy object buffer offset and leave
+		rts
 
 ChkForFall:
-		lda #$2e										; check if platform is above a certain point (SM original value=#$2d)
+		lda Enemy_ID,y									; SM (this check prevents wrong enemy data from being used)
+		cmp #$24										; SM check to see if other object is balance platform
+		bne ExPF+2										; SM if not, branch to leave
+		
+		lda #$2e										; check if platform is above a certain point (SM OG=#$2d)
 		cmp Enemy_Y_Position,x
 		bcc ChkOtherForFall								; if not, branch elsewhere
-
+		
 		cpy $00											; if collision flag is set to same value as
-		beq MakePlatformFall							; enemy state, branch to make platforms fall
-
+		beq InitPlatformFall							; enemy state, branch to make platforms fall
+		
 		clc
 		adc #$02										; otherwise add 2 pixels to vertical position
-		sta Enemy_Y_Position,x							; of current platform and branch elsewhere
+		sta Enemy_Y_Position,x							; of current platform and make platforms stop
 
-		jmp StopPlatforms								; to make platforms stop
+		jmp StopPlatforms
 
-MakePlatformFall:
-		jmp InitPlatformFall							; make platforms fall
+InitPlatformFall:
+		tya												; move offset of other platform from Y to X
+		tax
+		jsr GetEnemyOffscreenBits						; get offscreen bits
+		
+		lda #$01										; set moving direction as flag for
+		sta Enemy_MovingDir,x							; falling platforms
+		ldy Enemy_State,x								; reload offset for other platform into Y
+
+StopPlatforms:
+		jsr InitVStf									; initialize vertical speed and movement force
+		sta Enemy_Y_Speed,y								; for both platforms and leave
+		sta Enemy_Y_MoveForce,y
+		rts
 
 ChkOtherForFall:
 		cmp Enemy_Y_Position,y							; check if other platform is above a certain point
 		bcc ChkToMoveBalPlat							; if not, branch elsewhere
 
 		cpx $00											; if collision flag is set to same value as
-		beq MakePlatformFall							; enemy state, branch to make platforms fall
+		beq InitPlatformFall							; enemy state, branch to make platforms fall
 
 		clc
 		adc #$02										; otherwise add 2 pixels to vertical position
@@ -12444,44 +12483,6 @@ GetHRp:
 
 ExPRp:
 		rts												; leave!
-
-InitPlatformFall:
-		tya												; move offset of other platform from Y to X
-		tax
-		jsr GetEnemyOffscreenBits						; get offscreen bits
-		
-		lda #$01										; set moving direction as flag for
-		sta Enemy_MovingDir,x							; falling platforms
-		ldy Enemy_State,x								; reload offset for other platform into Y
-
-StopPlatforms:
-		jsr InitVStf									; initialize vertical speed and movement force
-		sta Enemy_Y_Speed,y								; for both platforms and leave
-		sta Enemy_Y_MoveForce,y
-		rts
-
-PlatformFall:
-		tya												; save offset for other platform to stack
-		pha
-		jsr MoveFallingPlatform							; make current platform fall
-		
-		pla
-		tax												; pull offset from stack and save to X
-		lda Enemy_State,x								; SMAS bugfix: retrieve enemy state for balance platform
-		bpl SkipLeftPlatform							; SMAS bugfix: skip left platform if invalid (not $ff)
-		jsr MoveFallingPlatform							; otherwise make other platform fall
-		
-SkipLeftPlatform:
-		ldx ObjectOffset
-		lda PlatformCollisionFlag,x						; if player not standing on either platform,
-		bmi ExPF										; skip this part
-
-		tax												; transfer collision flag offset as offset to X
-		jsr PositionPlayerOnVPlat						; and position player appropriately
-
-ExPF:
-		ldx ObjectOffset								; get enemy object buffer offset and leave
-		rts
 
 ; --------------------------------
 
@@ -17624,7 +17625,7 @@ YOffscreenBitsData:										; shares the last two bytes of "DefaultXOnscreenOfs
 FirstSprYPos:											; 4 bytes
 	.db $00												; last byte of "YOffscreenBitsData:"
 DefaultYOnscreenOfs:	 
-FirstSprXPos:											; 4 bytes	 
+FirstSprXPos:											; 4 bytes
 	.db $04, $00, $04
 
 StarFlagXPosAdder:										; 4 bytes
