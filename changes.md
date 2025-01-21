@@ -139,6 +139,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 
 ## Enemy Behaviour Changes
 - [x] Hammers now travel along their arc, regardless of whether they touch Mario.
++ [x] Hammers hitboxes now behave more consistently.
 - [x] Enemies like Goombas, Koopas, Buzzy Beetles and Spinies will only turn around when colliding with walls or other enemies.
 - [x] It is now possible to defeat Spinies by hitting blocks underneath them.
 + [x] Paratroopas will now be set to the falling state instead of the grounded state when stomped. 
