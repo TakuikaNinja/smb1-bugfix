@@ -14831,17 +14831,6 @@ GetFireballBoundBox:
 		tax
 
 		ldy #$02										; set offset for relative coordinates
-		bne FBallB										; [unconditional branch]
-
-GetMiscBoundBox:
-		txa												; add nine bytes to offset
-		clc												; to use in routines as offset for misc object
-		adc #$09
-		tax
-
-		ldy #$06										; set offset for relative coordinates
-
-FBallB:
 		jsr BoundingBoxCore								; get bounding box coordinates
 		jmp CheckRightScreenBBox						; jump to handle any offscreen coordinates
 
