@@ -1853,7 +1853,7 @@ RightCheck:
 		lsr $03											; thus in d3-d2, for upper right square
 		lsr $03
 		lsr $03
-		jmp SetAttrib
+		bpl SetAttrib									; [unconditional branch]
 
 LLeft:
 		lsr $03											; shift attribute bits 2 to the right
@@ -7350,87 +7350,6 @@ NoHammer:
 		clc												; return with carry clear
 		rts
 
-; --------------------------------
-; $00 - used to set downward force
-; $01 - used to set upward force (residual)
-; $02 - used to set maximum speed
-
-ProcHammerObj:
-		lda TimerControl								; if master timer control set
-		bne RunHSubs									; skip all of this code and go to last subs at the end
-
-		lda Misc_State,x								; otherwise get hammer's state
-		and #%01111111									; mask out d7
-		ldy HammerEnemyOffset,x							; get enemy object offset that spawned this hammer
-		cmp #$02										; check hammer's state
-		beq SetHSpd										; if currently at 2, branch
-		bcs SetHPos										; if greater than 2, branch elsewhere
-
-		txa
-		clc												; add 13 bytes to use
-		adc #$0d										; proper misc object
-		tax												; return offset to X
-
-		lda #$10
-		sta $00											; set downward movement force
-
-;		lda #$0f
-;		sta $01											; set upward movement force (not used)
-
-		lda #$04
-		sta $02											; set maximum vertical speed
-
-		lda #$00										; set A to impose gravity on hammer
-		jsr ImposeGravity								; do sub to impose gravity on hammer and move vertically
-		jsr MoveObjectHorizontally						; do sub to move it horizontally
-
-		ldx ObjectOffset								; get original misc object offset
-		jmp RunAllH										; branch to essential subroutines
-
-SetHSpd:
-		lda #$fe
-		sta Misc_Y_Speed,x								; set hammer's vertical speed
-
-		lda Enemy_State,y								; get enemy object state
-		and #%11110111									; mask out d3
-		sta Enemy_State,y								; store new state
-
-		ldx Enemy_MovingDir,y							; get enemy's moving direction
-		lda HammerXSpdData-1,x							; get proper speed to use based on moving direction
-
-		ldx ObjectOffset								; reobtain hammer's buffer offset
-		sta Misc_X_Speed,x								; set hammer's horizontal speed
-
-SetHPos:
-		dec Misc_State,x								; decrement hammer's state
-
-		lda Enemy_X_Position,y							; get enemy's horizontal position
-		clc
-		adc #$02										; set position 2 pixels to the right
-		sta Misc_X_Position,x							; store as hammer's horizontal position
-
-		lda Enemy_PageLoc,y								; get enemy's page location
-		adc #$00										; add carry
-		sta Misc_PageLoc,x								; store as hammer's page location
-
-		lda Enemy_Y_Position,y							; get enemy's vertical position
-		sec
-		sbc #$0a										; move position 10 pixels upward
-		sta Misc_Y_Position,x							; store as hammer's vertical position
-
-		lda #$01
-		sta Misc_Y_HighPos,x							; set hammer's vertical high byte
-		bne RunHSubs									; [unconditional branch]
-
-RunAllH:
-		jsr PlayerHammerCollision						; handle collisions
-
-RunHSubs:
-		jsr GetMiscOffscreenBits						; get offscreen information
-		jsr RelativeMiscPosition						; get relative coordinates
-		jsr GetMiscBoundBox								; get bounding box coordinates
-		jmp DrawHammer									; draw the hammer and return
-
 ; -------------------------------------------------------------------------------------
 ; $02 - used to store vertical high nybble offset from block buffer routine
 ; $06 - used to store low byte of block buffer address
@@ -12853,6 +12772,10 @@ PlayerHammerCollision:
 		lsr												; shift d0 into carry
 		bcc ExPHC										; branch to leave if d0 not set to execute every other frame
 
+		lda Player_OffscreenBits						; SM load player offscreen bits
+		cmp #$09										; SM compare it to a certain value
+		bcs ExPHC										; SM branch to leave if above or below the screen but not leftmost
+
 		lda TimerControl								; if either master timer control
 		ora Misc_OffscreenBits							; or any offscreen bits for hammer are set,
 		bne ExPHC										; branch to leave
@@ -15351,6 +15274,95 @@ StkLp:
 
 HammerSprAttrib:
 	.db $03, $03, $c3, $c3
+
+
+; --------------------------------
+; $00 - used to set downward force
+; $01 - used to set upward force (residual)
+; $02 - used to set maximum speed
+
+ProcHammerObj:
+		lda TimerControl								; if master timer control set
+		bne RunHSubs									; skip all of this code and go to last subs at the end
+
+		lda Misc_State,x								; otherwise get hammer's state
+		and #%01111111									; mask out d7
+		ldy HammerEnemyOffset,x							; get enemy object offset that spawned this hammer
+		cmp #$02										; check hammer's state
+		beq SetHSpd										; if currently at 2, branch
+		bcs SetHPos										; if greater than 2, branch elsewhere
+
+		txa
+		clc												; add 13 bytes to use
+		adc #$0d										; proper misc object
+		tax												; return offset to X
+
+		lda #$10
+		sta $00											; set downward movement force
+
+;		lda #$0f
+;		sta $01											; set upward movement force (not used)
+
+		lda #$04
+		sta $02											; set maximum vertical speed
+
+		lda #$00										; set A to impose gravity on hammer
+		jsr ImposeGravity								; do sub to impose gravity on hammer and move vertically
+		jsr MoveObjectHorizontally						; do sub to move it horizontally
+
+		ldx ObjectOffset								; get original misc object offset
+		jmp RunAllH										; branch to essential subroutines
+
+SetHSpd:
+		lda #$fe
+		sta Misc_Y_Speed,x								; set hammer's vertical speed
+
+		lda Enemy_State,y								; get enemy object state
+		and #%11110111									; mask out d3
+		sta Enemy_State,y								; store new state
+
+		ldx Enemy_MovingDir,y							; get enemy's moving direction
+		lda HammerXSpdData-1,x							; get proper speed to use based on moving direction
+
+		ldx ObjectOffset								; reobtain hammer's buffer offset
+		sta Misc_X_Speed,x								; set hammer's horizontal speed
+
+SetHPos:
+		dec Misc_State,x								; decrement hammer's state
+
+		lda Enemy_X_Position,y							; get enemy's horizontal position
+		clc
+		adc #$02										; set position 2 pixels to the right
+		sta Misc_X_Position,x							; store as hammer's horizontal position
+
+		lda Enemy_PageLoc,y								; get enemy's page location
+		adc #$00										; add carry
+		sta Misc_PageLoc,x								; store as hammer's page location
+
+		lda Enemy_Y_Position,y							; get enemy's vertical position
+		sec
+		sbc #$0a										; move position 10 pixels upward
+		sta Misc_Y_Position,x							; store as hammer's vertical position
+
+		lda #$01
+		sta Misc_Y_HighPos,x							; set hammer's vertical high byte
+		bne RunHSubs									; [unconditional branch]
+
+RunAllH:
+		jsr PlayerHammerCollision						; handle collisions
+
+RunHSubs:
+		jsr GetMiscOffscreenBits						; get offscreen information
+		jsr RelativeMiscPosition						; get relative coordinates
+
+; SM changed stuff - get bounding box coordinates and draw the hammer (should fix oddities)
+		txa												; get bounding box coordinates and draw the hammer - add nine bytes to offset
+		clc												; to use in routines as offset for misc object
+		adc #$09
+		tax
+		ldy #$06										; set offset for relative coordinates
+		jsr BoundingBoxCore								; get bounding box coordinates
+		ldx ObjectOffset								; reobtain object offset
 
 DrawHammer:
 		ldy Misc_SprDataOffset,x						; get misc object OAM data offset
