@@ -2596,8 +2596,8 @@ InitScroll:
 ; -------------------------------------------------------------------------------------
 
 WritePPUReg1:
-		sta PPU_CTRL_REG1								; write contents of A to PPU register 1
-		sta Mirror_PPU_CTRL_REG1						; and its mirror
+		sta Mirror_PPU_CTRL_REG1						; write contents of A to PPU register 1 mirror
+		sta PPU_CTRL_REG1								; then the register itself (thread safety)
 		rts
 
 ; -------------------------------------------------------------------------------------
@@ -11850,9 +11850,6 @@ FireworksSoundScore:
 
 ; --------------------------------
 
-StarFlagYPosAdder:
-	.db $00, $00, $08, $08
-
 RunStarFlagObj:
 		lda #$00										; initialize enemy frenzy buffer
 		sta EnemyFrenzyBuffer
@@ -14818,8 +14815,9 @@ BoundBoxCtrlData:
 	.db $00, $00, $18, $06
 	.db $00, $00, $20, $0d
 	.db $00, $00, $30, $0d
-	.db $00, $00, $08, $08
-	.db $06, $04, $0a, $08
+StarFlagYPosAdder:
+	.db $00, $00, $08, $08 ; shares 4 bytes
+	.db $06, $02, $14, $08 ; use SMBDX hitbox for Bowser's flame (OG: $06, $04, $0a, $08)
 	.db $03, $0c, $0d, $16 ; PAL diff: Piranha Plant, Bullet Bill, Goomba, Spiny, Blooper, Cheep Cheep have larger hitboxes
 	.db $00, $02, $10, $15 ; (plus bottom edge values from SMB2J)
 	.db $04, $04, $0c, $1c
@@ -15300,8 +15298,7 @@ ProcHammerObj:
 		bcs SetHPos										; if greater than 2, branch elsewhere
 
 		txa
-		clc												; add 13 bytes to use
-		adc #$0d										; proper misc object
+		adc #$0d										; add 13 bytes to use proper misc object
 		tax												; return offset to X
 
 		lda #$10
@@ -15317,8 +15314,8 @@ ProcHammerObj:
 		jsr ImposeGravity								; do sub to impose gravity on hammer and move vertically
 		jsr MoveObjectHorizontally						; do sub to move it horizontally
 
-		ldx ObjectOffset								; get original misc object offset
-		jmp RunAllH										; branch to essential subroutines
+		ldx ObjectOffset								; get original misc object offset (always < 128)
+		bpl RunAllH										; [unconditional branch]
 
 SetHSpd:
 		lda #$fe

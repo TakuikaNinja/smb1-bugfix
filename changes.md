@@ -154,6 +154,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Podoboos now jump higher, as seen in SMAS.
 + [x] Piranha Plants are now slightly braver, as seen in SMBDX. (the range for staying inside pipes is smaller)
 + [x] Piranha Plants are now able to collide with enemies, including kicked shells.
++ [x] Bowser's flames now use the larger hitbox from SMBDX.
 + [x] Platforms moving downwards will now properly drop the player into pits.
 + [x] Moving Platforms now behave as semi-solid platforms, in line with SMM/SMM2.
 + [x] Small Moving Platforms are now moved before they are drawn, eliminating visual inconsistencies.
