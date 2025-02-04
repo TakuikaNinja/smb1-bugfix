@@ -869,7 +869,7 @@ IncMsgCounter:
 		bcc ExitMsgs									; if not reached value yet, branch to leave
 
 SetEndTimer:
-		lda #$02
+		lda #$0c										; vs.smb diff: higher value
 		sta WorldEndTimer								; otherwise set world end timer
 
 IncModeTask_A:
@@ -882,7 +882,8 @@ ExitMsgs:
 
 EndCastleAward:
 		lda WorldEndTimer								; wait until world end timer has expired
-		bne ExEWA
+		cmp #$0a										; vs.smb diff: wait for a threshold instead
+		bcs ExEWA
 		
 		lda GameTimerDisplay							; if game timer points all awarded, skip this part
 		ora GameTimerDisplay+1
@@ -894,9 +895,6 @@ EndCastleAward:
 PointsAwarded:
 		lda #$30
 		sta SelectTimer									; set select timer (used for world 8 ending only)
-		
-		lda #$04
-		sta WorldEndTimer								; another short delay, then on to the next task
 		
 IncTask:
 		inc OperMode_Task
@@ -11905,7 +11903,7 @@ AwardTimerCastle:
 		beq StarFlagExit								; branch to leave if so
 		
 		lda #Sfx_TimerTick								; otherwise load timer tick sound
-		sta Square2SoundQueue							; every 4 frames
+		sta Square2SoundQueue							; every 2 frames
 
 NoTTick:
 		ldy #$23										; set offsets here to subtract from game timer's first digit
