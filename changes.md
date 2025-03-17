@@ -148,6 +148,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Bullet Bills fired from cannons and those spawned from frenzy objects now behave more similarly, including enemy collisions.
 + [x] Handling of Bullet Bills launched by cannons are no longer delayed by 1 frame. (no more Phantom Bullet Bills)
 + [x] Hammer Bros can now be defeated reliably using kicked shells.
++ [x] Hammer Bros will now use the correct movement direction for background collision checks, and will therefore avoid walking into solid tiles (notably 5-2).
 + [x] Jumping Green Paratroopas now move faster in Quest 2 and demote to the appropriate speed in Quest 2.
 + [x] Swimming Cheep Cheeps now move up and down farther after 5-3.
 + [x] Lakitus respawn more quickly after 5-3. Additionally, they will now always spawn at the correct height with the correct hitbox.
