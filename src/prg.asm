@@ -14705,7 +14705,18 @@ UnderHammerBro:
 		sta Enemy_State,x								; and store
 
 		jsr EnemyLanding								; modify vertical coordinate, speed and something else
-		jmp DoEnemySideCheck							; then check for horizontal blockage and leave
+		
+		lda Enemy_MovingDir,x							; save original moving direction
+		pha
+		lda Enemy_X_Speed,x
+		and #%10000000
+		asl
+		adc #$01
+		sta Enemy_MovingDir,x							; temporarily use "correct" moving direction (fixes behaviour in 5-2)
+		jsr DoEnemySideCheck							; then check for horizontal blockage
+		pla
+		sta Enemy_MovingDir,x							; restore original moving direction before exiting
+		rts
 
 NoUnderHammerBro:
 		lda Enemy_State,x								; if hammer bro is not standing on anything, set d0
