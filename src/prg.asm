@@ -107,16 +107,17 @@ NoDecTimers:
 		inc FrameCounter								; increment frame counter
 
 PauseRoutine:
-		lda OperMode									; are we in victory mode?
-		cmp #VictoryModeValue							; if so, go ahead
-		beq ChkPauseTimer
-		
+		lda OperMode
 		cmp #GameModeValue								; are we in game mode?
-		bne TickPRNG									; if not, leave
+		bne TickPRNG									; if not, prevent pausing
 		
 		lda OperMode_Task								; if we are in game mode, are we running game engine?
 		cmp #$03
-		bne TickPRNG									; if not, leave
+		bne TickPRNG									; if not, prevent pausing
+		
+		lda GameEngineSubroutine						; check for death routine
+		cmp #$0b
+		beq TickPRNG									; if so, prevent pausing
 
 ChkPauseTimer:
 		lda GamePauseTimer								; check if pause timer is still counting down
@@ -5566,7 +5567,7 @@ PlayerHole:
 HoleDie:
 		inx												; set flag in X for player death
 		ldy GameEngineSubroutine
-		cpy #$0b										; check for some other routine running
+		cpy #$0b										; check for death routine running
 		beq ChkHoleX									; if so, branch ahead
 
 		ldy DeathMusicLoaded							; check value here
@@ -5574,7 +5575,8 @@ HoleDie:
 
 		dey												; otherwise decrement to get $ff
 		sty TimerControl								; set master timer control flag to halt timers (double death fix)
-
+		ldy #$0b
+		sty GameEngineSubroutine
 		ldy #DeathMusic
 		sty EventMusicQueue								; play death music
 		sty DeathMusicLoaded							; and set value here
@@ -12882,6 +12884,10 @@ PlayerEnemyCollision:
 		lda EnemyOffscrBitsMasked,x						; if current enemy is offscreen by any amount,
 		bne NoPECol										; go ahead and branch to leave
 
+		lda OperMode
+		cmp #VictoryModeValue							; if set to victory mode,
+		beq NoPECol										; branch to leave (fixes a lot of conflicts...)
+
 		lda GameEngineSubroutine
 		cmp #$08										; if not set to run player control routine
 		bne NoPECol										; on next frame, branch to leave
@@ -13990,7 +13996,7 @@ HandleAxeMetatile:
 		lda #$00
 		sta OperMode_Task								; reset secondary mode
 
-		lda #$02
+		lda #VictoryModeValue
 		sta OperMode									; set primary mode to autoctrl mode
 
 		lda #$18

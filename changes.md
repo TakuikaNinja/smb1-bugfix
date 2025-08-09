@@ -53,7 +53,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 - [x] Holding the run button while Fire Mario no longer makes him fire a fireball while entering an area.
 - [x] Holding the jump button no longer makes Mario jump while entering an area.
 + [x] PlayerSize is now changed immediately when PlayerStatus is changed. (no more Small Fire Mario, sorry)
-+ [x] Dying and touching the axe at the same time will no longer decrease the player's lives. (you can still do this, though)
++ [x] Touching the axe now skips player-enemy collison checks, to prevent taking damage or dying at the same time.
 + [x] Mario's palette and visibility will now be reset when time runs out. (i.e. no longer affected by Fire/Star status & injury timer)
 + [x] FireballThrowingTimer & PlayerAnimTimer will now stay in sync. (no more skating/sliding glitch)
 + [x] The interval timer control (primarily used for level completion framerules) now runs for 20 frames instead of 21.
@@ -117,6 +117,8 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Moved the main game loop out of NMI and made the NMI handler more robust. (no more glitched scanlines, HUD flickering, or music slowdown)
 + [x] The reset handler has been tweaked to better resemble the sample implementation on NESdev Wiki.
 + [x] Optimized, tweaked, and trimmed code wherever possible. (ongoing effort)
++ [x] Added a (hopefully) valid Nintendo header to ensure FamicomBox compability.
++ [x] Pausing is now disabled during certain sequences, in order to prevent oddities.
 
 ## Modernised Quality of Life Mechanics
 + [x] Mario's physics have been tweaked to feel less stiff.
