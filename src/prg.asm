@@ -5234,21 +5234,18 @@ ScrollHandler:
 		ora ScrollLock									; and scroll lock flag
 		bne InitScrlAmt									; skip a bunch of code here if either is set
 		
+		ldy #$04										; force scroll to recenter camera
 		lda Player_Pos_ForScroll						; check player's horizontal screen position
-		bmi SpeedUp										; if on right side, branch ahead
+		bmi ScrollScreen								; if on right side, branch ahead
 		
-		cmp #$70
+		sec
+		sbc #$70										; subtract threshold
 		bcc InitScrlAmt									; if less than 112 pixels to the right, init scroll
 
-		sbc #$70										; otherwise subtract threshold (carry already set)
 		adc Player_X_Scroll								; add current scroll amount + carry
 		lsr												; and shift right once
-		and #$0f										; then mask out upper nybble
+		and #$03										; then mask out upper nybble
 		tay												; to use as scroll amount
-	.db $2c												; [skip 2 bytes]
-
-SpeedUp:
-		ldy #$04										; force scroll to recenter camera
 
 ScrollScreen:
 		tya
