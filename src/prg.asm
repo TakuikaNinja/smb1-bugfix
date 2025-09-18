@@ -5262,7 +5262,7 @@ ScrollHandler:
 
 		adc Player_X_Scroll								; add current scroll amount + carry
 		lsr												; and shift right once
-		and #$03										; then mask out upper nybble
+		and #$0f										; then mask out upper nybble
 		tay												; to use as scroll amount
 
 ScrollScreen:
@@ -13708,10 +13708,8 @@ ExPBGCol:
 ChkCollSize:
 		ldy #$02										; load default offset
 		lda CrouchingFlag
-		bne GBBAdr										; if player crouching, skip ahead
-
-		lda PlayerSize
-		bne GBBAdr										; if player small, skip ahead
+		ora PlayerSize
+		bne GBBAdr										; if player small or crouching, skip ahead
 
 		dey												; otherwise decrement offset for big player not crouching
 		lda SwimmingFlag
@@ -13771,15 +13769,8 @@ SolidMTiles:
 		sta Square1SoundQueue							; otherwise load bump sound
 
 NYSpd:
-		ldy #$01										; set player's vertical speed to nullify
-
-		lda AreaType									; PAL diff: Set vertical speed to 0 in water stages
-		bne NYSpd2										; not water
-
-		dey
-
-NYSpd2:
-		sty Player_Y_Speed								; jump or swim
+		lda #$01										; set player's vertical speed to nullify jump or swim
+		sta Player_Y_Speed								; (PAL sets this to 0 underwater but that causes clipping)
 
 DoFootCheck:
 		ldy $eb											; get block buffer adder offset

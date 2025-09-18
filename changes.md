@@ -168,6 +168,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 ## PAL Version Changes
 - [x] Cheep Cheep code has been optimised.
 - [x] Pipes at the end of underwater levels now don't have an empty block above them.
++ [x] Exclude the change which sets Mario's Y speed to 0 when bonking solid blocks in underwater levels, to prevent clipping into them with turbo inputs.
 - [x] The system that detects whether Mario has stomped an enemy has been improved.
 - [x] Fixed springs being able to get overwritten in memory, or overwriting other memory.
 - [x] Some enemies now have a slightly higher hitbox.
