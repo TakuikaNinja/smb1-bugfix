@@ -1312,6 +1312,8 @@ DisplayTimeUp:
 
 		lda #$00
 		sta GameTimerExpiredFlag						; reset timer expiration flag
+		lda NumberofLives								; skip to game over screen if no lives left
+		beq GameOverInter								; (fixes odd time up + game over behaviour)
 
 		lda #$02										; output time-up screen to buffer
 		bne OutputInter									; [unconditional branch]

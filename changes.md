@@ -108,6 +108,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] Fixed a case of the Y speed not being clamped when it should have been. (high byte > max Y speed && low byte < $80)
 + [x] The Game Text system has been overhauled and now utilises a command byte ($fe) to denote the player name.
 + [x] The routine for displaying victory messages in castle levels has been overhauled and now uses the Game Text system.
++ [x] Getting a game over by running out of time now prioritises the game over screen (like in SMB3) to prevent the wrong player name being shown in this scenario for 2-player mode.
 + [x] Status bar updates which only change the score will no longer include the coin display. (reduces risk of VRAM buffer overflow)
 + [x] Sprite 0 (used for the status bar scroll split) is better hidden, and the scroll split timing has been adjusted to account for this.
 + [x] There is now a failsafe/recovery mechanism for NMI re-entries caused by sprite 0 detection misses. (1-frame glitches at worst, hopefully)
