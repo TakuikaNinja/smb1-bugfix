@@ -281,10 +281,6 @@ NonMaskableInterrupt:
 		lda $01
 		pha												; backup zpg vars used by nmi
 
-		lda Mirror_PPU_CTRL_REG1						; get mirror reg
-		and #%11111110									; alter name table address to be $2800
-		sta PPU_CTRL_REG1								; (essentially $2000) but save other bits
-		
 		lda NMISyncFlag									; is the NMI sync flag set?
 		lsr												; lag frames will clear the carry
 		bcc LagFrameSpr0								; and skip to the sprite #0 hit
@@ -344,6 +340,10 @@ LagFrameSpr0:
 		bit PPU_STATUS
 		lda #$00										; reset scroll
 		jsr InitScroll
+		lda Mirror_PPU_CTRL_REG1						; get mirror reg
+		and #%11111100									; alter name table address to be $2000
+		sta PPU_CTRL_REG1								; but save other bits
+		
 		ldy Sprite0HitDetectFlag						; check for flag here
 		beq HUDSkip
 
@@ -356,8 +356,8 @@ Sprite0Clr:
 		lsr												; (put d0 in carry)
 		bcs Sprite0Hit									; do not bother with sprites at all
 		
-		jsr MoveSpritesOffscreen
-		jsr SpriteShuffler
+		jsr MoveSpritesOffscreen						; these tasks are quite time-consuming, 
+		jsr SpriteShuffler								; so we might as well do them before sprite #0 hits
 
 Sprite0Hit:
 		bit PPU_STATUS									; do sprite #0 hit detection
@@ -373,7 +373,7 @@ HUDSkip:
 		lda HorizontalScroll							; get scroll value now
 		ldx Mirror_PPU_CTRL_REG1						; same with nametable
 		sta PPU_SCROLL_REG								; set horizontal scroll
-		sty PPU_SCROLL_REG								; Y is already 0
+		sty PPU_SCROLL_REG								; Y is already 0 (doesn't actually affect scroll)
 		stx PPU_CTRL_REG1								; set nametable
 		
 		jsr SoundEngine									; play sound
@@ -2433,7 +2433,11 @@ InitATLoop:
 		bne InitATLoop
 		
 		sta HorizontalScroll							; reset scroll variable
-		jmp InitScroll									; initialize scroll registers to zero
+
+InitScroll:
+		sta PPU_SCROLL_REG								; store contents of A into scroll registers
+		sta PPU_SCROLL_REG								; and end whatever subroutine led us here
+		rts
 
 ; -------------------------------------------------------------------------------------
 ; $00 - temp joypad byte 1
@@ -2568,9 +2572,6 @@ UpdateScreen:
 		lda ($00),y
 		bne WriteBufferToScreen							; if byte is zero we have no further updates to make here
 
-InitScroll:
-		sta PPU_SCROLL_REG								; store contents of A into scroll registers
-		sta PPU_SCROLL_REG								; and end whatever subroutine led us here
 		rts
 
 ; -------------------------------------------------------------------------------------
