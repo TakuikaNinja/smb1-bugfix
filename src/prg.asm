@@ -3427,11 +3427,10 @@ ClrMTBuf:
 
 NormalScene:
 		cmp #$03
-		bmi RendBack									; if less than three we're there
+		bcc RendBack									; if less than three we're there
 
-		sec
 		sbc #$03										; if 3 or more, subtract 3
-		bpl NormalScene									; [unconditional branch]
+		bcs NormalScene									; [unconditional branch]
 
 RendBack:
 		ASL4											; move results to higher nybble
@@ -5213,11 +5212,10 @@ UpdScrollVar:
 		lda AreaParserTaskNum							; otherwise check number of tasks
 		bne RunParser
 		
-		lda ScrollThirtyTwo								; get horizontal scroll in 0-31 or $00-$20 range
-		cmp #$20										; check to see if exceeded $21
-		bmi ExitEng										; branch to leave if not
+		lda ScrollThirtyTwo								; get horizontal scroll in 0-31 or $00-$1F range
+		cmp #$20										; check to see if >= $20
+		bcc ExitEng										; branch to leave if not
 		
-		lda ScrollThirtyTwo
 		sbc #$20										; otherwise subtract $20 to set appropriately
 		sta ScrollThirtyTwo								; and store
 		

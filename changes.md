@@ -35,6 +35,7 @@ Changes marked with '+' are new additions/contributions that were not part of Ri
 + [x] The scroll unlock objects in underground warp zones now work as intended. (no more minus world)
 + [x] An erroneous increment of the warp zone value has been removed. (1-2 warpzone pipe destination stays at 1-2 exit until warp zone loads)
 + [x] Flagpoles will no longer set the scroll lock. Instead, extra scroll lock objects have been added to prevent the player from running past the flagpole.
++ [x] The background scenery will no longer glitch out after 128 screens or so. (kinda redundant given the above scroll lock fix)
 + [x] Scroll lock objects now explicitly set the scroll lock instead of toggling it.
 - [x] Lakitus now throw their spinies as originally intended.
 + [x] The initial number of lives is now set to 5 like in later entries, to compensate for the difficulty change.
